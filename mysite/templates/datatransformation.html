@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  {% include "head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+  
+  <script>
+    NProgress.configure({ showSpinner: false });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+  
+  <div id="toaster"></div>
+  
+
+  <div class="wrapper">
+    
+        {% include "leftsidebar.html" %}
+
+    
+
+    <div class="page-wrapper">
+                <!-- Header -->
+                {% include "header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">		
+          
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Source DataFrame</h2>
+              </div>
+              <div class="card-body">
+                 
+                {% autoescape off %}
+                      {{dataframe}}
+                    {% endautoescape %}
+                </div>
+              </div>
+            <div class="card card-default">
+                <div class="card-header card-header-border-bottom">
+                  <h2>Apply Transformation</h2>
+                </div>
+                <div class="card-body">
+                    <form enctype="multipart/form-data" action="{% url 'transformdata' project.pk %}" method='POST'>
+                      {% csrf_token %}
+                      <label for="exampleFormControlTextarea1">Define UDFs</label>
+                      <textarea name="udfclasses" class="form-control" id="exampleFormControlTextarea1" rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;" value="{{udfclasses}}">{{udfclasses}}</textarea>
+                      <label for="exampleFormControlInput1">Provide Select Statement</label>
+                      <input type="text" name="selectstatement" class="form-control" id="exampleFormControlInput1" placeholder='select("*")' value="{{selectstatement}}">
+                      <br/>
+                      <button type="submit" class="btn btn-primary">Transform</button>
+                    </form>
+                  </div>
+                </div>
+                <div class="card card-default">
+                  <div class="card-header card-header-border-bottom">
+                    <h2>Target DataFrame</h2>
+                  </div>
+                  <div class="card-body">
+                     
+                    {% autoescape off %}
+                          {{dataframe2}}
+                        {% endautoescape %}
+                    </div>
+                  </div>
+                
+              
+          
+                  
+                  
+
+
+						
+
+						
+
+						
+
+						
+</div>
+
+        
+
+
+      </div>
+
+                <footer class="footer mt-auto">
+            <div class="copyright bg-white">
+              <p>
+                &copy; <span id="copy-year">2019</span> Copyright Sleek Dashboard Bootstrap Template by
+                <a
+                  class="text-primary"
+                  href="http://www.iamabdus.com/"
+                  target="_blank"
+                  >Abdus</a
+                >.
+              </p>
+            </div>
+            <script>
+                var d = new Date();
+                var year = d.getFullYear();
+                document.getElementById("copy-year").innerHTML = year;
+            </script>
+          </footer>
+
+    </div>
+  </div>
+
+  <script src="/assets/plugins/jquery/jquery.min.js"></script>
+
+
+
+<script src="/assets/plugins/slimscrollbar/jquery.slimscroll.min.js"></script>
+<script src="/assets/plugins/jekyll-search.min.js"></script>
+
+
+
+<script src="/assets/plugins/charts/Chart.min.js"></script>
+  
+
+
+<script src="/assets/plugins/jvectormap/jquery-jvectormap-2.0.3.min.js"></script>
+<script src="/assets/plugins/jvectormap/jquery-jvectormap-world-mill.js"></script>
+  
+
+
+<script src="/assets/plugins/daterangepicker/moment.min.js"></script>
+<script src="/assets/plugins/daterangepicker/daterangepicker.js"></script>
+  
+
+
+<script src="/assets/plugins/toastr/toastr.min.js"></script>
+  
+
+
+<script src="/assets/js/sleek.bundle.js"></script>
+
+</body>
+
+</html>

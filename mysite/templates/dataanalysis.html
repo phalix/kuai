@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  {% include "head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+  
+  <script>
+    NProgress.configure({ showSpinner: false });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+  
+  <div id="toaster"></div>
+  
+
+  <div class="wrapper">
+    
+        {% include "leftsidebar.html" %}
+
+    
+
+    <div class="page-wrapper">
+                <!-- Header -->
+        {% include "header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">		
+          <div class="col-lg">
+            <form action="{% url 'setupdataclassifcation' project.pk %}" method='POST'>
+              {% csrf_token %}
+            
+
+
+                <div class="card card-default">
+                  <div class="card-header card-header-border-bottom">
+                    <h2>DataFrame Description</h2>
+                  </div>    
+                  
+                  <div id="dataframepreview" class="card-body">
+                    {% autoescape off %}
+                      {{dfdescription}}
+                    {% endautoescape %}
+                  </div>
+                </div>
+
+                <div class="card card-default">
+                  <div class="card-header card-header-border-bottom">
+                    <h2>Target Distribution</h2>
+                  </div>    
+                  
+                  <div id="dataframepreview" class="card-body">
+                    {% autoescape off %}
+                      {{distribution}}
+                    {% endautoescape %}
+                  </div>
+                </div>
+
+            
+            
+            
+            
+            
+          </form>
+                  
+                  
+
+
+						
+
+						
+
+						
+
+						
+</div>
+
+        
+
+
+      </div>
+
+                <footer class="footer mt-auto">
+            <div class="copyright bg-white">
+              <p>
+                &copy; <span id="copy-year">2019</span> Copyright Sleek Dashboard Bootstrap Template by
+                <a
+                  class="text-primary"
+                  href="http://www.iamabdus.com/"
+                  target="_blank"
+                  >Abdus</a
+                >.
+              </p>
+            </div>
+            <script>
+                var d = new Date();
+                var year = d.getFullYear();
+                document.getElementById("copy-year").innerHTML = year;
+            </script>
+          </footer>
+
+    </div>
+  </div>
+
+  <script src="/assets/plugins/jquery/jquery.min.js"></script>
+
+
+
+<script src="/assets/plugins/slimscrollbar/jquery.slimscroll.min.js"></script>
+<script src="/assets/plugins/jekyll-search.min.js"></script>
+
+
+
+<script src="/assets/plugins/charts/Chart.min.js"></script>
+  
+
+
+<script src="/assets/plugins/jvectormap/jquery-jvectormap-2.0.3.min.js"></script>
+<script src="/assets/plugins/jvectormap/jquery-jvectormap-world-mill.js"></script>
+  
+
+
+<script src="/assets/plugins/daterangepicker/moment.min.js"></script>
+<script src="/assets/plugins/daterangepicker/daterangepicker.js"></script>
+  
+
+
+<script src="/assets/plugins/toastr/toastr.min.js"></script>
+  
+
+
+<script src="/assets/js/sleek.bundle.js"></script>
+
+</body>
+
+</html>

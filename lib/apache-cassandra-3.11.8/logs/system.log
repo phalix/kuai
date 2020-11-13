@@ -1,0 +1,676 @@
+INFO  [main] 2020-09-19 18:19:07,093 YamlConfigurationLoader.java:89 - Configuration location: file:/Users/sehrbastian/Entwicklung/mysite/lib/apache-cassandra-3.11.8/conf/cassandra.yaml
+INFO  [main] 2020-09-19 18:19:07,557 Config.java:536 - Node configuration:[allocate_tokens_for_keyspace=null; authenticator=AllowAllAuthenticator; authorizer=AllowAllAuthorizer; auto_bootstrap=true; auto_snapshot=true; back_pressure_enabled=false; back_pressure_strategy=org.apache.cassandra.net.RateBasedBackPressure{high_ratio=0.9, factor=5, flow=FAST}; batch_size_fail_threshold_in_kb=50; batch_size_warn_threshold_in_kb=5; batchlog_replay_throttle_in_kb=1024; broadcast_address=null; broadcast_rpc_address=null; buffer_pool_use_heap_if_exhausted=true; cas_contention_timeout_in_ms=1000; cdc_enabled=false; cdc_free_space_check_interval_ms=250; cdc_raw_directory=null; cdc_total_space_in_mb=0; check_for_duplicate_rows_during_compaction=true; check_for_duplicate_rows_during_reads=true; client_encryption_options=<REDACTED>; cluster_name=Test Cluster; column_index_cache_size_in_kb=2; column_index_size_in_kb=64; commit_failure_policy=stop; commitlog_compression=null; commitlog_directory=null; commitlog_max_compression_buffers_in_pool=3; commitlog_periodic_queue_size=-1; commitlog_segment_size_in_mb=32; commitlog_sync=periodic; commitlog_sync_batch_window_in_ms=NaN; commitlog_sync_period_in_ms=10000; commitlog_total_space_in_mb=null; compaction_large_partition_warning_threshold_mb=100; compaction_throughput_mb_per_sec=16; concurrent_compactors=null; concurrent_counter_writes=32; concurrent_materialized_view_writes=32; concurrent_reads=32; concurrent_replicates=null; concurrent_writes=32; counter_cache_keys_to_save=2147483647; counter_cache_save_period=7200; counter_cache_size_in_mb=null; counter_write_request_timeout_in_ms=5000; credentials_cache_max_entries=1000; credentials_update_interval_in_ms=-1; credentials_validity_in_ms=2000; cross_node_timeout=false; data_file_directories=[Ljava.lang.String;@223f3642; disk_access_mode=auto; disk_failure_policy=stop; disk_optimization_estimate_percentile=0.95; disk_optimization_page_cross_chance=0.1; disk_optimization_strategy=ssd; dynamic_snitch=true; dynamic_snitch_badness_threshold=0.1; dynamic_snitch_reset_interval_in_ms=600000; dynamic_snitch_update_interval_in_ms=100; enable_materialized_views=true; enable_sasi_indexes=true; enable_scripted_user_defined_functions=false; enable_user_defined_functions=false; enable_user_defined_functions_threads=true; encryption_options=null; endpoint_snitch=SimpleSnitch; file_cache_round_up=null; file_cache_size_in_mb=null; gc_log_threshold_in_ms=200; gc_warn_threshold_in_ms=1000; hinted_handoff_disabled_datacenters=[]; hinted_handoff_enabled=true; hinted_handoff_throttle_in_kb=1024; hints_compression=null; hints_directory=null; hints_flush_period_in_ms=10000; incremental_backups=false; index_interval=null; index_summary_capacity_in_mb=null; index_summary_resize_interval_in_minutes=60; initial_token=null; inter_dc_stream_throughput_outbound_megabits_per_sec=200; inter_dc_tcp_nodelay=false; internode_authenticator=null; internode_compression=dc; internode_recv_buff_size_in_bytes=0; internode_send_buff_size_in_bytes=0; key_cache_keys_to_save=2147483647; key_cache_save_period=14400; key_cache_size_in_mb=null; listen_address=localhost; listen_interface=null; listen_interface_prefer_ipv6=false; listen_on_broadcast_address=false; max_hint_window_in_ms=10800000; max_hints_delivery_threads=2; max_hints_file_size_in_mb=128; max_mutation_size_in_kb=null; max_streaming_retries=3; max_value_size_in_mb=256; memtable_allocation_type=heap_buffers; memtable_cleanup_threshold=null; memtable_flush_writers=0; memtable_heap_space_in_mb=null; memtable_offheap_space_in_mb=null; min_free_space_per_drive_in_mb=50; native_transport_flush_in_batches_legacy=true; native_transport_max_concurrent_connections=-1; native_transport_max_concurrent_connections_per_ip=-1; native_transport_max_concurrent_requests_in_bytes=-1; native_transport_max_concurrent_requests_in_bytes_per_ip=-1; native_transport_max_frame_size_in_mb=256; native_transport_max_negotiable_protocol_version=-2147483648; native_transport_max_threads=128; native_transport_port=9042; native_transport_port_ssl=null; num_tokens=256; otc_backlog_expiration_interval_ms=200; otc_coalescing_enough_coalesced_messages=8; otc_coalescing_strategy=DISABLED; otc_coalescing_window_us=200; partitioner=org.apache.cassandra.dht.Murmur3Partitioner; permissions_cache_max_entries=1000; permissions_update_interval_in_ms=-1; permissions_validity_in_ms=2000; phi_convict_threshold=8.0; prepared_statements_cache_size_mb=null; range_request_timeout_in_ms=10000; read_request_timeout_in_ms=5000; repair_session_max_tree_depth=18; request_scheduler=org.apache.cassandra.scheduler.NoScheduler; request_scheduler_id=null; request_scheduler_options=null; request_timeout_in_ms=10000; role_manager=CassandraRoleManager; roles_cache_max_entries=1000; roles_update_interval_in_ms=-1; roles_validity_in_ms=2000; row_cache_class_name=org.apache.cassandra.cache.OHCProvider; row_cache_keys_to_save=2147483647; row_cache_save_period=0; row_cache_size_in_mb=0; rpc_address=localhost; rpc_interface=null; rpc_interface_prefer_ipv6=false; rpc_keepalive=true; rpc_listen_backlog=50; rpc_max_threads=2147483647; rpc_min_threads=16; rpc_port=9160; rpc_recv_buff_size_in_bytes=null; rpc_send_buff_size_in_bytes=null; rpc_server_type=sync; saved_caches_directory=null; seed_provider=org.apache.cassandra.locator.SimpleSeedProvider{seeds=127.0.0.1}; server_encryption_options=<REDACTED>; slow_query_log_timeout_in_ms=500; snapshot_before_compaction=false; snapshot_on_duplicate_row_detection=false; ssl_storage_port=7001; sstable_preemptive_open_interval_in_mb=50; start_native_transport=true; start_rpc=false; storage_port=7000; stream_throughput_outbound_megabits_per_sec=200; streaming_keep_alive_period_in_secs=300; streaming_socket_timeout_in_ms=86400000; thrift_framed_transport_size_in_mb=15; thrift_max_message_length_in_mb=16; thrift_prepared_statements_cache_size_mb=null; tombstone_failure_threshold=100000; tombstone_warn_threshold=1000; tracetype_query_ttl=86400; tracetype_repair_ttl=604800; transparent_data_encryption_options=org.apache.cassandra.config.TransparentDataEncryptionOptions@38c5cc4c; trickle_fsync=false; trickle_fsync_interval_in_kb=10240; truncate_request_timeout_in_ms=60000; unlogged_batch_across_partitions_warn_threshold=10; user_defined_function_fail_timeout=1500; user_defined_function_warn_timeout=500; user_function_timeout_policy=die; windows_timer_interval=1; write_request_timeout_in_ms=2000]
+INFO  [main] 2020-09-19 18:19:07,559 DatabaseDescriptor.java:381 - DiskAccessMode 'auto' determined to be mmap, indexAccessMode is mmap
+INFO  [main] 2020-09-19 18:19:07,559 DatabaseDescriptor.java:439 - Global memtable on-heap threshold is enabled at 502MB
+INFO  [main] 2020-09-19 18:19:07,559 DatabaseDescriptor.java:443 - Global memtable off-heap threshold is enabled at 502MB
+WARN  [main] 2020-09-19 18:19:07,859 DatabaseDescriptor.java:579 - Only 39,081GiB free across all data volumes. Consider adding more capacity to your cluster or removing obsolete snapshots
+INFO  [main] 2020-09-19 18:19:07,919 RateBasedBackPressure.java:123 - Initialized back-pressure with high ratio: 0.9, factor: 5, flow: FAST, window size: 2000.
+INFO  [main] 2020-09-19 18:19:07,920 DatabaseDescriptor.java:773 - Back-pressure is disabled with strategy org.apache.cassandra.net.RateBasedBackPressure{high_ratio=0.9, factor=5, flow=FAST}.
+INFO  [main] 2020-09-19 18:19:18,293 JMXServerUtils.java:253 - Configured JMX server at: service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:7199/jmxrmi
+INFO  [main] 2020-09-19 18:19:28,315 CassandraDaemon.java:481 - Hostname: Sebastians-MacBook-Pro.local
+INFO  [main] 2020-09-19 18:19:28,315 CassandraDaemon.java:488 - JVM vendor/version: Java HotSpot(TM) 64-Bit Server VM/1.8.0_121
+INFO  [main] 2020-09-19 18:19:28,316 CassandraDaemon.java:489 - Heap size: 1,961GiB/1,961GiB
+INFO  [main] 2020-09-19 18:19:28,318 CassandraDaemon.java:494 - Code Cache Non-heap memory: init = 2555904(2496K) used = 5022272(4904K) committed = 5046272(4928K) max = 251658240(245760K)
+INFO  [main] 2020-09-19 18:19:28,318 CassandraDaemon.java:494 - Metaspace Non-heap memory: init = 0(0K) used = 20261608(19786K) committed = 20709376(20224K) max = -1(-1K)
+INFO  [main] 2020-09-19 18:19:28,319 CassandraDaemon.java:494 - Compressed Class Space Non-heap memory: init = 0(0K) used = 2460008(2402K) committed = 2621440(2560K) max = 1073741824(1048576K)
+INFO  [main] 2020-09-19 18:19:28,319 CassandraDaemon.java:494 - Par Eden Space Heap memory: init = 335544320(327680K) used = 127518024(124529K) committed = 335544320(327680K) max = 335544320(327680K)
+INFO  [main] 2020-09-19 18:19:28,320 CassandraDaemon.java:494 - Par Survivor Space Heap memory: init = 41943040(40960K) used = 0(0K) committed = 41943040(40960K) max = 41943040(40960K)
+INFO  [main] 2020-09-19 18:19:28,320 CassandraDaemon.java:494 - CMS Old Gen Heap memory: init = 1728053248(1687552K) used = 0(0K) committed = 1728053248(1687552K) max = 1728053248(1687552K)
+INFO  [main] 2020-09-19 18:19:28,320 CassandraDaemon.java:496 - Classpath: bin/../conf:bin/../build/classes/main:bin/../build/classes/thrift:bin/../lib/HdrHistogram-2.1.9.jar:bin/../lib/ST4-4.0.8.jar:bin/../lib/airline-0.6.jar:bin/../lib/antlr-runtime-3.5.2.jar:bin/../lib/apache-cassandra-3.11.8.jar:bin/../lib/apache-cassandra-thrift-3.11.8.jar:bin/../lib/asm-5.0.4.jar:bin/../lib/caffeine-2.2.6.jar:bin/../lib/cassandra-driver-core-3.0.1-shaded.jar:bin/../lib/commons-cli-1.1.jar:bin/../lib/commons-codec-1.9.jar:bin/../lib/commons-lang3-3.1.jar:bin/../lib/commons-math3-3.2.jar:bin/../lib/compress-lzf-0.8.4.jar:bin/../lib/concurrent-trees-2.4.0.jar:bin/../lib/concurrentlinkedhashmap-lru-1.4.jar:bin/../lib/disruptor-3.0.1.jar:bin/../lib/ecj-4.4.2.jar:bin/../lib/guava-18.0.jar:bin/../lib/high-scale-lib-1.0.6.jar:bin/../lib/hppc-0.5.4.jar:bin/../lib/jackson-annotations-2.9.10.jar:bin/../lib/jackson-core-2.9.10.jar:bin/../lib/jackson-databind-2.9.10.4.jar:bin/../lib/jamm-0.3.0.jar:bin/../lib/javax.inject.jar:bin/../lib/jbcrypt-0.3m.jar:bin/../lib/jcl-over-slf4j-1.7.7.jar:bin/../lib/jctools-core-1.2.1.jar:bin/../lib/jflex-1.6.0.jar:bin/../lib/jna-4.2.2.jar:bin/../lib/joda-time-2.4.jar:bin/../lib/json-simple-1.1.jar:bin/../lib/jstackjunit-0.0.1.jar:bin/../lib/libthrift-0.9.2.jar:bin/../lib/log4j-over-slf4j-1.7.7.jar:bin/../lib/logback-classic-1.1.3.jar:bin/../lib/logback-core-1.1.3.jar:bin/../lib/lz4-1.3.0.jar:bin/../lib/metrics-core-3.1.5.jar:bin/../lib/metrics-jvm-3.1.5.jar:bin/../lib/metrics-logback-3.1.5.jar:bin/../lib/netty-all-4.0.44.Final.jar:bin/../lib/ohc-core-0.4.4.jar:bin/../lib/ohc-core-j8-0.4.4.jar:bin/../lib/reporter-config-base-3.0.3.jar:bin/../lib/reporter-config3-3.0.3.jar:bin/../lib/sigar-1.6.4.jar:bin/../lib/slf4j-api-1.7.7.jar:bin/../lib/snakeyaml-1.11.jar:bin/../lib/snappy-java-1.1.1.7.jar:bin/../lib/snowball-stemmer-1.3.0.581.1.jar:bin/../lib/stream-2.5.2.jar:bin/../lib/thrift-server-0.3.7.jar:bin/../lib/jsr223/*/*.jar::bin/../lib/jamm-0.3.0.jar
+INFO  [main] 2020-09-19 18:19:28,322 CassandraDaemon.java:498 - JVM Arguments: [-Xloggc:bin/../logs/gc.log, -ea, -XX:+UseThreadPriorities, -XX:ThreadPriorityPolicy=42, -XX:+HeapDumpOnOutOfMemoryError, -Xss256k, -XX:StringTableSize=1000003, -XX:+AlwaysPreTouch, -XX:-UseBiasedLocking, -XX:+UseTLAB, -XX:+ResizeTLAB, -XX:+UseNUMA, -XX:+PerfDisableSharedMem, -Djava.net.preferIPv4Stack=true, -XX:+UseParNewGC, -XX:+UseConcMarkSweepGC, -XX:+CMSParallelRemarkEnabled, -XX:SurvivorRatio=8, -XX:MaxTenuringThreshold=1, -XX:CMSInitiatingOccupancyFraction=75, -XX:+UseCMSInitiatingOccupancyOnly, -XX:CMSWaitDuration=10000, -XX:+CMSParallelInitialMarkEnabled, -XX:+CMSEdenChunksRecordAlways, -XX:+CMSClassUnloadingEnabled, -XX:+PrintGCDetails, -XX:+PrintGCDateStamps, -XX:+PrintHeapAtGC, -XX:+PrintTenuringDistribution, -XX:+PrintGCApplicationStoppedTime, -XX:+PrintPromotionFailure, -XX:+UseGCLogFileRotation, -XX:NumberOfGCLogFiles=10, -XX:GCLogFileSize=10M, -Xms2048M, -Xmx2048M, -Xmn400M, -XX:+UseCondCardMark, -XX:CompileCommandFile=bin/../conf/hotspot_compiler, -javaagent:bin/../lib/jamm-0.3.0.jar, -Dcassandra.jmx.local.port=7199, -Dcom.sun.management.jmxremote.authenticate=false, -Dcom.sun.management.jmxremote.password.file=/etc/cassandra/jmxremote.password, -Djava.library.path=bin/../lib/sigar-bin, -XX:OnOutOfMemoryError=kill -9 %p, -Dlogback.configurationFile=logback.xml, -Dcassandra.logdir=bin/../logs, -Dcassandra.storagedir=bin/../data]
+WARN  [main] 2020-09-19 18:19:28,503 StartupChecks.java:136 - jemalloc shared library could not be preloaded to speed up memory allocations
+WARN  [main] 2020-09-19 18:19:28,503 StartupChecks.java:169 - JMX is not enabled to receive remote connections. Please see cassandra-env.sh for more info.
+INFO  [main] 2020-09-19 18:19:28,509 SigarLibrary.java:44 - Initializing SIGAR library
+WARN  [main] 2020-09-19 18:19:28,718 SigarLibrary.java:174 - Cassandra server running in degraded mode. Is swap disabled? : false,  Address space adequate? : false,  nofile limit adequate? : true, nproc limit adequate? : false 
+WARN  [main] 2020-09-19 18:19:28,744 StartupChecks.java:332 - Directory bin/../data/data doesn't exist
+WARN  [main] 2020-09-19 18:19:28,754 StartupChecks.java:332 - Directory bin/../data/commitlog doesn't exist
+WARN  [main] 2020-09-19 18:19:28,755 StartupChecks.java:332 - Directory bin/../data/saved_caches doesn't exist
+WARN  [main] 2020-09-19 18:19:28,757 StartupChecks.java:332 - Directory /Users/sehrbastian/Entwicklung/mysite/lib/apache-cassandra-3.11.8/bin/../data/hints doesn't exist
+INFO  [main] 2020-09-19 18:19:28,878 QueryProcessor.java:116 - Initialized prepared statement caches with 10 MB (native) and 10 MB (Thrift)
+INFO  [main] 2020-09-19 18:19:30,258 ColumnFamilyStore.java:427 - Initializing system.IndexInfo
+INFO  [main] 2020-09-19 18:19:32,168 ColumnFamilyStore.java:427 - Initializing system.batches
+INFO  [main] 2020-09-19 18:19:32,197 ColumnFamilyStore.java:427 - Initializing system.paxos
+INFO  [main] 2020-09-19 18:19:32,251 ColumnFamilyStore.java:427 - Initializing system.local
+INFO  [main] 2020-09-19 18:19:32,272 ColumnFamilyStore.java:427 - Initializing system.peers
+INFO  [main] 2020-09-19 18:19:32,295 ColumnFamilyStore.java:427 - Initializing system.peer_events
+INFO  [main] 2020-09-19 18:19:32,310 ColumnFamilyStore.java:427 - Initializing system.range_xfers
+INFO  [main] 2020-09-19 18:19:32,327 ColumnFamilyStore.java:427 - Initializing system.compaction_history
+INFO  [main] 2020-09-19 18:19:32,340 ColumnFamilyStore.java:427 - Initializing system.sstable_activity
+INFO  [main] 2020-09-19 18:19:32,354 ColumnFamilyStore.java:427 - Initializing system.size_estimates
+INFO  [main] 2020-09-19 18:19:32,385 ColumnFamilyStore.java:427 - Initializing system.available_ranges
+INFO  [main] 2020-09-19 18:19:32,401 ColumnFamilyStore.java:427 - Initializing system.transferred_ranges
+INFO  [main] 2020-09-19 18:19:32,420 ColumnFamilyStore.java:427 - Initializing system.views_builds_in_progress
+INFO  [main] 2020-09-19 18:19:32,563 ColumnFamilyStore.java:427 - Initializing system.built_views
+INFO  [main] 2020-09-19 18:19:32,577 ColumnFamilyStore.java:427 - Initializing system.hints
+INFO  [main] 2020-09-19 18:19:32,604 ColumnFamilyStore.java:427 - Initializing system.batchlog
+INFO  [main] 2020-09-19 18:19:32,636 ColumnFamilyStore.java:427 - Initializing system.prepared_statements
+INFO  [main] 2020-09-19 18:19:32,656 ColumnFamilyStore.java:427 - Initializing system.schema_keyspaces
+INFO  [main] 2020-09-19 18:19:32,680 ColumnFamilyStore.java:427 - Initializing system.schema_columnfamilies
+INFO  [main] 2020-09-19 18:19:32,699 ColumnFamilyStore.java:427 - Initializing system.schema_columns
+INFO  [main] 2020-09-19 18:19:32,713 ColumnFamilyStore.java:427 - Initializing system.schema_triggers
+INFO  [main] 2020-09-19 18:19:32,732 ColumnFamilyStore.java:427 - Initializing system.schema_usertypes
+INFO  [main] 2020-09-19 18:19:32,746 ColumnFamilyStore.java:427 - Initializing system.schema_functions
+INFO  [main] 2020-09-19 18:19:32,755 ColumnFamilyStore.java:427 - Initializing system.schema_aggregates
+INFO  [main] 2020-09-19 18:19:32,758 ViewManager.java:137 - Not submitting build tasks for views in keyspace system as storage service is not initialized
+INFO  [main] 2020-09-19 18:19:33,145 ApproximateTime.java:44 - Scheduling approximate time-check task with a precision of 10 milliseconds
+INFO  [main] 2020-09-19 18:19:33,290 ColumnFamilyStore.java:427 - Initializing system_schema.keyspaces
+INFO  [main] 2020-09-19 18:19:33,332 ColumnFamilyStore.java:427 - Initializing system_schema.tables
+INFO  [main] 2020-09-19 18:19:33,451 ColumnFamilyStore.java:427 - Initializing system_schema.columns
+INFO  [main] 2020-09-19 18:19:33,483 ColumnFamilyStore.java:427 - Initializing system_schema.triggers
+INFO  [main] 2020-09-19 18:19:33,510 ColumnFamilyStore.java:427 - Initializing system_schema.dropped_columns
+INFO  [main] 2020-09-19 18:19:33,522 ColumnFamilyStore.java:427 - Initializing system_schema.views
+INFO  [main] 2020-09-19 18:19:33,562 ColumnFamilyStore.java:427 - Initializing system_schema.types
+INFO  [main] 2020-09-19 18:19:33,572 ColumnFamilyStore.java:427 - Initializing system_schema.functions
+INFO  [main] 2020-09-19 18:19:33,596 ColumnFamilyStore.java:427 - Initializing system_schema.aggregates
+INFO  [main] 2020-09-19 18:19:33,623 ColumnFamilyStore.java:427 - Initializing system_schema.indexes
+INFO  [main] 2020-09-19 18:19:33,637 ViewManager.java:137 - Not submitting build tasks for views in keyspace system_schema as storage service is not initialized
+INFO  [MemtableFlushWriter:1] 2020-09-19 18:19:34,839 CacheService.java:100 - Initializing key cache with capacity of 100 MBs.
+INFO  [MemtableFlushWriter:1] 2020-09-19 18:19:34,871 CacheService.java:122 - Initializing row cache with capacity of 0 MBs
+INFO  [MemtableFlushWriter:1] 2020-09-19 18:19:34,875 CacheService.java:151 - Initializing counter cache with capacity of 50 MBs
+INFO  [MemtableFlushWriter:1] 2020-09-19 18:19:34,880 CacheService.java:162 - Scheduling counter cache save to every 7200 seconds (going to save all keys).
+INFO  [CompactionExecutor:2] 2020-09-19 18:19:35,103 BufferPool.java:234 - Global buffer pool is enabled, when pool is exhausted (max is 502,000MiB) it will allocate on heap
+INFO  [main] 2020-09-19 18:19:35,127 StorageService.java:645 - Populating token metadata from system tables
+INFO  [main] 2020-09-19 18:19:35,213 StorageService.java:652 - Token metadata: 
+INFO  [main] 2020-09-19 18:19:35,294 AutoSavingCache.java:174 - Completed loading (2 ms; 4 keys) KeyCache cache
+INFO  [main] 2020-09-19 18:19:35,384 CommitLog.java:142 - No commitlog files found; skipping replay
+INFO  [main] 2020-09-19 18:19:35,385 StorageService.java:645 - Populating token metadata from system tables
+INFO  [main] 2020-09-19 18:19:35,440 StorageService.java:652 - Token metadata: 
+INFO  [main] 2020-09-19 18:19:35,861 QueryProcessor.java:163 - Preloaded 0 prepared statements
+INFO  [main] 2020-09-19 18:19:35,863 StorageService.java:663 - Cassandra version: 3.11.8
+INFO  [main] 2020-09-19 18:19:35,863 StorageService.java:664 - Thrift API version: 20.1.0
+INFO  [main] 2020-09-19 18:19:35,864 StorageService.java:665 - CQL supported versions: 3.4.4 (default: 3.4.4)
+INFO  [main] 2020-09-19 18:19:35,864 StorageService.java:667 - Native protocol supported versions: 3/v3, 4/v4, 5/v5-beta (default: 4/v4)
+INFO  [main] 2020-09-19 18:19:36,022 IndexSummaryManager.java:87 - Initializing index summary manager with a memory pool size of 100 MB and a resize interval of 60 minutes
+INFO  [main] 2020-09-19 18:19:36,081 MessagingService.java:750 - Starting Messaging Service on localhost/127.0.0.1:7000 (lo0)
+WARN  [main] 2020-09-19 18:19:36,185 SystemKeyspace.java:1130 - No host ID found, created c5acfc54-e144-48ad-8366-05b8e5cdade3 (Note: This should happen exactly once per node).
+INFO  [main] 2020-09-19 18:19:36,213 StorageService.java:595 - Unable to gossip with any peers but continuing anyway since node is in its own seed list
+INFO  [main] 2020-09-19 18:19:36,267 StorageService.java:749 - Loading persisted ring state
+INFO  [main] 2020-09-19 18:19:36,271 StorageService.java:877 - Starting up server gossip
+INFO  [main] 2020-09-19 18:19:36,545 StorageService.java:939 - This node will not auto bootstrap because it is configured to be a seed node.
+INFO  [main] 2020-09-19 18:19:36,600 BootStrapper.java:228 - Generated random tokens. tokens are [3726095514491239933, -2042919050162397085, -5244675703701152058, -5851557894133435312, -4306109328208671626, 650607339471880093, -7530463664796987512, 9167101735181151253, -3256985693517597859, -6896898084457011650, 5388961910247510268, 3079364408613502033, 7310379885227843722, 5828168875627726987, 8274608970174669642, -7003546391297688125, 984027057494012334, 7620101717792922790, -5689417275572154236, 5179862026097781199, -7156552945866680618, 2234691974585270845, 443018235721314694, 866759639182338146, 4914689458181605952, 2647605082554830704, 1273894933560717611, -1932794013043094127, -4222294957013491189, -7973928319241798605, 4228937072524242458, 371388733722581520, -7019660291203923938, 7117429427988881896, 1927212244763707460, 6183185844341241706, -2497112387329364078, 7641848354914088670, -3456240846415924183, 4692212061415676975, -8612973248715905511, 8544799134540930605, 9009323140998472471, -6479683533725940418, 2668529861921757383, -3173016956363297312, 4058944889290666974, 6753770506174035611, 1462105398512505, 3512610053893747755, -5600067188725446889, -7302646614012022080, 8129057811035730641, 128171911134066522, 5884789007032131045, -4375096250647038460, 4385005774867082698, -6835416575125119934, 8592463263211847627, 5362933135128985299, -2158373106971376298, 3439784422030569335, -154695696208648305, 3492467352034840353, -1590001092363621669, 7641966379383791934, -912972161770911069, -4799355683185618316, 8037394411376894327, -8116750778480526415, -1801929423342005332, -1942895510182805856, -8716420521823938595, -7091272880371481654, -4765258553552896138, -5656179410292958106, -2631418158626615453, 2231706573987421806, 1044494752552055590, 1294972427095812938, 910258381875258932, 888436422286053707, -3210690342758882938, -1546158934245433625, 9113904321979472248, -359319184130700231, 4055819310605568377, -8009267460612184411, -3486654208772933539, -5356629945681127299, 7879774781490519601, -8904764979461395188, -5632342346782408752, -1796897964584312246, -7861803586666700377, 1914984468939430351, -4505034035507688845, 369254294006394668, -3238266800558603610, 5569411326773260778, 7447910949302756819, 7647295137248487650, 2088542296051790008, -1437032954414791350, -2398682716391607780, 6355598010868143754, -3449859967760438136, -7127078941099000007, -769023199284992957, -4287776934794447471, 247371351691796407, 3599056940440244376, -1418147725409949034, 8585198705551626264, -837797854486507100, -7089876175719600353, 7440069255543695167, -787939299899520632, -1207238708865840110, -2009891025490773588, 5240644623934661771, -2245531659116992153, 8146612880499288477, -2961474922430430580, 1901162884224270517, 2857703150827239877, -101013070317605229, -1610161975113722317, -2368041188282616325, 3044861954429252972, -6943222326034352450, -6592643021935991490, 2939110370510129472, 9180646543301125313, -1053004566303591618, -8934688513965067945, 9019556248763441579, -7054295197111324737, 3643331760300070107, 4007112814025157009, 7318429721723695274, -3397873916379772706, -3500363381215802484, 5249433360087350828, -2638042368644877738, -5611730086928665299, 2068924871476629737, 8588083061202191077, 3347798817619868618, 360660862683425729, 1743324672319243319, 8667628373184937948, 7458273577716378610, 8013732183048080184, 6436392616275302123, -133875987834883533, -8004022810561872806, 3495737921456794265, 433566691291917621, 5628766356786438540, 4402256568009150224, -121463255722618967, -5064854376444580908, -1343925792538013222, -7056486738280059015, -1676832092983549367, 6816830549862133270, -6713884437901680129, -6274517853694286528, -1358737124934104929, -3716457463616404261, -544191228858280993, 1779094927480825525, 2533970222315786885, -4255476387351173964, -6862400424756540075, 8746023147578278153, -8093981675066495133, 3194656365602480404, -8099873436242298925, -262310585284219491, -9181906834462134606, 1115758486262536880, -3122657369875986652, 8311147395250783081, -8432903300110488825, 5655418315275184090, 2758792059756012296, 5304865385741639292, 1125943796683417440, 4019035602392464228, 4573994982813907765, 6106185257473882258, 8536404539994071773, -8490343199820876027, -7640760514309234555, 8260111011083518978, 2735879709989706317, 2935153493270978078, -5251161422608003305, -8259719925116885104, -6296973195648857578, 1158533967776928900, -1149437090232551550, -4204264710001392381, -321064095454002241, 6810633250687487844, 5962811850403203421, 6942761012115219999, 5581642341297464980, 2011148706406727345, -727833823239640892, 5616322250222940565, -2883692210288590489, 8597786421691062380, 5693267334140448286, 9017545851730831002, -5424195408613595817, 8655203777857122699, 7568991987775510930, 3793853865762080911, -4222128523873191736, 4944961179495583006, 6648824961015393258, -8802478230342169194, -2385166953294147332, 8137349961867125727, 7995100144483771858, 1341640934614516190, -3343610682509196736, 8195120210164958353, -2700848349628860457, 959423191899159218, 5622958318653644590, -8459778543869342883, 1226042358240674635, -1291566701553308925, -7341657493348719388, -1653492296526580244, 7878588558437831462, 5119579504634113966, 7980227374281852683, 4412385482815366290, 7753350295859407515, 3573149949283494584, 8472942233176962697, -705139805084194253, 7813895705934535947, -5693122871273907474, 7282509250589590423, 1454492122227535047, -6636273019686269478, 2451738803875548043, -6862738429027866200, -8383657269023349951, 7841541590174056045]
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,132 ViewManager.java:137 - Not submitting build tasks for views in keyspace system_traces as storage service is not initialized
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,248 ColumnFamilyStore.java:427 - Initializing system_traces.events
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,268 ColumnFamilyStore.java:427 - Initializing system_traces.sessions
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,274 ViewManager.java:137 - Not submitting build tasks for views in keyspace system_distributed as storage service is not initialized
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,308 ColumnFamilyStore.java:427 - Initializing system_distributed.parent_repair_history
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,361 ColumnFamilyStore.java:427 - Initializing system_distributed.repair_history
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,391 ColumnFamilyStore.java:427 - Initializing system_distributed.view_build_status
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,399 ViewManager.java:137 - Not submitting build tasks for views in keyspace system_auth as storage service is not initialized
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,430 ColumnFamilyStore.java:427 - Initializing system_auth.resource_role_permissons_index
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,443 ColumnFamilyStore.java:427 - Initializing system_auth.role_members
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,457 ColumnFamilyStore.java:427 - Initializing system_auth.role_permissions
+INFO  [MigrationStage:1] 2020-09-19 18:19:37,474 ColumnFamilyStore.java:427 - Initializing system_auth.roles
+INFO  [main] 2020-09-19 18:19:37,538 StorageService.java:1484 - JOINING: Finish joining ring
+INFO  [main] 2020-09-19 18:19:38,220 NativeTransportService.java:73 - Netty using Java NIO event loop
+INFO  [main] 2020-09-19 18:19:38,352 Server.java:158 - Using Netty Version: [netty-buffer=netty-buffer-4.0.44.Final.452812a, netty-codec=netty-codec-4.0.44.Final.452812a, netty-codec-haproxy=netty-codec-haproxy-4.0.44.Final.452812a, netty-codec-http=netty-codec-http-4.0.44.Final.452812a, netty-codec-socks=netty-codec-socks-4.0.44.Final.452812a, netty-common=netty-common-4.0.44.Final.452812a, netty-handler=netty-handler-4.0.44.Final.452812a, netty-tcnative=netty-tcnative-1.1.33.Fork26.142ecbb, netty-transport=netty-transport-4.0.44.Final.452812a, netty-transport-native-epoll=netty-transport-native-epoll-4.0.44.Final.452812a, netty-transport-rxtx=netty-transport-rxtx-4.0.44.Final.452812a, netty-transport-sctp=netty-transport-sctp-4.0.44.Final.452812a, netty-transport-udt=netty-transport-udt-4.0.44.Final.452812a]
+INFO  [main] 2020-09-19 18:19:38,353 Server.java:159 - Starting listening for CQL clients on localhost/127.0.0.1:9042 (unencrypted)...
+INFO  [main] 2020-09-19 18:19:38,498 ThriftServer.java:116 - Binding thrift service to localhost/127.0.0.1:9160
+INFO  [Thread-2] 2020-09-19 18:19:38,515 ThriftServer.java:133 - Listening for thrift clients...
+INFO  [main] 2020-09-19 18:19:38,523 CassandraDaemon.java:548 - Not starting RPC server as requested. Use JMX (StorageService->startRPCServer()) or nodetool (enablethrift) to start it
+INFO  [OptionalTasks:1] 2020-09-19 18:19:47,829 CassandraRoleManager.java:372 - Created default superuser role 'cassandra'
+INFO  [Service Thread] 2020-09-19 18:59:33,608 GCInspector.java:285 - ParNew GC in 381ms.  CMS Old Gen: 6744168 -> 16169424; Par Eden Space: 335544320 -> 0; Par Survivor Space: 36788760 -> 23489872
+INFO  [IndexSummaryManager:1] 2020-09-19 19:19:36,160 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-19 20:19:36,306 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-19 21:19:36,462 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+WARN  [Service Thread] 2020-09-19 21:25:13,358 GCInspector.java:283 - ParNew GC in 1702ms.  CMS Old Gen: 22728840 -> 23914760; Par Eden Space: 335544320 -> 0; Par Survivor Space: 19525416 -> 16008608
+INFO  [Service Thread] 2020-09-19 21:25:13,411 StatusLogger.java:47 - Pool Name                    Active   Pending      Completed   Blocked  All Time Blocked
+INFO  [Service Thread] 2020-09-19 21:25:13,641 StatusLogger.java:51 - MutationStage                     0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,642 StatusLogger.java:51 - ViewMutationStage                 0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,643 StatusLogger.java:51 - ReadStage                         0         0              3         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,645 StatusLogger.java:51 - RequestResponseStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,648 StatusLogger.java:51 - ReadRepairStage                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,660 StatusLogger.java:51 - CounterMutationStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,662 StatusLogger.java:51 - MiscStage                         0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,663 StatusLogger.java:51 - CompactionExecutor                0         0           6388         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,665 StatusLogger.java:51 - MemtableReclaimMemory             0         0             28         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,666 StatusLogger.java:51 - PendingRangeCalculator            0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,667 StatusLogger.java:51 - GossipStage                       0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,669 StatusLogger.java:51 - SecondaryIndexManagement          0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,672 StatusLogger.java:51 - HintsDispatcher                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,673 StatusLogger.java:51 - MigrationStage                    0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,675 StatusLogger.java:51 - MemtablePostFlush                 0         0             28         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,675 StatusLogger.java:51 - PerDiskMemtableFlushWriter_0         0         0             28         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,684 StatusLogger.java:51 - ValidationExecutor                0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,686 StatusLogger.java:51 - Sampler                           0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,687 StatusLogger.java:51 - MemtableFlushWriter               0         0             28         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,687 StatusLogger.java:51 - InternalResponseStage             0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,688 StatusLogger.java:51 - AntiEntropyStage                  0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,689 StatusLogger.java:51 - CacheCleanupExecutor              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 21:25:13,690 StatusLogger.java:61 - CompactionManager                 0         0
+INFO  [Service Thread] 2020-09-19 21:25:13,696 StatusLogger.java:73 - MessagingService                n/a       0/0
+INFO  [Service Thread] 2020-09-19 21:25:13,698 StatusLogger.java:83 - Cache Type                     Size                 Capacity               KeysToSave
+INFO  [Service Thread] 2020-09-19 21:25:13,699 StatusLogger.java:85 - KeyCache                        816                104857600                      all
+INFO  [Service Thread] 2020-09-19 21:25:13,699 StatusLogger.java:91 - RowCache                          0                        0                      all
+INFO  [Service Thread] 2020-09-19 21:25:13,699 StatusLogger.java:98 - Table                       Memtable ops,data
+INFO  [Service Thread] 2020-09-19 21:25:13,700 StatusLogger.java:101 - system_distributed.parent_repair_history                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,700 StatusLogger.java:101 - system_distributed.repair_history                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,700 StatusLogger.java:101 - system_distributed.view_build_status                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,700 StatusLogger.java:101 - system.compaction_history                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,700 StatusLogger.java:101 - system.schema_aggregates                  0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,701 StatusLogger.java:101 - system.schema_triggers                    0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,701 StatusLogger.java:101 - system.size_estimates             4644,282288
+INFO  [Service Thread] 2020-09-19 21:25:13,701 StatusLogger.java:101 - system.paxos                              0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,701 StatusLogger.java:101 - system.views_builds_in_progress                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,702 StatusLogger.java:101 - system.batches                            0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,702 StatusLogger.java:101 - system.schema_keyspaces                   0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,702 StatusLogger.java:101 - system.sstable_activity                  1,85
+INFO  [Service Thread] 2020-09-19 21:25:13,703 StatusLogger.java:101 - system.batchlog                           0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,704 StatusLogger.java:101 - system.schema_columns                     0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,704 StatusLogger.java:101 - system.hints                              0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,704 StatusLogger.java:101 - system.IndexInfo                          0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,704 StatusLogger.java:101 - system.schema_columnfamilies                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,706 StatusLogger.java:101 - system.schema_functions                   0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,706 StatusLogger.java:101 - system.built_views                        0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,706 StatusLogger.java:101 - system.peer_events                        0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,706 StatusLogger.java:101 - system.range_xfers                        0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system.peers                              0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system.transferred_ranges                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system.schema_usertypes                   0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system.local                              0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system.available_ranges                   0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system.prepared_statements                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system_schema.columns                     0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,707 StatusLogger.java:101 - system_schema.types                       0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.indexes                     0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.keyspaces                   0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.dropped_columns                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.aggregates                  0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.triggers                    0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.tables                      0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,708 StatusLogger.java:101 - system_schema.views                       0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_schema.functions                   0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_auth.roles                         0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_auth.role_members                  0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_auth.resource_role_permissons_index                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_auth.role_permissions                 0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_traces.sessions                    0,0
+INFO  [Service Thread] 2020-09-19 21:25:13,709 StatusLogger.java:101 - system_traces.events                      0,0
+INFO  [CompactionExecutor:34] 2020-09-19 22:19:35,492 AutoSavingCache.java:395 - Saved KeyCache (11 items) in 117 ms
+INFO  [IndexSummaryManager:1] 2020-09-19 22:19:36,612 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+WARN  [Service Thread] 2020-09-19 23:36:00,229 GCInspector.java:283 - ParNew GC in 3225ms.  CMS Old Gen: 23914760 -> 23952016; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16008608 -> 17836256
+INFO  [Service Thread] 2020-09-19 23:36:00,270 StatusLogger.java:47 - Pool Name                    Active   Pending      Completed   Blocked  All Time Blocked
+INFO  [Service Thread] 2020-09-19 23:36:01,054 StatusLogger.java:51 - MutationStage                     0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,062 StatusLogger.java:51 - ViewMutationStage                 0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,064 StatusLogger.java:51 - ReadStage                         0         0              3         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,160 StatusLogger.java:51 - RequestResponseStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,161 StatusLogger.java:51 - ReadRepairStage                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,175 StatusLogger.java:51 - CounterMutationStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,186 StatusLogger.java:51 - MiscStage                         0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,218 StatusLogger.java:51 - CompactionExecutor                0         0           8844         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,224 StatusLogger.java:51 - MemtableReclaimMemory             0         0             30         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,225 StatusLogger.java:51 - PendingRangeCalculator            0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,302 StatusLogger.java:51 - GossipStage                       0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,311 StatusLogger.java:51 - SecondaryIndexManagement          0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,313 StatusLogger.java:51 - HintsDispatcher                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,536 StatusLogger.java:51 - MigrationStage                    0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,574 StatusLogger.java:51 - MemtablePostFlush                 0         0             30         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,610 StatusLogger.java:51 - PerDiskMemtableFlushWriter_0         0         0             30         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,647 StatusLogger.java:51 - ValidationExecutor                0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,673 StatusLogger.java:51 - Sampler                           0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,686 StatusLogger.java:51 - MemtableFlushWriter               0         0             30         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,696 StatusLogger.java:51 - InternalResponseStage             0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,725 StatusLogger.java:51 - AntiEntropyStage                  0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,726 StatusLogger.java:51 - CacheCleanupExecutor              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-19 23:36:01,729 StatusLogger.java:61 - CompactionManager                 0         0
+INFO  [Service Thread] 2020-09-19 23:36:01,944 StatusLogger.java:73 - MessagingService                n/a       0/0
+INFO  [Service Thread] 2020-09-19 23:36:01,945 StatusLogger.java:83 - Cache Type                     Size                 Capacity               KeysToSave
+INFO  [Service Thread] 2020-09-19 23:36:01,946 StatusLogger.java:85 - KeyCache                        904                104857600                      all
+INFO  [Service Thread] 2020-09-19 23:36:01,949 StatusLogger.java:91 - RowCache                          0                        0                      all
+INFO  [Service Thread] 2020-09-19 23:36:01,949 StatusLogger.java:98 - Table                       Memtable ops,data
+INFO  [Service Thread] 2020-09-19 23:36:01,958 StatusLogger.java:101 - system_distributed.parent_repair_history                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,961 StatusLogger.java:101 - system_distributed.repair_history                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,962 StatusLogger.java:101 - system_distributed.view_build_status                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,962 StatusLogger.java:101 - system.compaction_history               2,404
+INFO  [Service Thread] 2020-09-19 23:36:01,965 StatusLogger.java:101 - system.schema_aggregates                  0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,966 StatusLogger.java:101 - system.schema_triggers                    0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,967 StatusLogger.java:101 - system.size_estimates             9288,282288
+INFO  [Service Thread] 2020-09-19 23:36:01,967 StatusLogger.java:101 - system.paxos                              0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,967 StatusLogger.java:101 - system.views_builds_in_progress                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,967 StatusLogger.java:101 - system.batches                            0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,968 StatusLogger.java:101 - system.schema_keyspaces                   0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,968 StatusLogger.java:101 - system.sstable_activity                11,149
+INFO  [Service Thread] 2020-09-19 23:36:01,969 StatusLogger.java:101 - system.batchlog                           0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,969 StatusLogger.java:101 - system.schema_columns                     0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,972 StatusLogger.java:101 - system.hints                              0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,976 StatusLogger.java:101 - system.IndexInfo                          0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,977 StatusLogger.java:101 - system.schema_columnfamilies                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,977 StatusLogger.java:101 - system.schema_functions                   0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,977 StatusLogger.java:101 - system.built_views                        0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,977 StatusLogger.java:101 - system.peer_events                        0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,977 StatusLogger.java:101 - system.range_xfers                        0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,978 StatusLogger.java:101 - system.peers                              0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,978 StatusLogger.java:101 - system.transferred_ranges                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,978 StatusLogger.java:101 - system.schema_usertypes                   0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,978 StatusLogger.java:101 - system.local                              0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,978 StatusLogger.java:101 - system.available_ranges                   0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,979 StatusLogger.java:101 - system.prepared_statements                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,980 StatusLogger.java:101 - system_schema.columns                     0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,985 StatusLogger.java:101 - system_schema.types                       0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,991 StatusLogger.java:101 - system_schema.indexes                     0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,991 StatusLogger.java:101 - system_schema.keyspaces                   0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,995 StatusLogger.java:101 - system_schema.dropped_columns                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:01,996 StatusLogger.java:101 - system_schema.aggregates                  0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,000 StatusLogger.java:101 - system_schema.triggers                    0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,001 StatusLogger.java:101 - system_schema.tables                      0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,001 StatusLogger.java:101 - system_schema.views                       0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,001 StatusLogger.java:101 - system_schema.functions                   0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,002 StatusLogger.java:101 - system_auth.roles                         0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,002 StatusLogger.java:101 - system_auth.role_members                  0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,002 StatusLogger.java:101 - system_auth.resource_role_permissons_index                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,002 StatusLogger.java:101 - system_auth.role_permissions                 0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,002 StatusLogger.java:101 - system_traces.sessions                    0,0
+INFO  [Service Thread] 2020-09-19 23:36:02,003 StatusLogger.java:101 - system_traces.events                      0,0
+INFO  [IndexSummaryManager:1] 2020-09-20 00:20:11,686 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-20 00:51:03,474 GCInspector.java:285 - ParNew GC in 208ms.  CMS Old Gen: 23952016 -> 28440672; Par Eden Space: 335544320 -> 0; Par Survivor Space: 17836256 -> 18078536
+INFO  [IndexSummaryManager:1] 2020-09-20 01:20:11,830 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-20 16:51:41,490 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [CompactionExecutor:76] 2020-09-20 20:25:37,436 AutoSavingCache.java:395 - Saved KeyCache (12 items) in 21 ms
+INFO  [IndexSummaryManager:1] 2020-09-20 20:25:39,383 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-20 20:25:39,384 GCInspector.java:285 - ParNew GC in 637ms.  CMS Old Gen: 28492728 -> 28494344; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16175736 -> 14008368
+INFO  [IndexSummaryManager:1] 2020-09-20 21:25:39,529 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-20 21:39:44,405 GCInspector.java:285 - ParNew GC in 424ms.  CMS Old Gen: 28494344 -> 29675480; Par Eden Space: 335544320 -> 0; Par Survivor Space: 14008368 -> 14806968
+INFO  [IndexSummaryManager:1] 2020-09-20 22:25:39,679 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-20 23:25:39,812 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-21 00:07:07,364 GCInspector.java:285 - ParNew GC in 324ms.  CMS Old Gen: 29685464 -> 30776984; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16311512 -> 16406552
+INFO  [CompactionExecutor:111] 2020-09-21 09:53:06,491 AutoSavingCache.java:395 - Saved KeyCache (13 items) in 3 ms
+INFO  [IndexSummaryManager:1] 2020-09-21 09:53:08,550 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-21 18:50:51,487 GCInspector.java:285 - ParNew GC in 313ms.  CMS Old Gen: 30776984 -> 30827648; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16406552 -> 18619640
+INFO  [IndexSummaryManager:1] 2020-09-21 18:54:20,560 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-21 19:54:20,698 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-21 20:01:26,832 GCInspector.java:285 - ParNew GC in 205ms.  CMS Old Gen: 30827648 -> 30828792; Par Eden Space: 335544320 -> 0; Par Survivor Space: 18619640 -> 14923648
+INFO  [IndexSummaryManager:1] 2020-09-21 20:54:20,830 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-21 21:16:54,710 GCInspector.java:285 - ParNew GC in 266ms.  CMS Old Gen: 30828792 -> 31969736; Par Eden Space: 335544320 -> 0; Par Survivor Space: 14923648 -> 15418736
+INFO  [CompactionExecutor:164] 2020-09-21 21:54:18,840 AutoSavingCache.java:395 - Saved KeyCache (15 items) in 10 ms
+INFO  [IndexSummaryManager:1] 2020-09-21 21:54:20,971 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-21 22:30:26,250 GCInspector.java:285 - ParNew GC in 448ms.  CMS Old Gen: 31969736 -> 31973976; Par Eden Space: 335544320 -> 0; Par Survivor Space: 15418736 -> 18535392
+INFO  [IndexSummaryManager:1] 2020-09-21 22:54:21,103 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-22 19:02:15,749 GCInspector.java:285 - ParNew GC in 744ms.  CMS Old Gen: 31973976 -> 33127520; Par Eden Space: 335544320 -> 0; Par Survivor Space: 18535392 -> 17599448
+INFO  [IndexSummaryManager:1] 2020-09-22 19:11:07,637 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-22 21:27:29,707 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-22 21:28:42,394 GCInspector.java:285 - ParNew GC in 683ms.  CMS Old Gen: 33127520 -> 33156496; Par Eden Space: 335544320 -> 0; Par Survivor Space: 17599448 -> 16319544
+INFO  [CompactionExecutor:238] 2020-09-22 22:27:27,634 AutoSavingCache.java:395 - Saved KeyCache (16 items) in 7 ms
+INFO  [IndexSummaryManager:1] 2020-09-22 22:27:29,880 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-22 22:43:44,475 GCInspector.java:285 - ParNew GC in 245ms.  CMS Old Gen: 33156496 -> 34259784; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16319544 -> 14577208
+INFO  [IndexSummaryManager:1] 2020-09-23 21:38:51,085 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+WARN  [Service Thread] 2020-09-23 23:30:12,256 GCInspector.java:283 - ParNew GC in 1045ms.  CMS Old Gen: 34259784 -> 34322784; Par Eden Space: 335544320 -> 0; Par Survivor Space: 14577208 -> 15522560
+INFO  [Service Thread] 2020-09-23 23:30:12,274 StatusLogger.java:47 - Pool Name                    Active   Pending      Completed   Blocked  All Time Blocked
+INFO  [Service Thread] 2020-09-23 23:30:12,672 StatusLogger.java:51 - MutationStage                     0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,674 StatusLogger.java:51 - ViewMutationStage                 0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,677 StatusLogger.java:51 - ReadStage                         0         0              3         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,678 StatusLogger.java:51 - RequestResponseStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,691 StatusLogger.java:51 - ReadRepairStage                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,693 StatusLogger.java:51 - CounterMutationStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,697 StatusLogger.java:51 - MiscStage                         0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,702 StatusLogger.java:51 - CompactionExecutor                0         0          45133         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,704 StatusLogger.java:51 - MemtableReclaimMemory             0         0             70         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,707 StatusLogger.java:51 - PendingRangeCalculator            0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,712 StatusLogger.java:51 - GossipStage                       0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,713 StatusLogger.java:51 - SecondaryIndexManagement          0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,717 StatusLogger.java:51 - HintsDispatcher                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,718 StatusLogger.java:51 - MigrationStage                    0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,720 StatusLogger.java:51 - MemtablePostFlush                 0         0             70         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,724 StatusLogger.java:51 - PerDiskMemtableFlushWriter_0         0         0             70         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,733 StatusLogger.java:51 - ValidationExecutor                0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,741 StatusLogger.java:51 - Sampler                           0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,745 StatusLogger.java:51 - MemtableFlushWriter               0         0             70         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,753 StatusLogger.java:51 - InternalResponseStage             0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,756 StatusLogger.java:51 - AntiEntropyStage                  0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,761 StatusLogger.java:51 - CacheCleanupExecutor              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-23 23:30:12,763 StatusLogger.java:61 - CompactionManager                 0         0
+INFO  [Service Thread] 2020-09-23 23:30:12,767 StatusLogger.java:73 - MessagingService                n/a       0/0
+INFO  [Service Thread] 2020-09-23 23:30:12,770 StatusLogger.java:83 - Cache Type                     Size                 Capacity               KeysToSave
+INFO  [Service Thread] 2020-09-23 23:30:12,770 StatusLogger.java:85 - KeyCache                       1424                104857600                      all
+INFO  [Service Thread] 2020-09-23 23:30:12,772 StatusLogger.java:91 - RowCache                          0                        0                      all
+INFO  [Service Thread] 2020-09-23 23:30:12,773 StatusLogger.java:98 - Table                       Memtable ops,data
+INFO  [Service Thread] 2020-09-23 23:30:12,777 StatusLogger.java:101 - system_distributed.parent_repair_history                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,777 StatusLogger.java:101 - system_distributed.repair_history                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,777 StatusLogger.java:101 - system_distributed.view_build_status                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,778 StatusLogger.java:101 - system.compaction_history                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,778 StatusLogger.java:101 - system.schema_aggregates                  0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,778 StatusLogger.java:101 - system.schema_triggers                    0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,778 StatusLogger.java:101 - system.size_estimates            16254,282288
+INFO  [Service Thread] 2020-09-23 23:30:12,778 StatusLogger.java:101 - system.paxos                              0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,779 StatusLogger.java:101 - system.views_builds_in_progress                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,780 StatusLogger.java:101 - system.batches                            0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,780 StatusLogger.java:101 - system.schema_keyspaces                   0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,781 StatusLogger.java:101 - system.sstable_activity                  7,85
+INFO  [Service Thread] 2020-09-23 23:30:12,781 StatusLogger.java:101 - system.batchlog                           0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,781 StatusLogger.java:101 - system.schema_columns                     0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,781 StatusLogger.java:101 - system.hints                              0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,783 StatusLogger.java:101 - system.IndexInfo                          0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,783 StatusLogger.java:101 - system.schema_columnfamilies                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,783 StatusLogger.java:101 - system.schema_functions                   0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,784 StatusLogger.java:101 - system.built_views                        0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,784 StatusLogger.java:101 - system.peer_events                        0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,784 StatusLogger.java:101 - system.range_xfers                        0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,784 StatusLogger.java:101 - system.peers                              0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,785 StatusLogger.java:101 - system.transferred_ranges                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,785 StatusLogger.java:101 - system.schema_usertypes                   0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,785 StatusLogger.java:101 - system.local                              0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,785 StatusLogger.java:101 - system.available_ranges                   0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,785 StatusLogger.java:101 - system.prepared_statements                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,786 StatusLogger.java:101 - system_schema.columns                     0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,786 StatusLogger.java:101 - system_schema.types                       0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,786 StatusLogger.java:101 - system_schema.indexes                     0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,789 StatusLogger.java:101 - system_schema.keyspaces                   0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,789 StatusLogger.java:101 - system_schema.dropped_columns                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,789 StatusLogger.java:101 - system_schema.aggregates                  0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,790 StatusLogger.java:101 - system_schema.triggers                    0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,790 StatusLogger.java:101 - system_schema.tables                      0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,790 StatusLogger.java:101 - system_schema.views                       0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,791 StatusLogger.java:101 - system_schema.functions                   0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,791 StatusLogger.java:101 - system_auth.roles                         0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,791 StatusLogger.java:101 - system_auth.role_members                  0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,791 StatusLogger.java:101 - system_auth.resource_role_permissons_index                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,791 StatusLogger.java:101 - system_auth.role_permissions                 0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,792 StatusLogger.java:101 - system_traces.sessions                    0,0
+INFO  [Service Thread] 2020-09-23 23:30:12,792 StatusLogger.java:101 - system_traces.events                      0,0
+INFO  [IndexSummaryManager:1] 2020-09-24 18:06:27,684 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-25 22:55:17,514 GCInspector.java:285 - ParNew GC in 717ms.  CMS Old Gen: 34322784 -> 34339984; Par Eden Space: 335544320 -> 0; Par Survivor Space: 15522560 -> 17754424
+INFO  [IndexSummaryManager:1] 2020-09-25 23:09:49,434 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [CompactionExecutor:288] 2020-09-26 10:32:44,532 AutoSavingCache.java:395 - Saved KeyCache (17 items) in 57 ms
+INFO  [IndexSummaryManager:1] 2020-09-26 10:32:46,783 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+WARN  [Service Thread] 2020-09-26 10:45:11,401 GCInspector.java:283 - ParNew GC in 7130ms.  CMS Old Gen: 34339984 -> 35445312; Par Eden Space: 335544320 -> 0; Par Survivor Space: 17754424 -> 11889896
+INFO  [Service Thread] 2020-09-26 10:45:11,414 StatusLogger.java:47 - Pool Name                    Active   Pending      Completed   Blocked  All Time Blocked
+INFO  [Service Thread] 2020-09-26 10:45:11,562 StatusLogger.java:51 - MutationStage                     0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,564 StatusLogger.java:51 - ViewMutationStage                 0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,566 StatusLogger.java:51 - ReadStage                         0         0              3         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,569 StatusLogger.java:51 - RequestResponseStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,575 StatusLogger.java:51 - ReadRepairStage                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,592 StatusLogger.java:51 - CounterMutationStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,595 StatusLogger.java:51 - MiscStage                         0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,599 StatusLogger.java:51 - CompactionExecutor                0         0          50360         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,599 StatusLogger.java:51 - MemtableReclaimMemory             0         0             77         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,603 StatusLogger.java:51 - PendingRangeCalculator            0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,605 StatusLogger.java:51 - GossipStage                       0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,606 StatusLogger.java:51 - SecondaryIndexManagement          0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,608 StatusLogger.java:51 - HintsDispatcher                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,608 StatusLogger.java:51 - MigrationStage                    0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,610 StatusLogger.java:51 - MemtablePostFlush                 0         0             77         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,611 StatusLogger.java:51 - PerDiskMemtableFlushWriter_0         0         0             77         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,621 StatusLogger.java:51 - ValidationExecutor                0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,629 StatusLogger.java:51 - Sampler                           0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,629 StatusLogger.java:51 - MemtableFlushWriter               0         0             77         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,631 StatusLogger.java:51 - InternalResponseStage             0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,633 StatusLogger.java:51 - AntiEntropyStage                  0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,642 StatusLogger.java:51 - CacheCleanupExecutor              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 10:45:11,648 StatusLogger.java:61 - CompactionManager                 0         0
+INFO  [Service Thread] 2020-09-26 10:45:11,648 StatusLogger.java:73 - MessagingService                n/a       0/0
+INFO  [Service Thread] 2020-09-26 10:45:11,649 StatusLogger.java:83 - Cache Type                     Size                 Capacity               KeysToSave
+INFO  [Service Thread] 2020-09-26 10:45:11,649 StatusLogger.java:85 - KeyCache                       1528                104857600                      all
+INFO  [Service Thread] 2020-09-26 10:45:11,650 StatusLogger.java:91 - RowCache                          0                        0                      all
+INFO  [Service Thread] 2020-09-26 10:45:11,650 StatusLogger.java:98 - Table                       Memtable ops,data
+INFO  [Service Thread] 2020-09-26 10:45:11,650 StatusLogger.java:101 - system_distributed.parent_repair_history                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,651 StatusLogger.java:101 - system_distributed.repair_history                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,651 StatusLogger.java:101 - system_distributed.view_build_status                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,651 StatusLogger.java:101 - system.compaction_history                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,651 StatusLogger.java:101 - system.schema_aggregates                  0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,651 StatusLogger.java:101 - system.schema_triggers                    0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,651 StatusLogger.java:101 - system.size_estimates                     0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,652 StatusLogger.java:101 - system.paxos                              0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,652 StatusLogger.java:101 - system.views_builds_in_progress                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,652 StatusLogger.java:101 - system.batches                            0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,652 StatusLogger.java:101 - system.schema_keyspaces                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,653 StatusLogger.java:101 - system.sstable_activity                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,653 StatusLogger.java:101 - system.batchlog                           0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,653 StatusLogger.java:101 - system.schema_columns                     0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.hints                              0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.IndexInfo                          0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.schema_columnfamilies                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.schema_functions                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.built_views                        0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.peer_events                        0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,655 StatusLogger.java:101 - system.range_xfers                        0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,656 StatusLogger.java:101 - system.peers                              0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,656 StatusLogger.java:101 - system.transferred_ranges                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,656 StatusLogger.java:101 - system.schema_usertypes                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,656 StatusLogger.java:101 - system.local                              0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,656 StatusLogger.java:101 - system.available_ranges                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,656 StatusLogger.java:101 - system.prepared_statements                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,657 StatusLogger.java:101 - system_schema.columns                     0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,657 StatusLogger.java:101 - system_schema.types                       0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,657 StatusLogger.java:101 - system_schema.indexes                     0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,657 StatusLogger.java:101 - system_schema.keyspaces                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,657 StatusLogger.java:101 - system_schema.dropped_columns                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_schema.aggregates                  0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_schema.triggers                    0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_schema.tables                      0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_schema.views                       0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_schema.functions                   0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_auth.roles                         0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,658 StatusLogger.java:101 - system_auth.role_members                  0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,659 StatusLogger.java:101 - system_auth.resource_role_permissons_index                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,659 StatusLogger.java:101 - system_auth.role_permissions                 0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,659 StatusLogger.java:101 - system_traces.sessions                    0,0
+INFO  [Service Thread] 2020-09-26 10:45:11,659 StatusLogger.java:101 - system_traces.events                      0,0
+INFO  [IndexSummaryManager:1] 2020-09-26 13:50:27,410 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+WARN  [Service Thread] 2020-09-26 14:02:12,170 GCInspector.java:283 - ParNew GC in 2884ms.  CMS Old Gen: 35445312 -> 35479528; Par Eden Space: 335544320 -> 0; Par Survivor Space: 11889896 -> 16693520
+INFO  [Service Thread] 2020-09-26 14:02:12,181 StatusLogger.java:47 - Pool Name                    Active   Pending      Completed   Blocked  All Time Blocked
+INFO  [Service Thread] 2020-09-26 14:02:12,306 StatusLogger.java:51 - MutationStage                     0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,307 StatusLogger.java:51 - ViewMutationStage                 0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,309 StatusLogger.java:51 - ReadStage                         0         0              3         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,314 StatusLogger.java:51 - RequestResponseStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,316 StatusLogger.java:51 - ReadRepairStage                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,318 StatusLogger.java:51 - CounterMutationStage              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,320 StatusLogger.java:51 - MiscStage                         0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,324 StatusLogger.java:51 - CompactionExecutor                0         0          52849         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,336 StatusLogger.java:51 - MemtableReclaimMemory             0         0             79         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,339 StatusLogger.java:51 - PendingRangeCalculator            0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,342 StatusLogger.java:51 - GossipStage                       0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,343 StatusLogger.java:51 - SecondaryIndexManagement          0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,347 StatusLogger.java:51 - HintsDispatcher                   0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,351 StatusLogger.java:51 - MigrationStage                    0         0              1         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,353 StatusLogger.java:51 - MemtablePostFlush                 0         0             79         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,358 StatusLogger.java:51 - PerDiskMemtableFlushWriter_0         0         0             79         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,359 StatusLogger.java:51 - ValidationExecutor                0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,371 StatusLogger.java:51 - Sampler                           0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,374 StatusLogger.java:51 - MemtableFlushWriter               0         0             79         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,378 StatusLogger.java:51 - InternalResponseStage             0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,387 StatusLogger.java:51 - AntiEntropyStage                  0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,398 StatusLogger.java:51 - CacheCleanupExecutor              0         0              0         0                 0
+
+INFO  [Service Thread] 2020-09-26 14:02:12,406 StatusLogger.java:61 - CompactionManager                 0         0
+INFO  [Service Thread] 2020-09-26 14:02:12,407 StatusLogger.java:73 - MessagingService                n/a       0/0
+INFO  [Service Thread] 2020-09-26 14:02:12,407 StatusLogger.java:83 - Cache Type                     Size                 Capacity               KeysToSave
+INFO  [Service Thread] 2020-09-26 14:02:12,414 StatusLogger.java:85 - KeyCache                       1632                104857600                      all
+INFO  [Service Thread] 2020-09-26 14:02:12,416 StatusLogger.java:91 - RowCache                          0                        0                      all
+INFO  [Service Thread] 2020-09-26 14:02:12,422 StatusLogger.java:98 - Table                       Memtable ops,data
+INFO  [Service Thread] 2020-09-26 14:02:12,423 StatusLogger.java:101 - system_distributed.parent_repair_history                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,423 StatusLogger.java:101 - system_distributed.repair_history                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,423 StatusLogger.java:101 - system_distributed.view_build_status                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,430 StatusLogger.java:101 - system.compaction_history               2,432
+INFO  [Service Thread] 2020-09-26 14:02:12,430 StatusLogger.java:101 - system.schema_aggregates                  0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,431 StatusLogger.java:101 - system.schema_triggers                    0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,431 StatusLogger.java:101 - system.size_estimates             6450,282288
+INFO  [Service Thread] 2020-09-26 14:02:12,431 StatusLogger.java:101 - system.paxos                              0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,431 StatusLogger.java:101 - system.views_builds_in_progress                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,431 StatusLogger.java:101 - system.batches                            0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,431 StatusLogger.java:101 - system.schema_keyspaces                   0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,432 StatusLogger.java:101 - system.sstable_activity                11,149
+INFO  [Service Thread] 2020-09-26 14:02:12,432 StatusLogger.java:101 - system.batchlog                           0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,435 StatusLogger.java:101 - system.schema_columns                     0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,440 StatusLogger.java:101 - system.hints                              0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,443 StatusLogger.java:101 - system.IndexInfo                          0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,443 StatusLogger.java:101 - system.schema_columnfamilies                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,443 StatusLogger.java:101 - system.schema_functions                   0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,445 StatusLogger.java:101 - system.built_views                        0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,445 StatusLogger.java:101 - system.peer_events                        0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,445 StatusLogger.java:101 - system.range_xfers                        0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,446 StatusLogger.java:101 - system.peers                              0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,453 StatusLogger.java:101 - system.transferred_ranges                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,455 StatusLogger.java:101 - system.schema_usertypes                   0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,456 StatusLogger.java:101 - system.local                              0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,457 StatusLogger.java:101 - system.available_ranges                   0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,460 StatusLogger.java:101 - system.prepared_statements                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,460 StatusLogger.java:101 - system_schema.columns                     0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,460 StatusLogger.java:101 - system_schema.types                       0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,460 StatusLogger.java:101 - system_schema.indexes                     0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,460 StatusLogger.java:101 - system_schema.keyspaces                   0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,461 StatusLogger.java:101 - system_schema.dropped_columns                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,461 StatusLogger.java:101 - system_schema.aggregates                  0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,461 StatusLogger.java:101 - system_schema.triggers                    0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,461 StatusLogger.java:101 - system_schema.tables                      0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,462 StatusLogger.java:101 - system_schema.views                       0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,462 StatusLogger.java:101 - system_schema.functions                   0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,463 StatusLogger.java:101 - system_auth.roles                         0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,464 StatusLogger.java:101 - system_auth.role_members                  0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,464 StatusLogger.java:101 - system_auth.resource_role_permissons_index                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,464 StatusLogger.java:101 - system_auth.role_permissions                 0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,465 StatusLogger.java:101 - system_traces.sessions                    0,0
+INFO  [Service Thread] 2020-09-26 14:02:12,465 StatusLogger.java:101 - system_traces.events                      0,0
+INFO  [IndexSummaryManager:1] 2020-09-26 15:13:48,414 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-26 19:17:12,530 GCInspector.java:285 - ParNew GC in 969ms.  CMS Old Gen: 35479528 -> 36587216; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16693520 -> 19050704
+INFO  [IndexSummaryManager:1] 2020-09-26 20:07:52,930 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-26 20:56:58,224 GCInspector.java:285 - ParNew GC in 534ms.  CMS Old Gen: 36587216 -> 36653640; Par Eden Space: 335544320 -> 0; Par Survivor Space: 19050704 -> 15984936
+INFO  [CompactionExecutor:368] 2020-09-26 21:17:24,574 AutoSavingCache.java:395 - Saved KeyCache (20 items) in 39 ms
+INFO  [IndexSummaryManager:1] 2020-09-26 21:17:27,208 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-26 22:17:27,335 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-27 11:00:20,574 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-27 11:02:34,750 GCInspector.java:285 - ParNew GC in 275ms.  CMS Old Gen: 36702472 -> 37802712; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16540904 -> 14936192
+INFO  [IndexSummaryManager:1] 2020-09-27 13:16:46,200 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-27 13:29:05,674 GCInspector.java:285 - ParNew GC in 323ms.  CMS Old Gen: 37802712 -> 37829136; Par Eden Space: 335544320 -> 0; Par Survivor Space: 14936192 -> 16060064
+INFO  [CompactionExecutor:510] 2020-09-27 17:18:15,705 AutoSavingCache.java:395 - Saved KeyCache (21 items) in 12 ms
+INFO  [IndexSummaryManager:1] 2020-09-27 17:18:18,434 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-27 17:45:35,666 GCInspector.java:285 - ParNew GC in 291ms.  CMS Old Gen: 37829136 -> 38977776; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16060064 -> 14964232
+INFO  [IndexSummaryManager:1] 2020-09-27 18:18:18,559 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-27 19:18:18,691 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-27 20:10:38,202 GCInspector.java:285 - ParNew GC in 246ms.  CMS Old Gen: 39031160 -> 39052976; Par Eden Space: 335544320 -> 0; Par Survivor Space: 18970304 -> 18380376
+INFO  [IndexSummaryManager:1] 2020-09-27 20:18:18,819 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [CompactionExecutor:651] 2020-09-27 21:18:16,200 AutoSavingCache.java:395 - Saved KeyCache (23 items) in 16 ms
+INFO  [IndexSummaryManager:1] 2020-09-27 21:18:18,941 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-27 21:21:22,653 GCInspector.java:285 - ParNew GC in 701ms.  CMS Old Gen: 39052976 -> 40152376; Par Eden Space: 335544320 -> 0; Par Survivor Space: 18380376 -> 15315760
+INFO  [IndexSummaryManager:1] 2020-09-27 22:18:19,085 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-28 10:06:14,173 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-28 20:10:06,889 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [CompactionExecutor:786] 2020-09-28 21:10:04,226 AutoSavingCache.java:395 - Saved KeyCache (25 items) in 13 ms
+INFO  [IndexSummaryManager:1] 2020-09-28 21:10:07,016 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-28 22:04:00,520 GCInspector.java:285 - ParNew GC in 248ms.  CMS Old Gen: 41334552 -> 41343848; Par Eden Space: 335544320 -> 0; Par Survivor Space: 16802128 -> 18466920
+INFO  [IndexSummaryManager:1] 2020-09-28 22:10:07,146 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-28 23:10:07,274 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-29 19:35:43,202 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [CompactionExecutor:910] 2020-09-29 20:35:40,522 AutoSavingCache.java:395 - Saved KeyCache (26 items) in 15 ms
+INFO  [IndexSummaryManager:1] 2020-09-29 20:35:43,350 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-29 21:35:43,476 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-29 22:35:43,606 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [IndexSummaryManager:1] 2020-09-29 23:35:43,725 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [CompactionExecutor:1093] 2020-09-30 18:05:07,463 AutoSavingCache.java:395 - Saved KeyCache (27 items) in 19 ms
+INFO  [IndexSummaryManager:1] 2020-09-30 18:05:10,270 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [Service Thread] 2020-09-30 18:09:51,782 GCInspector.java:285 - ParNew GC in 251ms.  CMS Old Gen: 43656032 -> 44805016; Par Eden Space: 335544320 -> 0; Par Survivor Space: 18328152 -> 13706376
+INFO  [IndexSummaryManager:1] 2020-09-30 19:15:08,430 IndexSummaryRedistribution.java:78 - Redistributing index summaries
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:19,270 HintsService.java:209 - Paused hints dispatch
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:19,275 ThriftServer.java:139 - Stop listening to thrift clients
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:19,287 Server.java:179 - Stop listening for CQL clients
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:19,288 Gossiper.java:1661 - Announcing shutdown
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:19,290 StorageService.java:2400 - Node localhost/127.0.0.1 state jump to shutdown
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:21,299 MessagingService.java:985 - Waiting for messaging service to quiesce
+INFO  [ACCEPT-localhost/127.0.0.1] 2020-09-30 20:10:21,300 MessagingService.java:1346 - MessagingService has terminated the accept() thread
+INFO  [StorageServiceShutdownHook] 2020-09-30 20:10:21,369 HintsService.java:209 - Paused hints dispatch
