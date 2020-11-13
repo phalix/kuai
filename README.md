@@ -1,7 +1,3 @@
 # kuai
 ## setup
-pip install pandas  
-pip install Django  
-pip install pyspark  
-pip install tensorflow  
-pip install keras  
+pip install pandas Django pyspark tensorflow keras  
