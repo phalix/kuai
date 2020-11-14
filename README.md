@@ -7,4 +7,6 @@ pip install pandas Django pyspark tensorflow keras
 run "python manage.py runserver"
 
 ## todo
-rename from mysite to kuai
+* rename from mysite to kuai
+* generate dimensions automatically for basic types
+* get type from dataframe schema!
