@@ -50,7 +50,7 @@
                               <!--<th scrope="col">Reformat</th>-->
                               <th scope="col">Transformation Method</th>
                               <th scrope="col">Transition Preview</th>
-                              
+                              <th scope="col">Set Dimensions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -61,7 +61,7 @@
                               </th>
                               <td>{{o.0}}</td>
                               <td>
-                                {% for key,value in firstrow.items %}
+                                {% for key,value in firstrow_transformed.items %}
                                   {% ifequal o.0 key %}{{value}}{% endifequal %}
                                 {% endfor %}
                               </td>
@@ -101,11 +101,13 @@
                                 </select>
                               </td>
                               <td>
-                                {% for key,value in firstrow.items %}
-                                  {% ifequal o.0|add:"PipedPre" key %}{{value}}{% endifequal %}
+                                {% for key,value in firstrow_indexed.items %}
+                                  {% ifequal o.0 key %}{{value}}{% endifequal %}
                                 {% endfor %}
                               </td>
-                              
+                              <td>
+                                <input name="dimension_{{o.0}}" class="form-control" value="{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.dimension}}{% endifequal %}{% endfor %}{% ifequal o.0 target  %}{{targetfeature.dimension}}{% endifequal %}"/>
+                              </td>
                               
                             </tr>
                             <tr>
@@ -185,7 +187,8 @@
                       
                       <th scope="col">Selection</th>
                       <th scrope="col">Example</th>
-                      <th scrope="col">Transition Preview</th>
+                      <th scope="col">Transition Preview</th>
+                      
                       
                     </tr>
                   </thead>
@@ -203,18 +206,18 @@
                       </div>
                     </td>
                       <td>
-                        {% for key,value in firstrow.items %}
+                        {% for key,value in firstrow_transformed.items %}
                           {% ifequal target key %}{{value}}{% endifequal %}
                         {% endfor %}
                       </td>
                       
                       
                       <td>
-                        {% for key,value in firstrow.items %}
-                          {% ifequal target|add:"PipedPre" key %}{{value}}{% endifequal %}
+                        {% for key,value in firstrow_indexed.items %}
+                          {% ifequal target key %}{{value}}{% endifequal %}
                         {% endfor %}
                       </td>
-                      
+                     
                       
                     </tr>
 

@@ -82,7 +82,7 @@ def createDataFrameHTMLPreview(dataframe):
     #remove id
     #cast to string, limit to 50
     removeid = filter(lambda x: x != "_id", dataframe.columns)
-    limitto50 = map(lambda x:substring(col(x).cast("String").alias(x),0,100),removeid) 
+    limitto50 = map(lambda x:(substring(col(x).cast("String"),0,100)).alias(x),removeid) 
     pandas = dataframe.limit(displaylimit).select(list(limitto50)).toPandas()
     html = pandas.to_html()
     
@@ -191,7 +191,8 @@ def uploaddata(request,project_id):
         from pyspark.ml.image import ImageSchema 
         
         spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
-        df = ImageSchema.readImages(subm_file) 
+        df = spark.read.format("image").option("dropInvalid", True).load(subm_file) 
+        #df = ImageSchema.readImages(subm_file) 
         #if shuffle:
         #    df = df.sample(frac=1)
         splitted = df.randomSplit([trainshare,testshare,cvshare])
@@ -247,8 +248,9 @@ def dataclassification(request,project_id):
         target = ""
     
     df = readfromcassandra(project_id,1)
+    print(df.dtypes)
     df = transformdataframe(project,df).cache()
-
+    print(df.dtypes)
     print(df.schema)
     
     from pyspark.sql import functions as F
@@ -257,6 +259,7 @@ def dataclassification(request,project_id):
     from pyspark.ml.feature import VectorIndexer
     print("Imports Done")
     indexed = applyfeaturetransition(df,cur_features,project.target)#.limit(displaylimit)
+    indexed.show()
     #mytypes_filter = filter(lambda x:x[0]!='_id' and not x[0].endswith("Pre"),indexed.dtypes)
     mytypes_filter = filter(lambda x:x[0]!='_id',indexed.dtypes)
     mytypes = list(mytypes_filter)
@@ -272,13 +275,14 @@ def dataclassification(request,project_id):
 
     mytypes = list(map(lambda x:reformatPipedPre(x),mytypes))
 
-    print("Types done")
+    print("Types sdone")
     
-    
+    firstrow_transformed = df.first().asDict()
     try:
-        firstrow = indexed.first().asDict()
+        firstrow_indexed = indexed.first().asDict()
         print("First row done")
-        
+        from pyspark.sql.functions import size
+        indexed.select(size(col("image"))).show()
         featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
         print("featurevector_df")
         featurevector = ""#featurevector_df.first().asDict()['features_array']
@@ -292,15 +296,22 @@ def dataclassification(request,project_id):
         
             
     
-    except:
-        firstrow = df.first().asDict()
+    except Exception as e:
+        print(e)
+        firstrow_indexed = firstrow_transformed
         featurevector = []
         featurevector_df_html = ""
         dataframe_html = ""
     
-    for key in firstrow:
-        firstrow[key] = str(firstrow[key])[0:50]
+    for key in firstrow_indexed:
+        firstrow_indexed[key] = str(firstrow_indexed[key])[0:50]
 
+    for key in firstrow_transformed:
+        firstrow_transformed[key] = str(firstrow_transformed[key])[0:50]
+
+    print(firstrow_transformed)
+    print(firstrow_indexed)
+    
     print("provision done")
 
     context = {
@@ -313,7 +324,8 @@ def dataclassification(request,project_id):
         "columns" : df.columns,
         "menuactive":3,
         "types" : mytypes,
-        "firstrow": firstrow,
+        "firstrow_indexed": firstrow_indexed,
+        "firstrow_transformed": firstrow_transformed,
         "pipelines": fp.indexPipelines(),
         "featurevector": featurevector,
         "dataframe":dataframe_html,#
@@ -377,8 +389,9 @@ def setupdataclassifcation(request,project_id):
     targetselection = request.POST['targetselection']
     targettransition = request.POST['fttransition_'+targetselection]
     reformattransition = request.POST['ftreformat_'+targetselection]
+    targetdimension = request.POST['dimension_'+targetselection]
     targettype = request.POST['fttype_'+targetselection]
-    target = Feature(fieldname=targetselection,transition=targettransition,reformat=reformattransition,type=targettype)
+    target = Feature(fieldname=targetselection,transition=targettransition,reformat=reformattransition,type=targettype,dimension=targetdimension)
     target.save()
     project.target = target
     
@@ -387,8 +400,9 @@ def setupdataclassifcation(request,project_id):
             print(x[8:])
             transition = request.POST['fttransition_'+x[8:]]
             reformat = request.POST['ftreformat_'+x[8:]]
+            dimension = request.POST['dimension_'+x[8:]]
             type = request.POST['fttype_'+x[8:]]
-            curfeat = Feature(fieldname=x[8:],transition=transition,reformat=reformat,type=type)
+            curfeat = Feature(fieldname=x[8:],transition=transition,reformat=reformat,type=type,dimension=dimension)
             curfeat.save()
             project.features.add(curfeat)
             curfeat.save()
@@ -461,8 +475,11 @@ def getsparksession(project_id,type):
         import os
         #relevant for selecting right version
         #TODO: must be configurable
-        os.environ['PYSPARK_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
-        os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
+        #os.environ['PYSPARK_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
+        #os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
+
+        #os.environ['PYSPARK_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
+        #os.environ['PYSPARK_DRIVER_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
 
         conf = createSparkConfig(project_id,type)
         
@@ -503,12 +520,12 @@ def createSparkConfig(project_id,type):
     
     #conf.set("spark.executor.core", "4")
     #conf.set("spark.executor.instances", "1")
-    conf.set("spark.executor.memory", "6g")
+    #conf.set("spark.executor.memory", "6g")
     #conf.set("spark.executor.memoryOverhead","512mb")
     
     #conf.set("spark.default.parallelism","3")
     conf.set("spark.driver.maxResultSize","4096mb")
-    conf.set("spark.driver.extraJavaOptions","-XX:+UseG1GC -XX:+UseCompressedOops -XX:-UseGCOverheadLimit")
+    #conf.set("spark.driver.extraJavaOptions","-XX:+UseG1GC -XX:+UseCompressedOops")
     
     
     return conf
@@ -521,7 +538,7 @@ def applyfeaturetransition(dataframe,features,target):
             if(feat.transition>0):
                 indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
             else:
-                #indexed = fp.applytransition(0,feat.fieldname,indexed)
+                #indexed = fp.applytransition(0,feat.fieldname,isndexed)
                 print("no transformation needed")
             
         except Exception as e:
@@ -549,7 +566,9 @@ def buildFeatureVector(dataframe,features,target):
     feature_array = []
     
     for myf in features:
-        feature_array.append(myf.fieldname+"Pre")
+        a = myf.dimension
+        print(list(map(lambda x:int(x),a.split(","))))
+        feature_array.append(myf.fieldname)
 
     vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
     
@@ -612,7 +631,7 @@ def loadimagesexample():
     print("transform done")
     from pyspark.sql.functions import substring,col
     removeid = filter(lambda x: x != "_id", df2.columns)
-    limitto50 = map(lambda x:substring(col(x).cast("String").alias(x),0,100),removeid) 
+    limitto50 = map(lambda x:(substring(col(x).cast("String"),0,100)).alias(x),removeid) 
     df3 = df2.select(list(limitto50))
     return df3
     #pandas = df3.toPandas()

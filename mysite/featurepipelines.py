@@ -38,17 +38,18 @@ def piStrDateCast(featurename,dataframe):
 def piStrOneHotEncoding(featurename,dataframe):
     from pyspark.ml.feature import OneHotEncoder
     from pyspark.ml.feature import StringIndexer
-    from pyspark.ml.feature import VectorIndexer
+    #from pyspark.ml.feature import VectorIndexer
     indexed = dataframe
-    indexer = StringIndexer(inputCol=featurename, outputCol=featurename+"Idx")
+    indexer = StringIndexer(inputCol=featurename, outputCol=featurename+"HE")
     indexed = indexer.fit(indexed).transform(indexed)
-    encoder = OneHotEncoder(inputCols=[featurename+"Idx"],
+    encoder = OneHotEncoder(inputCols=[featurename+"HE"],
                                 outputCols=[featurename+"OHE"])
     indexed = encoder.fit(indexed).transform(indexed)
 
-    indexer = VectorIndexer(inputCol=featurename+"OHE", outputCol=featurename, maxCategories=10)
-    indexerModel = indexer.fit(indexed)
-    indexed = indexerModel.transform(indexed)
+    indexed = indexed.drop(featurename).drop(featurename+"HE").withColumnRenamed(featurename+"OHE",featurename)
+    #indexer = VectorIndexer(inputCol=featurename+"OHE", outputCol=featurename+"tHE", maxCategories=10)
+    #indexerModel = indexer.fit(indexed)
+    #indexed = indexerModel.transform(indexed)
     
     return indexed
 

@@ -15,6 +15,7 @@ class Feature(models.Model):
     transition = models.IntegerField(null=True)
     reformat = models.TextField(null=True)
     type = models.CharField(max_length=15,null=False)
+    dimension = models.CharField(max_length=50,null=True)
 
 class Configuration(models.Model):
     fieldname = models.CharField(max_length=99,null=False)
