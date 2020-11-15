@@ -285,10 +285,10 @@ def dataclassification(request,project_id):
         indexed.select(size(col("image"))).show()
         featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
         print("featurevector_df")
-        featurevector = ""#featurevector_df.first().asDict()['features_array']
+        featurevector = featurevector_df.first().asDict()['features_array']
         print("featurevector")
         featurevector_df_html = ""
-        featurevector_df_html = ""#createDataFrameHTMLPreview(mysite.neuralnetwork.generateTrainingDataFrame(project,featurevector_df))
+        featurevector_df_html = createDataFrameHTMLPreview(mysite.neuralnetwork.generateTrainingDataFrame(project,featurevector_df))
         print("featurevector_df_html")
         dataframe_html = ""
         dataframe_html = createDataFrameHTMLPreview(indexed) 
@@ -344,27 +344,37 @@ def getinputschema(project_id):
     #Right now, it is only possible to use flat object like string, integer, etc.
     project = get_object_or_404(Project, pk=project_id)
     
-    if not project.input or len(project.input)==0:
+    if True or not project.input or len(project.input)==0:
         cur_features = project.features.all()
-        df = readfromcassandra(project_id)
+        feature_dict = getfeaturedimensionbyproject(cur_features)
+        
+        #Seperate Treatment of one-dimensional features, due to the fact that they can be joined
+        if 1 in feature_dict:
+            onedimension = feature_dict[1] 
+            inonedim = reduce(lambda x,y:x+y,onedimension.values())
 
-        indexed = applyfeaturetransition(df,cur_features,project.target)
-        featurevector_df = buildFeatureVector(indexed,cur_features,project.target)
-        features_array = featurevector_df.first().asDict()['features_array']
-        result = {
-            1:[len(features_array),],
-            #2:(0,0),
-            #3:(0,0,0),
-        }
+            result = {
+                1:[len(inonedim),],
+            }
+        else:
+            result = {}
 
-        #for element in df.schema:
-        #    for feat in cur_features:
-        #        if feat.fieldname == element.name:
-        #            if type(element) == pyspark.sql.types.StructField:
-        #                result[1] = (result[1][0]+1,)
-                        
-        #TODO: create code for 2 dim, 3 dim and 4 dim
+        for key in feature_dict.keys():
+            if key>1:
+                result[key] = []
+        
+        for (key,value) in feature_dict.items():
+            if key>1:
+                for (key2,value2) in value.items():
+                    
+                    
+                    
+                    result[key].append(value2)
+                    
 
+        
+
+        
         res_json_str = json.dumps(result)
         project.input = res_json_str
         project.save()
@@ -554,36 +564,52 @@ def applyfeaturetransition(dataframe,features,target):
     return indexed
 
 
+def getfeaturedimensionbyproject(features):
+    feature_dict = {
+
+    }
+    
+    for myf in features:
+        a = myf.dimension
+        
+        b = list(map(lambda x:int(x),a.split(",")))
+        
+        if len(b) in feature_dict:
+            arr = feature_dict[len(b)]    
+        else:
+            arr = {}
+        arr[myf.fieldname] = b
+    
+        feature_dict[len(b)] = arr
+
+    print(feature_dict)
+    return feature_dict
+
 def buildFeatureVector(dataframe,features,target):
     #Transform Data
     train_df = dataframe
     from pyspark.ml.linalg import Vectors
     from pyspark.ml.feature import VectorAssembler
     
-    feature_dict = {}
-    #TODO: sum up features by dimension
+    
+    feature_dict = getfeaturedimensionbyproject(features)
+    if 1 in feature_dict:
+        feature_array = feature_dict[1].keys()
 
-    feature_array = []
-    
-    for myf in features:
-        a = myf.dimension
-        print(list(map(lambda x:int(x),a.split(","))))
-        feature_array.append(myf.fieldname)
-
-    vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
-    
-    train_df3 = vector_assembler.transform(train_df)
-    from pyspark.sql import types as T
-    from pyspark.sql import functions as F
-    from pyspark.ml.linalg import DenseVector
-    def convertSparseVectortoDenseVector(v):
-        v = DenseVector(v)
-        new_array = list([float(x) for x in v])
-        return new_array
-    toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
-    
-    train_df3 = train_df3.withColumn('features_array', toDenseVectorUdf('features'))
-    return train_df3
+        vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
+        
+        train_df3 = vector_assembler.transform(train_df)
+        from pyspark.sql import types as T
+        from pyspark.sql import functions as F
+        from pyspark.ml.linalg import DenseVector
+        def convertSparseVectortoDenseVector(v):
+            v = DenseVector(v)
+            new_array = list([float(x) for x in v])
+            return new_array
+        toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
+        train_df3 = train_df3.withColumn('features_array', toDenseVectorUdf('features'))
+        return train_df3
+    return None
 
 
 def analysis(request,project_id):

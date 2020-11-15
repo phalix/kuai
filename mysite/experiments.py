@@ -171,11 +171,14 @@ def retrieveExperimentStats(project_id):
 
 
 def runexperiment(project_id,experiment_id):
-    from tensorflow import Graph, Session
-    thread_graph = Graph()
-    with thread_graph.as_default():
-        thread_session = Session()
-        with thread_session.as_default():
+    #from tensorflow import Graph, Session
+    #thread_graph = Graph()
+    #with thread_graph.as_default():
+    #    thread_session = Session()
+    #    with thread_session.as_default():
+    print("hiaa")
+    if True:
+        if True:
             project = get_object_or_404(Project, pk=project_id)
             exp = get_object_or_404(Experiment, pk=experiment_id)
             #exp = createnewexperimentinproject(project)
@@ -199,13 +202,17 @@ def runexperiment(project_id,experiment_id):
 
 
             train_df = mysite.dataoperation.readfromcassandra(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+            print("a")
             train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
+            print("b")
             train_df3 = mysite.neuralnetwork.generateTrainingDataFrame(project,train_df1)
-            
+            print("c")
             test_df = mysite.dataoperation.readfromcassandra(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
+            print("d")
             test_df1 = mysite.dataoperation.buildFeatureVector(test_df,project.features.all(),project.target)
+            print("e")
             test_df3 = mysite.neuralnetwork.generateTrainingDataFrame(project,test_df1)
-            
+            print("f")
             #random split to required batch size
             # 1. get count of train_df3
             # 2. 1/train_df3/batch_size = share
@@ -246,7 +253,7 @@ def runexperiment(project_id,experiment_id):
 
             from collections.abc import Iterable
 
-            #TODO: epochs should come from database
+            
             NoOfEpochs = exp.noofepochs
             j = currentepoch
             while j <= NoOfEpochs+currentepoch and exp.status == 1:
@@ -314,7 +321,7 @@ def run(request,project_id,experiment_id):
     #TODO: make it possible to cancel experiment
     template = loader.get_template('runexperiment.html')
     project = get_object_or_404(Project, pk=project_id)
-    experiment_id = getlatestexperiment(project_id);
+    experiment_id = getlatestexperiment(project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     expDict = retrieveExperimentStats(project_id)
     
@@ -368,8 +375,8 @@ def startExperimentsPerProject(request,project_id,experiment_id):
     active = True
     
     experiment = get_object_or_404(Experiment, pk=experiment_id)
-    
-    if experiment.status in (0,3):
+    print("hi")
+    if True or experiment.status in (0,3):
         startexperiment(project_id,experiment.id)
     experiment.status = 1
     experiment.save()

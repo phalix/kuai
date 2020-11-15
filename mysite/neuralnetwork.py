@@ -67,10 +67,10 @@ def modelrunwithspark(request,project_id):
 def getinputshape(project_id):
     inputs = {}
     inputshapes = mysite.dataoperation.getinputschema(project_id)
-    for key in inputshapes:
-        value = inputshapes[key]
-        if sum(value) > 0:
-            inputs[key] = keras.Input(shape=value)
+    for (key,value) in inputshapes.items():
+        
+        for v in value:
+            inputs[key] = keras.Input(shape=tuple(v))
     return inputs
 
 currentmodel = None
@@ -105,7 +105,8 @@ def buildmodel(project_id,loss,metrics):
                 option = attr.option
                 if len(option)>0:
                     calldict[attr.fieldname] = option
-            
+        calldict["name"]= "tobesaved_"+str(layer.id)  
+        #y.name = "tobesaved_"+str(layer.id)    
             
         #initiate by actual predecessor
         y = getattr(keras.layers, layer.layertype)(**calldict)
@@ -115,7 +116,7 @@ def buildmodel(project_id,loss,metrics):
         intermedinputs = []
         for inpim in layer.inputlayers.filter(inputlayer=False):
             intermedinputs.append(inpim.index)
-        y.name = "tobesaved_"+str(layer.id)
+        
         previouslayers[layer.index] = (y,inputsinput,intermedinputs,layer.id)
     
     previouslayer_inst = {}
@@ -132,7 +133,7 @@ def buildmodel(project_id,loss,metrics):
                 else:
                     cursel.append(previouslayer_inst[x])
             for x in value[1]:
-                cursel.append(inputs[str(x)])
+                cursel.append(inputs[x])
             if len(cursel) == 1:
                 previouslayer_inst[layidx] = value[0](cursel[0])
             else:
@@ -177,7 +178,7 @@ def generateTrainingDataFrame(project,train_df1):
     from pyspark.sql.functions import lit
     import numpy as np
     #remember filepath for loading in spark worker
-    train_df3 = train_df1.withColumn("target",train_df1[project.target.fieldname+"PipedPre"])
+    train_df3 = train_df1.withColumn("target",train_df1[project.target.fieldname])
     train_df3 = train_df3[[['features_array',"target"]]]
     
     return train_df3
@@ -193,7 +194,7 @@ def modelsummary(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
 
     import pandas as pd
-    from sklearn.linear_model import LogisticRegression
+    #from sklearn.linear_model import LogisticRegression
     from pyspark.sql.functions import pandas_udf, PandasUDFType
     
     from pyspark.sql.types import StructField,StructType,StringType,DoubleType
@@ -244,7 +245,7 @@ def index(request,project_id):
                 iputs.append(str(inp.index))
             for inp in l.inputlayers.filter(inputlayer=True):
                 curIndex = inp.index
-                curDimensions = inputs[str(curIndex)]
+                curDimensions = inputs[curIndex]
                 iputs.append("Input"+str(curIndex)+"_"+str(curDimensions))
             l.input = iputs
             confs = {}
@@ -278,25 +279,14 @@ def getkeraslayeroptions(libstr):
         arguments = []
         try:
             nameofclass = l[1]
-            #nameofclass = nameofclass.replace("tensorflow.python","pyt")
-            #inspection = inspect.getargspec(nameofclass)
-            #inspect.getargspec(keras.layers.core.Dense)
-            #arguments = inspection.args[1:]
-            
-            #defaultvalues = inspection.defaults
-            
             args = []
-            #for i in range(0,len(arguments)):
-            #    defvalue = None
-            #    if i < len(defaultvalues):
-            #        defvalue = defaultvalues[i]
-            #    o = (arguments[i],defvalue)
-            #    args.append(o)
+            if inspect.isclass(nameofclass):
+                nameofclass = nameofclass.__init__
             parameter = inspect.signature(nameofclass).parameters
             arguments = list(parameter.keys())
             for argkey in arguments:
                 arg = parameter[argkey]
-                if(arg.name != "kwargs"):
+                if(arg.name != "kwargs" and arg.name != "self"):
                     if(arg.default == inspect._empty):
                         o = (arg.name,None)
                     else:
@@ -305,13 +295,10 @@ def getkeraslayeroptions(libstr):
 
             result.append((l[0],args))
         except Exception as e: 
-            #print(l)
-            #print(nameofclass)
-            #print(inspection)
-            #print(e)
+            print(e)
             arguments = []
-            #result.append((l[0],arguments))
-        
+            
+    print(result)
     return result
 
 def aioptandoutupload(request,project_id):
@@ -482,7 +469,7 @@ def aiupload(request,project_id):
         curstates = request.POST.getlist("states[]"+str(index))
         for state in curstates:
             if state.startswith('Input'):
-                inpidx = state[5:].split("_")[0]
+                inpidx = int(state[5:].split("_")[0])
                 inplayer = inputlayers[inpidx]
                 curLayer.inputlayers.add(inplayer)
             else:
