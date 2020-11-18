@@ -14,10 +14,10 @@ As well as an AutoML Framework and a diagram framework.
 ## What is Kuai
 Kuai enables a quick protoyping approach for neural networks.  
 It enables the classical workflow of  
-**data preparation with spark
-**ai modelling with a graphical UI for Keras/Tensorflow
+**data preparation with spark  
+**ai modelling with a graphical UI for Keras/Tensorflow  
 **Simulation and Test  
-**Deployment
+**Deployment  
 
 Everything is supported by easy to use user interfaces.
 
@@ -32,3 +32,5 @@ run "python manage.py runserver"
 * rename from mysite to kuai
 * generate dimensions automatically for basic types
 * get type from dataframe schema!
+* integrate experiment engine
+* write more tests
