@@ -30,6 +30,31 @@ CV_DATA_QUALIFIER = 3
 displaylimit = 10
 
 
+def analysis(request,project_id):
+    template = loader.get_template('dataanalysis.html')
+    project = get_object_or_404(Project, pk=project_id)
+    
+    df = readfromcassandra(project_id,1)
+    df2 = transformdataframe(project,df)
+
+    dfdescription = df2.describe().toPandas().to_html()
+    target = project.target.fieldname
+    distributionbytarget = df2.groupby(target).count()
+    distributionbytarget_html = distributionbytarget.toPandas().to_html()
+    
+    context = {
+        "project" : project,
+        "project_id" : project_id,
+        "projects": Project.objects.all(),
+        "menuactive":3,
+        "dfdescription":dfdescription,
+        "distribution":distributionbytarget_html,
+    }
+
+
+    return HttpResponse(template.render(context, request))
+
+
 def index(request,project_id):
     template = loader.get_template('datasetup.html')
     project = get_object_or_404(Project, pk=project_id)
@@ -43,51 +68,7 @@ def index(request,project_id):
 
     return HttpResponse(template.render(context, request))
 
-def transformdataframe(project,dataframe):
-    from pyspark.sql import SQLContext
-    from pyspark import StorageLevel
 
-    spark = getsparksession(project.id,1)
-    sqlContext = SQLContext(spark)
-    try:
-        df2 = sqlContext.sql("select * from transform_temp_table")
-
-    except:
-        traceback.print_exc()
-        
-        
-        if project.selectstatement:
-            tobeeval = "dataframe."+project.selectstatement
-            print(tobeeval)
-            
-            try:
-                exec(project.udfclasses)
-                df2 = eval(tobeeval)
-                df2.registerTempTable("transform_temp_table")
-                #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
-                sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
-
-            except:
-                traceback.print_exc()
-                #project.selectstatement = ""
-                #project.save()
-                df2 = dataframe
-        else:
-            df2 = dataframe
-    return df2
-
-def createDataFrameHTMLPreview(dataframe):
-    from pyspark.sql.functions import substring
-    #dataframe.limit(displaylimit).toPandas().to_html()
-    #remove id
-    #cast to string, limit to 50
-    removeid = filter(lambda x: x != "_id", dataframe.columns)
-    limitto50 = map(lambda x:(substring(col(x).cast("String"),0,100)).alias(x),removeid) 
-    pandas = dataframe.limit(displaylimit).select(list(limitto50)).toPandas()
-    html = pandas.to_html()
-    
-
-    return html
 
 def setuptransformdata(request,project_id):
     template = loader.get_template('datatransformation.html')
@@ -117,9 +98,12 @@ def setuptransformdata(request,project_id):
     return HttpResponse(template.render(context, request))
 
 def transformdata(request,project_id):
+    
     selectstatement = request.POST["selectstatement"]
     udfclasses = request.POST["udfclasses"]
-
+    print(selectstatement)
+    print(udfclasses)
+    
     if len(selectstatement)==0:
         selectstatement = 'select("*")'
 
@@ -128,8 +112,7 @@ def transformdata(request,project_id):
     project.udfclasses = udfclasses
     project.save()
 
-    print(selectstatement)
-    print(udfclasses)
+    
     
     from pyspark.sql import SQLContext
     spark = getsparksession(project.id,1)
@@ -153,7 +136,7 @@ def existingdatasetselection(request):
 
 def uploaddata(request,project_id):
     #subm_file = request.FILES['filewithdata']
-    print(request.POST['folderfile'])
+    
     shuffle = request.POST['shuffledata']
     trainshare = float(request.POST['trainshare'])
     testshare = float(request.POST['testshare'])
@@ -218,7 +201,7 @@ def uploaddata(request,project_id):
     except:
         print("nothing to drop")
 
-    return HttpResponseRedirect('/dataclassification/'+str(project_id))
+    return HttpResponseRedirect('/transform/'+str(project_id)+"/")
 
 def dataclassification(request,project_id):
     
@@ -248,19 +231,15 @@ def dataclassification(request,project_id):
         target = ""
     
     df = readfromcassandra(project_id,1)
-    print(df.dtypes)
     df = transformdataframe(project,df).cache()
-    print(df.dtypes)
-    print(df.schema)
+    
     
     from pyspark.sql import functions as F
     from pyspark.ml.feature import OneHotEncoder
     from pyspark.ml.feature import StringIndexer
     from pyspark.ml.feature import VectorIndexer
     print("Imports Done")
-    indexed = applyfeaturetransition(df,cur_features,project.target)#.limit(displaylimit)
-    indexed.show()
-    #mytypes_filter = filter(lambda x:x[0]!='_id' and not x[0].endswith("Pre"),indexed.dtypes)
+    indexed = applyfeaturetransition(df,cur_features,project.target)
     mytypes_filter = filter(lambda x:x[0]!='_id',indexed.dtypes)
     mytypes = list(mytypes_filter)
     mytypes_dict  = dict(mytypes)
@@ -288,7 +267,7 @@ def dataclassification(request,project_id):
         featurevector = featurevector_df.first().asDict()['features_array']
         print("featurevector")
         featurevector_df_html = ""
-        featurevector_df_html = createDataFrameHTMLPreview(mysite.neuralnetwork.generateTrainingDataFrame(project,featurevector_df))
+        featurevector_df_html = createDataFrameHTMLPreview(featurevector_df)
         print("featurevector_df_html")
         dataframe_html = ""
         dataframe_html = createDataFrameHTMLPreview(indexed) 
@@ -298,6 +277,7 @@ def dataclassification(request,project_id):
     
     except Exception as e:
         print(e)
+        traceback.print_exc()
         firstrow_indexed = firstrow_transformed
         featurevector = []
         featurevector_df_html = ""
@@ -337,65 +317,13 @@ def dataclassification(request,project_id):
 
 
 
-def getinputschema(project_id):
-    import pyspark
-    import json
-    #TODO: we need to add other dimensions in order to use pictures etc.
-    #Right now, it is only possible to use flat object like string, integer, etc.
-    project = get_object_or_404(Project, pk=project_id)
-    
-    if True or not project.input or len(project.input)==0:
-        cur_features = project.features.all()
-        feature_dict = getfeaturedimensionbyproject(cur_features)
-        
-        #Seperate Treatment of one-dimensional features, due to the fact that they can be joined
-        if 1 in feature_dict:
-            onedimension = feature_dict[1] 
-            inonedim = reduce(lambda x,y:x+y,onedimension.values())
-
-            result = {
-                1:[len(inonedim),],
-            }
-        else:
-            result = {}
-
-        for key in feature_dict.keys():
-            if key>1:
-                result[key] = []
-        
-        for (key,value) in feature_dict.items():
-            if key>1:
-                for (key2,value2) in value.items():
-                    
-                    
-                    
-                    result[key].append(value2)
-                    
-
-        
-
-        
-        res_json_str = json.dumps(result)
-        project.input = res_json_str
-        project.save()
-    else:
-        result = json.loads(project.input)
-
-
-    return result
-
-
-
-
-
-
 def setupdataclassifcation(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     project.features.all().delete()
     project.input = ""
     project.save()
     #project.target.delete()
-    
+    print(request.POST)
     targetselection = request.POST['targetselection']
     targettransition = request.POST['fttransition_'+targetselection]
     reformattransition = request.POST['ftreformat_'+targetselection]
@@ -453,7 +381,7 @@ def savetocassandra(project_id,df,type=TRAIN_DATA_QUALIFIER):
     
 
 def savetocassandra_writesparkdataframe(sparkdf):
-    sparkdf.write.format("mongo").mode("append").save()   
+    sparkdf.write.format("mongo").mode("overwrite").save()   
     
 
 
@@ -501,7 +429,7 @@ def getsparksession(project_id,type):
         from pyspark.sql import SparkSession
         
         spark = SparkSession.builder.appName('kuai') \
-            .master("local[8]")\
+            .master("local[16]")\
             .config(conf=conf)\
             .getOrCreate()
         return spark
@@ -525,20 +453,69 @@ def createSparkConfig(project_id,type):
     #conf.set("spark.memory.offHeap.enabled",True)
     
     #conf.set("spark.driver.core", "4")
-    #conf.set("spark.driver.memory", "2g")
+    conf.set("spark.driver.memory", "16g")
     #conf.set("spark.driver.memoryOverhead","512mb")
     
     #conf.set("spark.executor.core", "4")
     #conf.set("spark.executor.instances", "1")
-    #conf.set("spark.executor.memory", "6g")
+    conf.set("spark.executor.memory", "16g")
     #conf.set("spark.executor.memoryOverhead","512mb")
     
     #conf.set("spark.default.parallelism","3")
-    conf.set("spark.driver.maxResultSize","4096mb")
+    #conf.set("spark.driver.maxResultSize","4096mb")
     #conf.set("spark.driver.extraJavaOptions","-XX:+UseG1GC -XX:+UseCompressedOops")
     
     
     return conf
+
+def transformdataframe(project,dataframe):
+    #apply project.selectstatement
+    #apply project.udfclasses
+    from pyspark.sql import SQLContext
+    from pyspark import StorageLevel
+
+    spark = getsparksession(project.id,1)
+    sqlContext = SQLContext(spark)
+    try:
+        df2 = sqlContext.sql("select * from transform_temp_table")
+
+    except:
+        traceback.print_exc()
+        
+        
+        if project.selectstatement:
+            tobeeval = "dataframe."+project.selectstatement
+            print(tobeeval)
+            
+            try:
+                exec(project.udfclasses)
+                df2 = eval(tobeeval)
+                df2.registerTempTable("transform_temp_table")
+                #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
+                sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
+
+            except:
+                traceback.print_exc()
+                #project.selectstatement = ""
+                #project.save()
+                df2 = dataframe
+        else:
+            df2 = dataframe
+    return df2
+
+def createDataFrameHTMLPreview(dataframe):
+    from pyspark.sql.functions import substring
+    #dataframe.limit(displaylimit).toPandas().to_html()
+    #remove id
+    #cast to string, limit to 50
+    removeid = filter(lambda x: x != "_id", dataframe.columns)
+    limitto50 = map(lambda x:(substring(col(x).cast("String"),0,100)).alias(x),removeid) 
+    pandas = dataframe.limit(displaylimit).select(list(limitto50)).toPandas()
+    html = pandas.to_html()
+    
+
+    return html
+
 
 def applyfeaturetransition(dataframe,features,target):
     indexed = dataframe
@@ -557,33 +534,71 @@ def applyfeaturetransition(dataframe,features,target):
     #target
     
     try:
-        indexed = fp.applytransition(target.transition,target.fieldname,indexed)
+        if(target.transition>0):
+            indexed = fp.applytransition(target.transition,target.fieldname,indexed)
     except Exception as e:
             print("error on transformation")
             print(e)
     return indexed
 
 
-def getfeaturedimensionbyproject(features):
-    feature_dict = {
 
-    }
+
+### Get Features and Dimensions
+
+def getfeaturedimensionbyproject(features):
+    feature_dict = {}
     
     for myf in features:
         a = myf.dimension
-        
         b = list(map(lambda x:int(x),a.split(",")))
-        
         if len(b) in feature_dict:
             arr = feature_dict[len(b)]    
         else:
             arr = {}
         arr[myf.fieldname] = b
-    
         feature_dict[len(b)] = arr
 
-    print(feature_dict)
     return feature_dict
+
+### concats number of dimensions
+
+def getinputschema(project_id):
+    import pyspark
+    import json
+    project = get_object_or_404(Project, pk=project_id)
+    
+    cur_features = project.features.all()
+    feature_dict = getfeaturedimensionbyproject(cur_features)
+    
+    #Seperate Treatment of one-dimensional features, due to the fact that they can be joined
+    if 1 in feature_dict:
+        onedimension = feature_dict[1] 
+        inonedim = reduce(lambda x,y:x+y,onedimension.values())
+
+        result = {
+            1:[len(inonedim),],
+        }
+    else:
+        result = {}
+
+    for key in feature_dict.keys():
+        if key>1:
+            result[key] = []
+    
+    for (key,value) in feature_dict.items():
+        if key>1:
+            for (key2,value2) in value.items():
+                result[key].append(value2)
+    res_json_str = json.dumps(result)
+    project.input = res_json_str
+    project.save()
+    
+    #get by without calling the function
+    #result = json.loads(project.input)
+    return result
+
+### return dataframe by features and target
 
 def buildFeatureVector(dataframe,features,target):
     #Transform Data
@@ -594,11 +609,13 @@ def buildFeatureVector(dataframe,features,target):
     
     feature_dict = getfeaturedimensionbyproject(features)
     if 1 in feature_dict:
-        feature_array = feature_dict[1].keys()
-
+        feature_array = list(feature_dict[1].keys())
+        print("vector assembler")
+        print(feature_array)
         vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
-        
+        train_df.show()
         train_df3 = vector_assembler.transform(train_df)
+        train_df3.show()
         from pyspark.sql import types as T
         from pyspark.sql import functions as F
         from pyspark.ml.linalg import DenseVector
@@ -608,61 +625,18 @@ def buildFeatureVector(dataframe,features,target):
             return new_array
         toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
         train_df3 = train_df3.withColumn('features_array', toDenseVectorUdf('features'))
-        return train_df3
-    return None
-
-
-def analysis(request,project_id):
-    template = loader.get_template('dataanalysis.html')
-    project = get_object_or_404(Project, pk=project_id)
+        train_df = train_df3
+    print("*************")
+    print(feature_dict)
+    print("*************")
+    train_df3 = train_df
+    for (key,value) in feature_dict.items():
+        if key > 1:
+            for (key2,value2) in value.items():
+                train_df3 = train_df3.withColumn('features_array'+str(value2),train_df[key2])
+                print(key2)
+                print(value2)
     
-    
-    df = readfromcassandra(project_id,1)
-    df2 = transformdataframe(project,df)
+    train_df3 = train_df3.withColumn("target",train_df3[target.fieldname])
 
-    dfdescription = createDataFrameHTMLPreview(df2.describe())
-    
-    
-    distributionbytarget = createDataFrameHTMLPreview(df2.groupby(project.target).count())
-    
-    context = {
-        "project" : project,
-        "project_id" : project_id,
-        "projects": Project.objects.all(),
-        "menuactive":3,
-        "dfdescription":dfdescription,
-        "distribution":distributionbytarget,
-    }
-
-
-    return HttpResponse(template.render(context, request))
-
-
-def loadimagesexample():
-    import mysite.dataoperation as dt
-    ### ImageSchema.toNDArray
-    from pyspark.ml.image import ImageSchema
-    spark = dt.getsparksession(1,1)
-    #zero = ImageSchema.readImages("/Users/sehrbastian/Entwicklung/Bilderkennung/standardisiert2/*") 
-    #print(zero.count())
-    df = spark.read.format("image").option("dropInvalid", True).load("/Users/sehrbastian/Entwicklung/Bilderkennung/standardisiert2/1/") 
-    df = df.limit(1).cache()
-    return df
-    #test = udf(lambda vector: pyspark.ml.image.ImageSchema.toNDArray(vector)) 
-    from django.shortcuts import render,get_object_or_404
-    from mysite.models import Project,Feature,NeuralNetwork
-    project_id = 1
-    project = get_object_or_404(Project, pk=1)
-    df2 = dt.transformdataframe(project,df).cache()
-    print("transform done")
-    from pyspark.sql.functions import substring,col
-    removeid = filter(lambda x: x != "_id", df2.columns)
-    limitto50 = map(lambda x:(substring(col(x).cast("String"),0,100)).alias(x),removeid) 
-    df3 = df2.select(list(limitto50))
-    return df3
-    #pandas = df3.toPandas()
-    #return pandas
-
-    
-    #df2.limit(1).show()
-    #return df2.take(1)#show(1, truncate=True)
+    return train_df3

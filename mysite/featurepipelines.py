@@ -2,9 +2,6 @@
 #TODO: type transformation!!!
 def piNone(featurename,dataframe):
     df = dataframe
-    df = df.withColumn(featurename+"Pre",
-        df[featurename]
-        )
     return df
 
 from pyspark.sql import types as T
@@ -55,10 +52,18 @@ def piStrOneHotEncoding(featurename,dataframe):
 
 def piNumStandardScaler(featurename,dataframe):
     from pyspark.sql.functions import mean,stddev,max,min
-    
+    print("meanstart")
     mean_age, sttdev_age,max_age,min_age = dataframe.select(mean(featurename), stddev(featurename),max(featurename),min(featurename)).first()
+    print(mean_age)
+    print(sttdev_age)
+    print(max_age)
+    print(min_age)
+    print("meanend")
     #return dataframe.withColumn(featurename, (dataframe[featurename] - mean_age) / sttdev_age) #standardization
-    return dataframe.withColumn(featurename, (dataframe[featurename] - min_age) / (max_age-min_age)) #min max scale
+    print((dataframe[featurename] - min_age) / (max_age-min_age))
+    a = dataframe.withColumn(featurename+'Pre', (dataframe[featurename] - min_age) / (max_age-min_age)) #min max scale
+    a.show()
+    return a
     
 
 def piStrCountVectorizer(featurename,dataframe):

@@ -66,11 +66,8 @@
                                 {% endfor %}
                               </td>
                               <td>
-                                <select class="form-control" name="fttype_{{o.0}}">
-                                  <option {% ifequal o.1 "string" %}selected{% endifequal %}>string</option>
-                                  <option {% ifequal o.1 "double" %}selected{% endifequal %}>double</option>
-                                  <option {% ifequal o.1 "date" %}selected{% endifequal %}>date</option>
-                                </select>  
+                                <input value="{{o.1}}" name="fttype_{{o.0}}" class="form-control" readonly/>
+                                
                               </td>
                               <!--<td>
                                 <input class="form-control input-lg" type="text" placeholder="Datatype Reformat Rule" name="ftreformat_{{o.0}}" value="{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.reformat}}{% endifequal %}{% endfor %}"/>
@@ -80,7 +77,7 @@
                                 <select class="form-control" name="fttransition_{{o.0}}">
                                   <option value="0">None</option>
                                   {% for key,value in pipelines.items %}
-                                    {% ifequal o.1 value.3 %}
+                                    
                                       <option
                                       {% for feat in features %}
                                         {% ifequal feat.fieldname o.0%}
@@ -96,7 +93,7 @@
                                       {% endifequal %}
                                       value="{{value.0}}">{{value.1}}</option
                                         >
-                                    {% endifequal %}
+                                    
                                   {% endfor %}
                                 </select>
                               </td>

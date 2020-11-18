@@ -29,8 +29,8 @@ def modelrunwithspark(request,project_id):
     context = {
         "project" : project,
         "project_id" : project_id,
+        "menuactive":4,
         #"layer_types" : getkeraslayeroptions(librarystring2),
-        #"menuactive":4,
         #"neuralnetwork": nn,
         #"layers": layers
 
@@ -63,125 +63,6 @@ def modelrunwithspark(request,project_id):
 
     return HttpResponse(template.render(context, request))
 
-
-def getinputshape(project_id):
-    inputs = {}
-    inputshapes = mysite.dataoperation.getinputschema(project_id)
-    for (key,value) in inputshapes.items():
-        
-        for v in value:
-            inputs[key] = keras.Input(shape=tuple(v))
-    return inputs
-
-currentmodel = None
-
-def getcurrentmodel(project_id,loss,metrics):
-    #global currentmodel
-    #if not currentmodel:
-    currentmodel = buildmodel(project_id,loss,metrics)
-    return currentmodel
-
-def buildmodel(project_id,loss,metrics):
-    project = get_object_or_404(Project, pk=project_id)
-    nn = project.neuralnetwork
-    myfeatures = project.features.all()
-    
-    
-    target_array = []
-    target_array.append(project.target.fieldname)
-    
-    #Build Tensorflow Model
-    inputs = getinputshape(project_id)
-    previouslayers = {}
-    for layer in nn.layers.filter(inputlayer=False):
-        calldict = {}
-        for attr in layer.configuration.all():
-            #TODO: dynamictiy of parameters
-            option = None
-            try:
-                option = eval(attr.option)
-                calldict[attr.fieldname] = option
-            except:
-                option = attr.option
-                if len(option)>0:
-                    calldict[attr.fieldname] = option
-        calldict["name"]= "tobesaved_"+str(layer.id)  
-        #y.name = "tobesaved_"+str(layer.id)    
-            
-        #initiate by actual predecessor
-        y = getattr(keras.layers, layer.layertype)(**calldict)
-        inputsinput = []
-        for inpim in layer.inputlayers.filter(inputlayer=True):
-            inputsinput.append(inpim.index)
-        intermedinputs = []
-        for inpim in layer.inputlayers.filter(inputlayer=False):
-            intermedinputs.append(inpim.index)
-        
-        previouslayers[layer.index] = (y,inputsinput,intermedinputs,layer.id)
-    
-    previouslayer_inst = {}
-    removed = True
-    while len(previouslayers)>0 and removed ==True:
-        removed = False
-        for layidx in previouslayers:
-            cursel = []
-            value = previouslayers[layidx]
-            okay = True
-            for x in value[2]:
-                if x not in previouslayer_inst:
-                    okay = False
-                else:
-                    cursel.append(previouslayer_inst[x])
-            for x in value[1]:
-                cursel.append(inputs[x])
-            if len(cursel) == 1:
-                previouslayer_inst[layidx] = value[0](cursel[0])
-            else:
-                previouslayer_inst[layidx] = value[0](cursel)
-            
-            y = previouslayer_inst[layidx]
-
-
-    model = keras.Model(inputs=list(inputs.values())[0],outputs=y)
-    
-    configuration = nn.optimizer.configuration.all()
-    configdict = {}
-    for conf in configuration:
-        try:
-            option = eval(conf.option)
-            configdict[conf.fieldname] = option
-        except:
-            option = conf.option
-            if len(option)>0:
-                configdict[conf.fieldname] = option
-        
-
-    optimizer = eval(librarystring3+"."+nn.optimizer.name)(**configdict)
-
-    
-    #optimizer = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-
-    model_compilation = model.compile(optimizer=optimizer,
-                #loss='sparse_categorical_crossentropy',
-                loss=loss,
-                metrics=metrics)
-    #print(model_compilation)
-    
-    #
-    #model.compile(loss='categorical_crossentropy',
-    #          optimizer=optimizer,
-    #          metrics=['accuracy'])
-
-    return model
-
-def generateTrainingDataFrame(project,train_df1):
-    from pyspark.sql.functions import lit
-    import numpy as np
-    #remember filepath for loading in spark worker
-    train_df3 = train_df1.withColumn("target",train_df1[project.target.fieldname])
-    train_df3 = train_df3[[['features_array',"target"]]]
-    
-    return train_df3
 
 def modelsummary(request,project_id):
     #TODO: split this function, into
@@ -232,7 +113,7 @@ def index(request,project_id):
     nn = None
     layers = None
     
-    inputs = mysite.dataoperation.getinputschema(project_id)
+    inputs = getinputshape(project_id)
 
     if project.neuralnetwork:
         nn = project.neuralnetwork
@@ -245,7 +126,10 @@ def index(request,project_id):
                 iputs.append(str(inp.index))
             for inp in l.inputlayers.filter(inputlayer=True):
                 curIndex = inp.index
-                curDimensions = inputs[curIndex]
+                shapes = inp.configuration.filter(fieldname="shape")
+                curDimensions = ""
+                for s in shapes:
+                    curDimensions = s.option
                 iputs.append("Input"+str(curIndex)+"_"+str(curDimensions))
             l.input = iputs
             confs = {}
@@ -270,36 +154,6 @@ def index(request,project_id):
     
     
     return HttpResponse(template.render(context, request))
-
-    
-def getkeraslayeroptions(libstr):
-    result = []
-    layers = inspect.getmembers(eval(libstr))
-    for l in layers:
-        arguments = []
-        try:
-            nameofclass = l[1]
-            args = []
-            if inspect.isclass(nameofclass):
-                nameofclass = nameofclass.__init__
-            parameter = inspect.signature(nameofclass).parameters
-            arguments = list(parameter.keys())
-            for argkey in arguments:
-                arg = parameter[argkey]
-                if(arg.name != "kwargs" and arg.name != "self"):
-                    if(arg.default == inspect._empty):
-                        o = (arg.name,None)
-                    else:
-                        o = (arg.name,arg.default)
-                    args.append(o)
-
-            result.append((l[0],args))
-        except Exception as e: 
-            print(e)
-            arguments = []
-            
-    print(result)
-    return result
 
 def aioptandoutupload(request,project_id):
     #print(request.POST)
@@ -413,12 +267,16 @@ def aiupload(request,project_id):
     project.save()
 
     #input layer needs to be defined
-    inputs = mysite.dataoperation.getinputschema(project_id)
+    inputs = getinputshape(project_id)
     inputlayers = {}
-    for inp in inputs:
+    for (inp,value) in inputs.items():
         inplayer = Layer(index=inp,inputlayer=True)
         inplayer.save()
-        curConf = Configuration(fieldname="shape",option=inputs[inp])
+        curConf = Configuration(fieldname="shape",option=value.shape)
+        curConf.save()
+        inplayer.configuration.add(curConf)
+        inplayer.save()
+        curConf = Configuration(fieldname="name",option=value.name)
         curConf.save()
         inplayer.configuration.add(curConf)
         inplayer.save()
@@ -470,6 +328,8 @@ def aiupload(request,project_id):
         for state in curstates:
             if state.startswith('Input'):
                 inpidx = int(state[5:].split("_")[0])
+                print("input_________")
+                print(inpidx)
                 inplayer = inputlayers[inpidx]
                 curLayer.inputlayers.add(inplayer)
             else:
@@ -508,6 +368,7 @@ def optimizer(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     optimizername = ""
     availablelayers = []
+    inputs = getinputshape(project_id)
     optconfs = []
     if project.neuralnetwork:
         for l in project.neuralnetwork.layers.filter(inputlayer=False,outputlayer=False):
@@ -517,7 +378,7 @@ def optimizer(request,project_id):
             optconfs = project.neuralnetwork.optimizer.configuration.all()
 
 
-    inputs = mysite.dataoperation.getinputschema(project_id)
+   
     layers = None
     if project.neuralnetwork:
         nn = project.neuralnetwork
@@ -531,7 +392,11 @@ def optimizer(request,project_id):
             for inp in l.inputlayers.filter(inputlayer=True):
                 print(inp.index)
                 curIndex = inp.index
-                curDimensions = inputs[str(inp.index)]
+                shapes = inp.configuration.filter(fieldname="shape")
+                curDimensions = ""
+                for s in shapes:
+                    curDimensions = s.option
+                print(curDimensions)
                 iputs.append("Input"+str(curIndex)+"_"+str(curDimensions))
             l.input = iputs
             confs = {}
@@ -558,53 +423,149 @@ def optimizer(request,project_id):
     
     return HttpResponse(template.render(context, request))
 
+### helper functions to get json from python structure
 
-def pandasudftest():
-    @pandas_udf("id long", PandasUDFType.GROUPED_MAP)
-    def myudffunction(sample_df):
-        import numpy
-        from pyspark import TaskContext
-        import socket
-        ctx = TaskContext()
-        #print(["Stage: {0}, Partition: {1}, Host: {2}".format(ctx.stageId(), ctx.partitionId(), socket.gethostname())])
-        #Open Model
-        from keras.models import load_model
-        filepath = sample_df["model_path"][0]
-        target = sample_df["target"][0]
+def getkeraslayeroptions(libstr):
+    result = []
+    layers = inspect.getmembers(eval(libstr))
+    for l in layers:
+        arguments = []
+        try:
+            nameofclass = l[1]
+            args = []
+            if inspect.isclass(nameofclass):
+                nameofclass = nameofclass.__init__
+            parameter = inspect.signature(nameofclass).parameters
+            arguments = list(parameter.keys())
+            for argkey in arguments:
+                arg = parameter[argkey]
+                if(arg.name != "kwargs" and arg.name != "self"):
+                    if(arg.default == inspect._empty):
+                        o = (arg.name,None)
+                    else:
+                        o = (arg.name,arg.default)
+                    args.append(o)
+
+            result.append((l[0],args))
+        except Exception as e: 
+            print(e)
+            arguments = []
+            
+    return result
+
+
+
+
+currentmodel = None
+
+def getcurrentmodel(project_id,loss,metrics):
+    #global currentmodel
+    #if not currentmodel:
+    currentmodel = buildmodel(project_id,loss,metrics)
+    return currentmodel
+
+
+def getinputshape(project_id):
+    inputs = {}
+    project = get_object_or_404(Project, pk=project_id)
+    cur_features = project.features.all()
+    inputshapes = mysite.dataoperation.getfeaturedimensionbyproject(cur_features)
+    idx = 1
+    for (key,value) in inputshapes.items():
         
-        
-        while True:
+        for (k,v) in value.items():
+            name=("Input"+str(idx)+"_"+str(k)).replace(" ","")
+            inputs[idx] = keras.Input(shape=tuple(v),name=name)
+            idx = idx + 1
+    
+    print(inputs)
+    return inputs
+
+
+## generate keras model from database definition
+def buildmodel(project_id,loss,metrics):
+    project = get_object_or_404(Project, pk=project_id)
+    nn = project.neuralnetwork
+    myfeatures = project.features.all()
+    
+    
+    target_array = []
+    target_array.append(project.target.fieldname)
+    
+    #Build Tensorflow Model
+    inputs = getinputshape(project_id)
+    previouslayers = {}
+    for layer in nn.layers.filter(inputlayer=False):
+        calldict = {}
+        for attr in layer.configuration.all():
+            #TODO: dynamictiy of parameters
+            option = None
             try:
-                #print("loading")
-                model = load_model(filepath)
-                
-                x = numpy.asarray(sample_df['features_array'].tolist())
-                #TODO: y must be checked!
-                y = sample_df[target]
-                model.train_on_batch(x,y)
-                counter = 1
-                #print("Counter "+str(counter))
-                #Save Model
-                model.save(filepath)#+str(ctx.stageId()))
-                break
-            except Exception as ex:
-                template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                message = template.format(type(ex).__name__, ex.args)
-                #print(message)
-                import time
-                time.sleep(5)
+                option = eval(attr.option)
+                calldict[attr.fieldname] = option
+            except:
+                option = attr.option
+                if len(option)>0:
+                    calldict[attr.fieldname] = option
+        calldict["name"]= "tobesaved_"+str(layer.id)  
+        #y.name = "tobesaved_"+str(layer.id)    
+            
+        #initiate by actual predecessor
+        y = getattr(keras.layers, layer.layertype)(**calldict)
+        inputsinput = []
+        for inpim in layer.inputlayers.filter(inputlayer=True):
+            inputsinput.append(inpim.index)
+        intermedinputs = []
+        for inpim in layer.inputlayers.filter(inputlayer=False):
+            intermedinputs.append(inpim.index)
         
-        #Create Result Set with Zeros
-        noof = len(sample_df.index)
-        import numpy as np
-        import pandas as pd
-        result = pd.DataFrame(np.zeros(noof),columns=["id"])
-        
-        return result
+        previouslayers[layer.index] = (y,inputsinput,intermedinputs,layer.id)
     
-    
-    
-    # partition the data and run the UDF   
-    filepath = '/tmp/kuai_model_'+str(project_id)+".h5"
+    previouslayer_inst = {}
+    removed = True
+    while len(previouslayers)>0 and removed ==True:
+        removed = False
+        for layidx in previouslayers:
+            cursel = []
+            value = previouslayers[layidx]
+            okay = True
+            for x in value[2]:
+                if x not in previouslayer_inst:
+                    okay = False
+                else:
+                    cursel.append(previouslayer_inst[x])
+            for x in value[1]:
+                cursel.append(inputs[x])
+            if len(cursel) == 1:
+                previouslayer_inst[layidx] = value[0](cursel[0])
+            else:
+                previouslayer_inst[layidx] = value[0](cursel)
+            
+            y = previouslayer_inst[layidx]
 
-    #results = train_df3.groupby(['features_array',project.target.fieldname]).apply(myudffunction)
+
+    model = keras.Model(inputs=list(inputs.values()),outputs=y)
+    
+    configuration = nn.optimizer.configuration.all()
+    configdict = {}
+    for conf in configuration:
+        try:
+            option = eval(conf.option)
+            configdict[conf.fieldname] = option
+        except:
+            option = conf.option
+            if len(option)>0:
+                configdict[conf.fieldname] = option
+        
+
+    optimizer = eval(librarystring3+"."+nn.optimizer.name)(**configdict)
+
+    
+    
+
+    model_compilation = model.compile(optimizer=optimizer,
+                loss=loss,
+                metrics=metrics)
+    
+
+    return model

@@ -7,7 +7,7 @@ from datetime import datetime
 
 from django import forms
 
-from .models import Project,Experiment,Result,Sample,Metrics,Loss,LayerWeights
+from mysite.models import Project,Experiment,Result,Sample,Metrics,Loss,LayerWeights
 
 import mysite.neuralnetwork
 
@@ -199,25 +199,26 @@ def runexperiment(project_id,experiment_id):
             #restore weights
             loadmodelweights(experiment_id,model)
             
-
-
+            
             train_df = mysite.dataoperation.readfromcassandra(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+            train_df = mysite.dataoperation.transformdataframe(project,train_df)
             print("a")
             train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
             print("b")
-            train_df3 = mysite.neuralnetwork.generateTrainingDataFrame(project,train_df1)
-            print("c")
+            train_df3 = train_df1
+            
+            
             test_df = mysite.dataoperation.readfromcassandra(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
+            test_df = mysite.dataoperation.transformdataframe(project,test_df)
             print("d")
             test_df1 = mysite.dataoperation.buildFeatureVector(test_df,project.features.all(),project.target)
             print("e")
-            test_df3 = mysite.neuralnetwork.generateTrainingDataFrame(project,test_df1)
-            print("f")
+            test_df3 = test_df1
             #random split to required batch size
             # 1. get count of train_df3
             # 2. 1/train_df3/batch_size = share
             # 3. randomsplit with array of share and count 1/share
-            
+            train_df3.show()
             def getArrayToSplitDFToBatch(count,batchsize):
                 i = batchsize/count
                 import math
@@ -242,13 +243,33 @@ def runexperiment(project_id,experiment_id):
 
             def getXandYFromDataframe(df,project):
                 import numpy as np
-                #df.show()
                 currentdf = df.toPandas()
+                result = mysite.dataoperation.getfeaturedimensionbyproject(project.features.all())
+                print(result)
+                
+                x = []
+                if 1 in result:
+                        x_1 = currentdf['features_array']
+                        x_2 = x_1.tolist()
+                        x_3 = np.asarray(x_2)
+                        x.append(x_3)
+
+                for (key,value) in result.items():
+                    if key > 1:
+                        for dim in value.values():
+                            x_1 = currentdf['features_array'+str(dim)]
+                            x_2 = x_1.tolist()
+                            x_3 = np.asarray(x_2)
+                            x.append(x_3)
+                
+                print(x)
+
+                #Remove array structure if input is not multiple!
+                if len(x) == 1:
+                    x = x[0]
+
                 y = currentdf["target"]
-                x_1 = currentdf['features_array']
-                x_2 = x_1.tolist()
-                x_3 = np.asarray(x_2)
-                x = np.asarray(currentdf['features_array'].tolist())
+                
                 return {"x":x,"y":y}
 
             from collections.abc import Iterable
@@ -265,32 +286,37 @@ def runexperiment(project_id,experiment_id):
                 batchcounter = 0
                 for i in multiple_df:
                     batchcounter = batchcounter+1
-                    
-                    
-                    currentdf = getXandYFromDataframe(i,project)
-                    datafromtraining = model.train_on_batch(currentdf["x"],currentdf["y"])   
-                    
-                    if not isinstance(datafromtraining, Iterable):
-                        datafromtraining = [datafromtraining]
-                    
-                    samp = Sample(name=lossfunction,number=datafromtraining[0],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
-                    samples.append(samp)
-                    for k in range(0,len(metrics)):
-                        samp = Sample(name=metrics[k],number=datafromtraining[k+1],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+                    try:
+                        currentdf = getXandYFromDataframe(i,project)
+                        datafromtraining = model.train_on_batch(currentdf["x"],currentdf["y"])
+                        if not isinstance(datafromtraining, Iterable):
+                            datafromtraining = [datafromtraining]
+                        
+                        samp = Sample(name=lossfunction,number=datafromtraining[0],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
                         samples.append(samp)
+                        for k in range(0,len(metrics)):
+                            samp = Sample(name=metrics[k],number=datafromtraining[k+1],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+                            samples.append(samp)   
+                    except:
+                        print("Training not successfull")
+
+                    
                         
                 for i in multiple_df_test:
-                    currentdf = getXandYFromDataframe(i,project)
-                    datafromtesting = model.test_on_batch(currentdf["x"],currentdf["y"])  
-                    
-                    if not isinstance(datafromtesting, Iterable):
-                        datafromtesting = [datafromtesting]
-                    
-                    samp = Sample(name=lossfunction,number=datafromtesting[0],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
-                    samples.append(samp)
-                    for k in range(0,len(metrics)):
-                        samp = Sample(name=metrics[k],number=datafromtesting[k+1],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
+                    try:
+                        currentdf = getXandYFromDataframe(i,project)
+                        datafromtesting = model.test_on_batch(currentdf["x"],currentdf["y"])  
+                        
+                        if not isinstance(datafromtesting, Iterable):
+                            datafromtesting = [datafromtesting]
+                        
+                        samp = Sample(name=lossfunction,number=datafromtesting[0],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
                         samples.append(samp)
+                        for k in range(0,len(metrics)):
+                            samp = Sample(name=metrics[k],number=datafromtesting[k+1],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
+                            samples.append(samp)
+                    except:
+                        print("Testing not successfull") 
                 
                 res = Result(epochno=j)
                 res.experiment = exp
