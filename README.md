@@ -23,8 +23,9 @@ Everything is supported by easy to use user interfaces.
 
 ## setup
 install java  
-install python and pip  > 3
+install python and pip > 3  
 pip install pandas Django pyspark tensorflow keras  
+
 ## runapp
 run "python manage.py runserver"
 
