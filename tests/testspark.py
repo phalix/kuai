@@ -2,8 +2,8 @@ from django.test import TestCase
 from django.test import Client
 
 from mysite import dataoperation
-from django.shortcuts import render,get_object_or_404
-from mysite.models import Project,Feature,NeuralNetwork
+from django.shortcuts import render, get_object_or_404
+from mysite.models import Project, Feature, NeuralNetwork
 
 
 class KuaiTestCase(TestCase):
@@ -15,30 +15,33 @@ class KuaiTestCase(TestCase):
         projectname = 'testproject'
 
         c = Client()
-        response = c.post('/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname})
-        self.assertEqual(response.status_code>199 and response.status_code < 400,True)
-        project = get_object_or_404(Project,pk=1)
-        self.assertEqual(project.author,author)
-        self.assertEqual(project.projectname,projectname)
+        response = c.post(
+            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname})
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+        project = get_object_or_404(Project, pk=1)
+        self.assertEqual(project.author, author)
+        self.assertEqual(project.projectname, projectname)
 
         project_id = 1
         project_id_str = str(project_id)
         response = c.get('/dashboard/'+project_id_str+'/')
-        self.assertEqual(response.status_code>199 and response.status_code < 400,True)
-
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
 
         response = c.post('/dataupload/'+project_id_str+'/', {
-            'folderfile':"D:\\test\\*",
-            'shuffledata':True,
-            'trainshare':0.6,
-            'testshare':0.2,
-            'cvshare':0.2,
-            'datatype':'img'
+            'folderfile': "D:\\test\\*",
+            'shuffledata': True,
+            'trainshare': 0.6,
+            'testshare': 0.2,
+            'cvshare': 0.2,
+            'datatype': 'img'
         })
-        self.assertEqual(response.status_code>199 and response.status_code < 400,True)
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
 
-        response = c.post('/datatransform/'+project_id_str+'/',{
-            'selectstatement':'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))',
+        response = c.post('/datatransform/'+project_id_str+'/', {
+            'selectstatement': 'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))',
             'udfclasses': """def category(value):
         return int(value.split('/')[5])
     
@@ -56,16 +59,27 @@ def imagetonp(image):
 
 udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
         })
-        
-        self.assertEqual(response.status_code>199 and response.status_code < 400,True)
 
-        project = get_object_or_404(Project,pk=project_id)
-        self.assertEqual(project.selectstatement,'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))')
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
+        project = get_object_or_404(Project, pk=project_id)
+        self.assertEqual(project.selectstatement,
+                         'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))')
         
-        response = c.post('/dataclassification/'+project_id_str+'/',{
-            
+        response = c.post('/setupdataclassifcation/'+project_id_str+'/', {
+            'feature_category': 'on', 'fttype_category': 'float', 'fttransition_category': '0', 'dimension_category': '1', 'ftreformat_category': '                                        ', 'feature_cc22': 'on', 'fttype_cc22': 'float', 'fttransition_cc22': '3', 'dimension_cc22': '1', 'ftreformat_cc22': '', 'feature_image': 'on', 'fttype_image': 'array<array<array<int>>>', 'fttransition_image': '0', 'dimension_image': '720,1280,3', 'ftreformat_image': '', 'fttype_cc22Pre': 'double', 'fttransition_cc22Pre': '0', 'dimension_cc22Pre': '', 'ftreformat_cc22Pre': '', 'targetselection': 'category'
         })
+        
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
+        response = c.post('/dataclassification/'+project_id_str+'/', {})
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
 
         import mysite.dataoperation as md
-        self.assertEqual(md.getinputschema(project_id),{})
-        
+        print(md.getinputschema(project_id))
+        self.assertEqual(md.getinputschema(project_id), {1: [1], 3: [[720, 1280, 3]]})
+        print(md.getfeaturedimensionbyproject(project.features.all()))
+        self.assertEqual(md.getfeaturedimensionbyproject(project.features.all()),{1: {'cc22': [1]}, 3: {'image': [720, 1280, 3]}})

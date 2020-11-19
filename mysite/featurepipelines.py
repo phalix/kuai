@@ -61,7 +61,7 @@ def piNumStandardScaler(featurename,dataframe):
     print("meanend")
     #return dataframe.withColumn(featurename, (dataframe[featurename] - mean_age) / sttdev_age) #standardization
     print((dataframe[featurename] - min_age) / (max_age-min_age))
-    a = dataframe.withColumn(featurename+'Pre', (dataframe[featurename] - min_age) / (max_age-min_age)) #min max scale
+    a = dataframe.withColumn(featurename, (dataframe[featurename] - min_age) / (max_age-min_age)) #min max scale
     a.show()
     return a
     

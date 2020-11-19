@@ -519,7 +519,9 @@ def createDataFrameHTMLPreview(dataframe):
 
 def applyfeaturetransition(dataframe,features,target):
     indexed = dataframe
-    
+    assert features != None
+    assert target != None
+
     for feat in features:
         try:
             if(feat.transition>0):
@@ -566,6 +568,7 @@ def getfeaturedimensionbyproject(features):
 def getinputschema(project_id):
     import pyspark
     import json
+    from functools import reduce
     project = get_object_or_404(Project, pk=project_id)
     
     cur_features = project.features.all()
@@ -601,6 +604,14 @@ def getinputschema(project_id):
 ### return dataframe by features and target
 
 def buildFeatureVector(dataframe,features,target):
+    ###
+    assert target != None
+    assert features != None
+    assert features[0] != None
+    assert target.fieldname != None
+    assert features[0].fieldname != None
+    
+    
     #Transform Data
     train_df = dataframe
     from pyspark.ml.linalg import Vectors
