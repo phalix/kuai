@@ -1,8 +1,31 @@
 # kuai
+## This software uses:
+Django (https://www.djangoproject.com/)  
+Keras/TensorFlow (https://www.tensorflow.org/)  
+Spark (https://spark.apache.org/)  
+MongoDB (https://www.mongodb.com/de)  
+Sleek Dashboard (https://sleek.tafcoder.com/)  
+and everything is programmed in Python.  
+
+Integration with https://www.atlas.dessa.com/ or https://www.openml.org/
+
+As well as an AutoML Framework and a diagram framework.
+
+## What is Kuai
+Kuai enables a quick protoyping approach for neural networks.  
+It enables the classical workflow of  
+**data preparation with spark  
+**ai modelling with a graphical UI for Keras/Tensorflow  
+**Simulation and Test  
+**Deployment  
+
+Everything is supported by easy to use user interfaces.
+
 ## setup
 install java  
-install python and pip  
+install python and pip > 3  
 pip install pandas Django pyspark tensorflow keras  
+
 ## runapp
 run "python manage.py runserver"
 
@@ -10,3 +33,5 @@ run "python manage.py runserver"
 * rename from mysite to kuai
 * generate dimensions automatically for basic types
 * get type from dataframe schema!
+* integrate experiment engine
+* write more tests
