@@ -217,14 +217,10 @@ def dataclassification(request,project_id):
 
     
     # TODO: Enable Text Preprocessing from Keras
-    r_features = []
-    cur_features = project.features.all()
     
-
-    for feat in cur_features:
-        if feat != None:
-            r_features.append(feat.fieldname)
-
+    cur_features = project.features.all()
+    r_features = list(map(lambda x:x.fieldname,cur_features))
+    
     if project.target != None:
         target = project.target.fieldname
     else:
@@ -239,20 +235,9 @@ def dataclassification(request,project_id):
     from pyspark.ml.feature import StringIndexer
     from pyspark.ml.feature import VectorIndexer
     print("Imports Done")
-    indexed = applyfeaturetransition(df,cur_features,project.target)
-    mytypes_filter = filter(lambda x:x[0]!='_id',indexed.dtypes)
-    mytypes = list(mytypes_filter)
-    mytypes_dict  = dict(mytypes)
     
-    mytypes = list(filter(lambda x:not (x[0]+"Piped" in mytypes_dict.keys()),mytypes ))
-    def reformatPipedPre(x):
-        if x[0].endswith("Piped"):
-            a= x[0][:(len(x[0])-5)]
-        else:
-            a = x[0]
-        return (a,x[1])
-
-    mytypes = list(map(lambda x:reformatPipedPre(x),mytypes))
+    indexed = applyfeaturetransition(df,cur_features,project.target)
+    mytypes = gettypesanddimensionsofdataframe(indexed)
 
     print("Types sdone")
     
@@ -260,8 +245,6 @@ def dataclassification(request,project_id):
     try:
         firstrow_indexed = indexed.first().asDict()
         print("First row done")
-        from pyspark.sql.functions import size
-        indexed.select(size(col("image"))).show()
         featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
         print("featurevector_df")
         featurevector = featurevector_df.first().asDict()['features_array']
@@ -387,7 +370,7 @@ def savetocassandra_writesparkdataframe(sparkdf):
 
 def readfromcassandra(project_id,type=TRAIN_DATA_QUALIFIER):
     from pyspark.sql import SQLContext
-    from pyspark import StorageLevel
+    
     spark = getsparksession(project_id,type)
     sqlContext = SQLContext(spark)
     try:
@@ -468,13 +451,13 @@ def createSparkConfig(project_id,type):
     
     return conf
 
-def transformdataframe(project,dataframe):
+def transformdataframe(project,dataframe,type=1):
     #apply project.selectstatement
     #apply project.udfclasses
     from pyspark.sql import SQLContext
     from pyspark import StorageLevel
 
-    spark = getsparksession(project.id,1)
+    spark = getsparksession(project.id,type)
     sqlContext = SQLContext(spark)
     try:
         df2 = sqlContext.sql("select * from transform_temp_table")
@@ -603,6 +586,34 @@ def getinputschema(project_id):
 
 ### return dataframe by features and target
 
+def gettypesanddimensionsofdataframe(df):
+    #Remove id, since sometimes mongodb adds this
+    mytypes_filter = filter(lambda x:x[0]!='_id',df.dtypes)
+    mytypes_nodim = list(mytypes_filter)
+    
+    #mytypes_dict  = dict(mytypes)
+    
+    #mytypes = list(filter(lambda x:not (x[0]+"Piped" in mytypes_dict.keys()),mytypes ))
+    #def reformatPipedPre(x):
+    #    if x[0].endswith("Piped"):
+    #        a= x[0][:(len(x[0])-5)]
+    #    else:
+    #        a = x[0]
+    #    return (a,x[1])
+
+    mytypes =[]
+    #Figure out dimension
+    for item in mytypes_nodim:
+        if item[1] in ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data'):
+           cur = item + (1,)
+        else:
+            cur = item + (0,)
+        mytypes.append(cur)
+
+    #mytypes = list(map(lambda x:reformatPipedPre(x),mytypes))
+
+    return mytypes
+
 def buildFeatureVector(dataframe,features,target):
     ###
     assert target != None
@@ -611,18 +622,16 @@ def buildFeatureVector(dataframe,features,target):
     assert target.fieldname != None
     assert features[0].fieldname != None
     
-    
     #Transform Data
     train_df = dataframe
     from pyspark.ml.linalg import Vectors
     from pyspark.ml.feature import VectorAssembler
-    
+    import pyspark.sql.functions as psf
     
     feature_dict = getfeaturedimensionbyproject(features)
+    selector = []
     if 1 in feature_dict:
         feature_array = list(feature_dict[1].keys())
-        print("vector assembler")
-        print(feature_array)
         vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
         train_df.show()
         train_df3 = vector_assembler.transform(train_df)
@@ -637,17 +646,47 @@ def buildFeatureVector(dataframe,features,target):
         toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
         train_df3 = train_df3.withColumn('features_array', toDenseVectorUdf('features'))
         train_df = train_df3
-    print("*************")
-    print(feature_dict)
-    print("*************")
+        selector.append([psf.col('features_array')])
+    
+    
     train_df3 = train_df
     for (key,value) in feature_dict.items():
         if key > 1:
             for (key2,value2) in value.items():
-                train_df3 = train_df3.withColumn('features_array'+str(value2),train_df[key2])
-                print(key2)
-                print(value2)
-    
-    train_df3 = train_df3.withColumn("target",train_df3[target.fieldname])
+                selector.append(psf.col(key2).alias('feature_'+str(key2)))
+                #train_df3 = train_df3.withColumn('feature_'+str(key2),train_df[key2])
+                
+    selector.append(psf.col(target.fieldname).alias("target"))
 
+    #train_df3 = train_df3.withColumn("target",train_df3[target.fieldname])
+    train_df3 = train_df3.select(selector)
     return train_df3
+
+
+def getXandYFromDataframe(df,project):
+    import numpy as np
+    currentdf = df.toPandas()
+    result = getfeaturedimensionbyproject(project.features.all())
+    
+    x = []
+    if 1 in result:
+            x_1 = currentdf['features_array']
+            x_2 = x_1.tolist()
+            x_3 = np.asarray(x_2)
+            x.append(x_3)
+
+    for (key,value) in result.items():
+        if key > 1:
+            for dim in value.keys():
+                x_1 = currentdf['feature_'+str(dim)]
+                x_2 = x_1.tolist()
+                x_3 = np.asarray(x_2)
+                x.append(x_3)
+    
+    #Remove array structure if input is not multiple!
+    if len(x) == 1:
+        x = x[0]
+
+    y = currentdf["target"]
+    
+    return {"x":x,"y":y}

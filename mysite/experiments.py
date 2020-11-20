@@ -241,36 +241,7 @@ def runexperiment(project_id,experiment_id):
             multiple_df = getMultipleDf(train_df3,exp.batchsize)
             multiple_df_test = getMultipleDf(test_df3,exp.batchsize)
 
-            def getXandYFromDataframe(df,project):
-                import numpy as np
-                currentdf = df.toPandas()
-                result = mysite.dataoperation.getfeaturedimensionbyproject(project.features.all())
-                print(result)
-                
-                x = []
-                if 1 in result:
-                        x_1 = currentdf['features_array']
-                        x_2 = x_1.tolist()
-                        x_3 = np.asarray(x_2)
-                        x.append(x_3)
-
-                for (key,value) in result.items():
-                    if key > 1:
-                        for dim in value.values():
-                            x_1 = currentdf['features_array'+str(dim)]
-                            x_2 = x_1.tolist()
-                            x_3 = np.asarray(x_2)
-                            x.append(x_3)
-                
-                print(x)
-
-                #Remove array structure if input is not multiple!
-                if len(x) == 1:
-                    x = x[0]
-
-                y = currentdf["target"]
-                
-                return {"x":x,"y":y}
+            
 
             from collections.abc import Iterable
 
@@ -287,7 +258,7 @@ def runexperiment(project_id,experiment_id):
                 for i in multiple_df:
                     batchcounter = batchcounter+1
                     try:
-                        currentdf = getXandYFromDataframe(i,project)
+                        currentdf = mysite.dataoperation.getXandYFromDataframe(i,project)
                         datafromtraining = model.train_on_batch(currentdf["x"],currentdf["y"])
                         if not isinstance(datafromtraining, Iterable):
                             datafromtraining = [datafromtraining]

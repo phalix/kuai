@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from mysite.models import Project, Feature, NeuralNetwork
 
 
-class KuaiTestCase(TestCase):
+class TestKuaiCase(TestCase):
     def setUp(self):
         print("setup")
 
@@ -83,3 +83,12 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
         self.assertEqual(md.getinputschema(project_id), {1: [1], 3: [[720, 1280, 3]]})
         print(md.getfeaturedimensionbyproject(project.features.all()))
         self.assertEqual(md.getfeaturedimensionbyproject(project.features.all()),{1: {'cc22': [1]}, 3: {'image': [720, 1280, 3]}})
+
+        df = md.readfromcassandra(project_id,1)
+        df2 = md.transformdataframe(project,df)
+        
+        project = get_object_or_404(Project, pk=1)
+
+        a = md.buildFeatureVector(df2,project.features.all(),project.target)
+        b = md.getXandYFromDataframe(a,project)
+        print(a)

@@ -103,7 +103,7 @@
                                 {% endfor %}
                               </td>
                               <td>
-                                <input name="dimension_{{o.0}}" class="form-control" value="{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.dimension}}{% endifequal %}{% endfor %}{% ifequal o.0 target  %}{{targetfeature.dimension}}{% endifequal %}"/>
+                                <input name="dimension_{{o.0}}" class="form-control" {% ifequal o.2 1 %}readonly{% endifequal %} value="{% ifequal o.2 1 %}{{o.2}}{% else %}{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.dimension}}{% endifequal %}{% endfor %}{% ifequal o.0 target  %}{{targetfeature.dimension}}{% endifequal %}{% endifequal %}" />
                               </td>
                               
                             </tr>
