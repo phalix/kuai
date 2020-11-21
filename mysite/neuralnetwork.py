@@ -23,46 +23,6 @@ librarystring2 = 'keras.layers'
 librarystring3 = 'keras.optimizers'
 librarystring4 = 'keras.metrics'
 
-def modelrunwithspark(request,project_id):
-    template = loader.get_template('modelsummary.html')
-    project = get_object_or_404(Project, pk=project_id)
-    context = {
-        "project" : project,
-        "project_id" : project_id,
-        "menuactive":4,
-        #"layer_types" : getkeraslayeroptions(librarystring2),
-        #"neuralnetwork": nn,
-        #"layers": layers
-
-    }
-    
-    df = mysite.dataoperation.readfromcassandra(project_id)
-    import sparkdl
-    from sparkdl import KerasTransformer
-
-
-    # Parameters
-    SIZE = (299, 299)  # Size accepted by Inception model
-    IMAGES_PATH = 'datasets/image_classifier/test/'  # Images Path
-    MODEL = '/tmp/model-full-tmp.h5'  # Model Path
-
-    
-
-    # Define Spark Transformer
-    transformer = KerasTransformer(inputCol="uri", outputCol="predictions",
-                                    modelFile=MODEL,
-                                    outputMode="vector")
-
-    #TODO: Write Module for importing exporting models with mongo
-    #uri_df = dataoperation.readfromcassandra(project_id)
-    # Get Output
-    #labels_df = transformer.transform(uri_df)
-    # Show Output
-    #labels_df.show()
-
-
-    return HttpResponse(template.render(context, request))
-
 
 def modelsummary(request,project_id):
     #TODO: split this function, into
@@ -118,7 +78,7 @@ def index(request,project_id):
     if project.neuralnetwork:
         nn = project.neuralnetwork
         if nn.layers:
-            layers = nn.layers.filter(inputlayer=False)
+            layers = nn.layers.filter(inputlayer=False).filter(outputlayer=False)
     if layers:
         for l in layers:
             iputs = []
@@ -137,9 +97,6 @@ def index(request,project_id):
                 confs[conf.fieldname] = conf.option
             l.confs = l.configuration.all()
 
-    
-    
-    
     context = {
         "project" : project,
         "project_id" : project_id,
@@ -150,9 +107,6 @@ def index(request,project_id):
         "inputs": inputs,
     }
 
-    
-    
-    
     return HttpResponse(template.render(context, request))
 
 def aioptandoutupload(request,project_id):
@@ -249,17 +203,15 @@ def aioptandoutupload(request,project_id):
     nn.save()
     project.save()
 
-    # TODO: save to database
-    # TODO: save output layer
-    # TODO: save optimizer parameters
     # TODO: add semantics to parameters
     return HttpResponseRedirect('/optimizer/'+str(project_id))
 
 def aiupload(request,project_id):
+    #do not delete inputlayer, change on data classification
     project = get_object_or_404(Project, pk=project_id)
     if project.neuralnetwork:
         nn = project.neuralnetwork
-        nn.layers.all().delete()
+        nn.layers.filter(outputlayer=False)
     else:
         nn = NeuralNetwork()
     nn.save()
@@ -475,10 +427,9 @@ def getinputshape(project_id):
         
         for (k,v) in value.items():
             name=("Input"+str(idx)+"_"+str(k)).replace(" ","")
-            inputs[idx] = keras.Input(shape=tuple(v),name=name)
+            inputs[idx] = keras.Input(shape=v,name=name)
             idx = idx + 1
     
-    print(inputs)
     return inputs
 
 
@@ -563,7 +514,7 @@ def buildmodel(project_id,loss,metrics):
     
     
 
-    model_compilation = model.compile(optimizer=optimizer,
+    model.compile(optimizer=optimizer,
                 loss=loss,
                 metrics=metrics)
     

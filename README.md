@@ -24,7 +24,7 @@ Everything is supported by easy to use user interfaces.
 ## setup
 install java  
 install python and pip > 3  
-pip install pandas Django pyspark tensorflow keras  
+pip install pandas Django pyspark tensorflow keras notebook ipywidgets seaborn matplotlib
 
 ## runapp
 run "python manage.py runserver"

@@ -176,6 +176,7 @@ def runexperiment(project_id,experiment_id):
     #with thread_graph.as_default():
     #    thread_session = Session()
     #    with thread_session.as_default():
+    import sys, traceback
     print("hiaa")
     if True:
         if True:
@@ -259,36 +260,47 @@ def runexperiment(project_id,experiment_id):
                     batchcounter = batchcounter+1
                     try:
                         currentdf = mysite.dataoperation.getXandYFromDataframe(i,project)
-                        datafromtraining = model.train_on_batch(currentdf["x"],currentdf["y"])
-                        if not isinstance(datafromtraining, Iterable):
-                            datafromtraining = [datafromtraining]
-                        
-                        samp = Sample(name=lossfunction,number=datafromtraining[0],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
-                        samples.append(samp)
-                        for k in range(0,len(metrics)):
-                            samp = Sample(name=metrics[k],number=datafromtraining[k+1],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
-                            samples.append(samp)   
-                    except:
+                        if len(currentdf['y'])>0:
+                            datafromtraining = model.train_on_batch(currentdf["x"],currentdf["y"])
+                            if not isinstance(datafromtraining, Iterable):
+                                datafromtraining = [datafromtraining]
+                            
+                            samp = Sample(name=lossfunction,number=datafromtraining[0],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+                            samples.append(samp)
+                            for k in range(0,len(metrics)):
+                                samp = Sample(name=metrics[k],number=datafromtraining[k+1],batch=batchcounter,source=mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+                                samples.append(samp)   
+                        else:
+                            print("Batch with no Elements in Training")
+                    except Exception as e:
+                        print(e)
+                        traceback.print_exc(file=sys.stdout)
                         print("Training not successfull")
-
+                    else:
+                        print("Training successfull")
                     
                         
                 for i in multiple_df_test:
                     try:
-                        currentdf = getXandYFromDataframe(i,project)
-                        datafromtesting = model.test_on_batch(currentdf["x"],currentdf["y"])  
-                        
-                        if not isinstance(datafromtesting, Iterable):
-                            datafromtesting = [datafromtesting]
-                        
-                        samp = Sample(name=lossfunction,number=datafromtesting[0],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
-                        samples.append(samp)
-                        for k in range(0,len(metrics)):
-                            samp = Sample(name=metrics[k],number=datafromtesting[k+1],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
+                        currentdf = mysite.dataoperation.getXandYFromDataframe(i,project)
+                        if len(currentdf['y'])>0:
+                            datafromtesting = model.test_on_batch(currentdf["x"],currentdf["y"])  
+                            
+                            if not isinstance(datafromtesting, Iterable):
+                                datafromtesting = [datafromtesting]
+                            
+                            samp = Sample(name=lossfunction,number=datafromtesting[0],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
                             samples.append(samp)
+                            for k in range(0,len(metrics)):
+                                samp = Sample(name=metrics[k],number=datafromtesting[k+1],batch=batchcounter,source=mysite.dataoperation.TEST_DATA_QUALIFIER)
+                                samples.append(samp)
+                        else:
+                            print("Batch with no Elements in Testing")
                     except:
                         print("Testing not successfull") 
-                
+                    else:
+                        print("Testing successfull")
+
                 res = Result(epochno=j)
                 res.experiment = exp
                 res.save()

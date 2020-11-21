@@ -91,4 +91,5 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
 
         a = md.buildFeatureVector(df2,project.features.all(),project.target)
         b = md.getXandYFromDataframe(a,project)
-        print(a)
+        a.show()
+        print(b)

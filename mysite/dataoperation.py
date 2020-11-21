@@ -17,6 +17,7 @@ from django import forms
 
 import mysite.featurepipelines as fp
 import mysite.neuralnetwork
+
 from pyspark.sql.functions import udf,col,lit
 from pyspark.sql.types import StringType,DoubleType,DateType,ArrayType,FloatType,IntegerType
 
@@ -30,6 +31,79 @@ CV_DATA_QUALIFIER = 3
 displaylimit = 10
 
 
+def analysisbychart(request,project_id):
+    
+    ### TODO: Enable creation of multiple diagrams
+
+    import numpy as np
+    import pandas as pd
+    import matplotlib
+    matplotlib.use('Agg')
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    from inspect import signature 
+    
+    
+    assert ('x' in request.GET and 'y' in request.GET) or 'hue' in request.GET
+    assert 'func' in request.GET
+    assert 'columns' in request.GET
+
+    columns = request.GET['columns'].split(",")
+    func = request.GET['func']
+
+    assert len(columns)>0
+    assert len(func)>0
+
+    a = eval("sns."+func)
+    parameters = list(signature(a).parameters)
+
+    kwargs = {}
+    if 'x' in request.GET and 'y' in request.GET:
+        x = request.GET['x'].split(",")[0]
+        if 'x' in parameters:
+            kwargs['x'] = x
+        y = request.GET['y'].split(",")[0]
+        if 'y' in parameters:
+            kwargs['y'] = y
+    else:
+        x = None
+        y = None
+    
+    if 'hue' in request.GET:
+        hue = request.GET['hue']
+        if len(hue)>0 and 'hue' in parameters:
+            kwargs['hue'] = hue
+    else:
+        hue = None    
+
+    
+    
+
+    matplotlib.pyplot.ioff()
+    sns.set_theme(style="darkgrid")
+    
+    project = get_object_or_404(Project, pk=project_id)
+    
+    df = readfromcassandra(project_id,1)
+    df2 = transformdataframe(project,df)
+
+    #assert x in df2.columns
+    #assert y in df2.columns
+    
+    response = HttpResponse(content_type="image/jpeg")
+    dfxandy = df2.select(columns).toPandas()
+    kwargs['data'] = dfxandy
+    c = a(**kwargs)
+
+
+    if hasattr(c,'figure'):
+        c.figure.savefig(response, format="png")
+    else:
+        c.savefig(response, format="png")
+    
+    return response
+
+
 def analysis(request,project_id):
     template = loader.get_template('dataanalysis.html')
     project = get_object_or_404(Project, pk=project_id)
@@ -38,10 +112,25 @@ def analysis(request,project_id):
     df2 = transformdataframe(project,df)
 
     dfdescription = df2.describe().toPandas().to_html()
-    target = project.target.fieldname
+    if project and project.target and project.target.fieldname:
+        target = project.target.fieldname
+    else:
+        target = df2.columns[0]
+    
     distributionbytarget = df2.groupby(target).count()
     distributionbytarget_html = distributionbytarget.toPandas().to_html()
     
+    columns = df2.columns
+    
+    ### TODO: provide plot types of seaborn for selection
+    ### TODO: restrict columns to simple types
+    ['relplot','scatterplot','lineplot']
+    ['displot','histplot','kdeplot','ecdfplot','rugplot','distplot']
+    ['catplot','stripplot','swarmplot','boxplot','violinplot','boxenplot','pointplot','barplot','countplot']
+    ['lmplot','regplot','residplot']
+    ['heatmap','clustermap']
+    ['pairplot']
+    ['jointplot']
     context = {
         "project" : project,
         "project_id" : project_id,
@@ -49,6 +138,7 @@ def analysis(request,project_id):
         "menuactive":3,
         "dfdescription":dfdescription,
         "distribution":distributionbytarget_html,
+        "columns":columns,
     }
 
 
@@ -175,13 +265,12 @@ def uploaddata(request,project_id):
         
         spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
         df = spark.read.format("image").option("dropInvalid", True).load(subm_file) 
-        #df = ImageSchema.readImages(subm_file) 
+        #TODO: undo again
         #if shuffle:
         #    df = df.sample(frac=1)
         splitted = df.randomSplit([trainshare,testshare,cvshare])
-        #splitted[0].config(conf=createSparkConfig(1,TRAIN_DATA_QUALIFIER))
-        #splitted[1].config(conf=createSparkConfig(1,TEST_DATA_QUALIFIER))
-        #splitted[2].config(conf=createSparkConfig(1,CV_DATA_QUALIFIER))
+        #TODO: undo again, just for testing or come up with a different solution
+        splitted = [df,df,df]
         
         
         
@@ -236,18 +325,19 @@ def dataclassification(request,project_id):
     from pyspark.ml.feature import VectorIndexer
     print("Imports Done")
     
-    indexed = applyfeaturetransition(df,cur_features,project.target)
-    mytypes = gettypesanddimensionsofdataframe(indexed)
+    
+    mytypes = gettypesanddimensionsofdataframe(df)
 
     print("Types sdone")
     
     firstrow_transformed = df.first().asDict()
     try:
+        indexed = applyfeaturetransition(df,cur_features,project.target)
         firstrow_indexed = indexed.first().asDict()
         print("First row done")
         featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
         print("featurevector_df")
-        featurevector = featurevector_df.first().asDict()['features_array']
+        featurevector = dict(filter(lambda x:x[0]!='target',featurevector_df.first().asDict().items()))
         print("featurevector")
         featurevector_df_html = ""
         featurevector_df_html = createDataFrameHTMLPreview(featurevector_df)
@@ -604,7 +694,7 @@ def gettypesanddimensionsofdataframe(df):
     mytypes =[]
     #Figure out dimension
     for item in mytypes_nodim:
-        if item[1] in ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data'):
+        if isTypeSimpleType(item[1]):
            cur = item + (1,)
         else:
             cur = item + (0,)
@@ -613,6 +703,15 @@ def gettypesanddimensionsofdataframe(df):
     #mytypes = list(map(lambda x:reformatPipedPre(x),mytypes))
 
     return mytypes
+
+def isTypeSimpleType(type):
+    if type in sparkSimpleTypes():
+        return True
+    else:
+        return False
+
+def sparkSimpleTypes():
+    return ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data')
 
 def buildFeatureVector(dataframe,features,target):
     ###
@@ -646,7 +745,7 @@ def buildFeatureVector(dataframe,features,target):
         toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
         train_df3 = train_df3.withColumn('features_array', toDenseVectorUdf('features'))
         train_df = train_df3
-        selector.append([psf.col('features_array')])
+        selector.append(psf.col('features_array'))
     
     
     train_df3 = train_df
