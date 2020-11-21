@@ -14,10 +14,10 @@ As well as an AutoML Framework and a diagram framework.
 ## What is Kuai
 Kuai enables a quick protoyping approach for neural networks.  
 It enables the classical workflow of  
-** data preparation with spark (In Progress)
-** ai modelling with a graphical UI for Keras/Tensorflow (In Progress)  
-** Simulation and Test  (In Progress) 
-** Deployment (to be done)
+* data preparation with spark (In Progress)
+* ai modelling with a graphical UI for Keras/Tensorflow (In Progress)  
+* Simulation and Test  (In Progress) 
+* Deployment (to be done)
 
 Everything is supported by easy to use user interfaces.
 
