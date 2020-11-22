@@ -5,6 +5,8 @@ Keras/TensorFlow (https://www.tensorflow.org/)
 Spark (https://spark.apache.org/)  
 MongoDB (https://www.mongodb.com/de)  
 Sleek Dashboard (https://sleek.tafcoder.com/)  
+Seaborn (https://seaborn.pydata.org/)  
+Atlas Dessa (https://www.atlas.dessa.com/)  
 and everything is programmed in Python.  
 
 Integration with https://www.atlas.dessa.com/ or https://www.openml.org/
@@ -35,3 +37,4 @@ run "python manage.py runserver"
 * get type from dataframe schema!
 * integrate experiment engine
 * write more tests
+* create docker container for this
