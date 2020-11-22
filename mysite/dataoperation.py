@@ -18,9 +18,10 @@ from django import forms
 import mysite.featurepipelines as fp
 import mysite.neuralnetwork
 
+import pyspark
 from pyspark.sql.functions import udf,col,lit
 from pyspark.sql.types import StringType,DoubleType,DateType,ArrayType,FloatType,IntegerType
-
+import inspect
 
 
 
@@ -31,8 +32,24 @@ CV_DATA_QUALIFIER = 3
 displaylimit = 10
 
 
+def evalUDFFunction(request,project_id):
+    func = request.GET['func']
+    column = request.GET['column']
+
+    response = {
+        'type':type("hello"),
+        'value':"hello"
+    }
+
+
+
+    return HttpResponse(json.dumps(response), content_type='application/json')
+
+
+
+
 def analysisbychart(request,project_id):
-    
+    ### TODO: Enable saving of diagrams to revisit analysis
     ### TODO: Enable creation of multiple diagrams
 
     import numpy as np
@@ -119,18 +136,19 @@ def analysis(request,project_id):
     
     distributionbytarget = df2.groupby(target).count()
     distributionbytarget_html = distributionbytarget.toPandas().to_html()
-    
-    columns = df2.columns
+    ### restrict columns to simple types
+    columns = list(dict(filter(lambda x:isTypeSimpleType(x[1]),df2.dtypes)).keys())
     
     ### TODO: provide plot types of seaborn for selection
-    ### TODO: restrict columns to simple types
-    ['relplot','scatterplot','lineplot']
-    ['displot','histplot','kdeplot','ecdfplot','rugplot','distplot']
-    ['catplot','stripplot','swarmplot','boxplot','violinplot','boxenplot','pointplot','barplot','countplot']
-    ['lmplot','regplot','residplot']
-    ['heatmap','clustermap']
-    ['pairplot']
-    ['jointplot']
+    
+    seabornfunctions = {}
+    seabornfunctions['Relational Plots'] = ['relplot','scatterplot','lineplot']
+    seabornfunctions['Distribution Plots'] = ['displot','histplot','kdeplot','ecdfplot','rugplot','distplot']
+    seabornfunctions['Categorical Plots'] = ['catplot','stripplot','swarmplot','boxplot','violinplot','boxenplot','pointplot','barplot','countplot']
+    seabornfunctions['Regression Plots'] = ['lmplot','regplot','residplot']
+    seabornfunctions['Matrix Plots'] = ['heatmap','clustermap']
+    seabornfunctions['Multi Plot Grids - Pair'] = ['pairplot']
+    seabornfunctions['Multi Plot Grids - Joint '] = ['jointplot']
     context = {
         "project" : project,
         "project_id" : project_id,
@@ -139,6 +157,7 @@ def analysis(request,project_id):
         "dfdescription":dfdescription,
         "distribution":distributionbytarget_html,
         "columns":columns,
+        "plotfunctions":seabornfunctions,
     }
 
 
@@ -168,6 +187,9 @@ def setuptransformdata(request,project_id):
     df2 = transformdataframe(project,df)
     
     b = createDataFrameHTMLPreview(df)
+
+    #Spark ResultTypes:
+    sparktypes = list(map(lambda x: x[0],filter(lambda x: x[0].endswith("Type"),inspect.getmembers(pyspark.sql.types))))
     try:
         a = createDataFrameHTMLPreview(df2)
     except:
@@ -182,6 +204,9 @@ def setuptransformdata(request,project_id):
         "dataframe2":a, 
         "selectstatement":project.selectstatement,
         "udfclasses":project.udfclasses,
+        "columns":df.columns,
+        "types":sparktypes,
+        
     }
 
 
@@ -209,7 +234,7 @@ def transformdata(request,project_id):
     sqlContext = SQLContext(spark)
     try:
         sqlContext.uncacheTable("transform_temp_table")
-        df2 = sqlContext.sql("drop table transform_temp_table")
+        sqlContext.sql("drop table transform_temp_table")
     except:
         print("nothing to drop")
 
@@ -234,7 +259,7 @@ def uploaddata(request,project_id):
     subm_file = request.POST['folderfile']
     if request.POST['datatype'] == "csv":
         ###TODO: seperator must be configurable
-        
+        #TODO: Change to spark read csv
         df = pd.read_csv(subm_file,sep=";")
         
         
@@ -250,12 +275,6 @@ def uploaddata(request,project_id):
         traindata = df[msk1]
         testdata = df[msk2]
         cvdata = df[msk3]
-        
-        traindata.to_pickle('./'+str(project_id)+"tr.pickle")
-        testdata.to_pickle('./'+str(project_id)+"te.pickle")
-        cvdata.to_pickle('./'+str(project_id)+"cv.pickle")
-
-        df.to_pickle('./'+str(project_id)+".pickle")
         
         savetocassandra(project_id,traindata,1)
         savetocassandra(project_id,testdata,2)
@@ -498,7 +517,7 @@ def getsparksession(project_id,type):
         db_path = settings.DATABASES['default']['NAME']
 
 
-        import pyspark
+        
         from pyspark.sql import SparkSession
         
         spark = SparkSession.builder.appName('kuai') \
@@ -509,7 +528,7 @@ def getsparksession(project_id,type):
     raise TypeError("type")
 
 def createSparkConfig(project_id,type):
-    import pyspark
+    
     conf = pyspark.SparkConf()
     conf.set("spark.app.name", 'kuai')
     #conf.set("spark.executor.cores", 1)
@@ -639,7 +658,7 @@ def getfeaturedimensionbyproject(features):
 ### concats number of dimensions
 
 def getinputschema(project_id):
-    import pyspark
+    
     import json
     from functools import reduce
     project = get_object_or_404(Project, pk=project_id)
@@ -764,9 +783,12 @@ def buildFeatureVector(dataframe,features,target):
 
 def getXandYFromDataframe(df,project):
     import numpy as np
+    featurevalues = list(filter(lambda x:x.startswith("feature"),df.columns))
+
     currentdf = df.toPandas()
-    result = getfeaturedimensionbyproject(project.features.all())
     
+    '''
+    result = getfeaturedimensionbyproject(project.features.all())
     x = []
     if 1 in result:
             x_1 = currentdf['features_array']
@@ -780,12 +802,28 @@ def getXandYFromDataframe(df,project):
                 x_1 = currentdf['feature_'+str(dim)]
                 x_2 = x_1.tolist()
                 x_3 = np.asarray(x_2)
-                x.append(x_3)
-    
+                x.append(x_3)'''
+    x = []
+    for feature in featurevalues:
+        x_1 = currentdf[feature]
+        x_2 = x_1.tolist()
+        x_3 = np.asarray(x_2)
+        x.append(x_3)
+
     #Remove array structure if input is not multiple!
     if len(x) == 1:
         x = x[0]
-
+    targetvalues = list(filter(lambda x:x.startswith("target"),df.columns))
     y = currentdf["target"]
     
     return {"x":x,"y":y}
+
+
+def getTransformedData(project_id,qualifier=1):
+    project = get_object_or_404(Project, pk=project_id)
+    #1 = mysite.dataoperation.TRAIN_DATA_QUALIFIER
+    train_df = mysite.dataoperation.readfromcassandra(project_id,qualifier)
+    train_df = mysite.dataoperation.transformdataframe(project,train_df)
+    train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
+    train_df3 = train_df1
+    return train_df3

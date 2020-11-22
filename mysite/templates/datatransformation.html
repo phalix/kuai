@@ -41,6 +41,47 @@
                     {% endautoescape %}
                 </div>
               </div>
+              <div class="card card-default">
+                <div class="card-header card-header-border-bottom">
+                  <h2>Define UDF</h2>
+                </div>
+                <div class="card-body">
+                  <p> Select Input Column from Dataframe <select
+                        class="js-example-basic-multiple form-control"
+                        name="columns"
+                        multiple="multiple"
+                        data-select2-id="columns1"
+                        tabindex="-1"
+                        aria-hidden="true"
+                      >
+                        //{% for c in columns %}
+                        <option value="{{ c }}">{{c}}</option>
+                        //{% endfor %}
+                      </select></p> 
+                  <p>TextArea Python Code
+                  <textarea name="udfcode1" class="form-control" id="exampleFormControlTextarea1" rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;" ></textarea>
+                  </p>
+                  <p>Multiple Selection of DataType
+                  <select
+                        class="js-example-basic-multiple form-control"
+                        name="columns"
+                        multiple="multiple"
+                        data-select2-id="output1"
+                        tabindex="-1"
+                        aria-hidden="true"
+                      >
+                        //{% for c in types %}
+                        <option value="{{ c }}">{{c}}</option>
+                        //{% endfor %}
+                      </select>
+                  </p>
+                  <br/>
+                  <p>
+                  <button type="button" class="btn btn-block btn-primary">Add</button>
+                  <button type="button" class="btn btn-block btn-warning">Remove</button><p/>
+                  <p>TODO: On creation; create preselect</p>
+                  </div>
+                </div>
             <div class="card card-default">
                 <div class="card-header card-header-border-bottom">
                   <h2>Apply Transformation</h2>
@@ -57,6 +98,7 @@
                     </form>
                   </div>
                 </div>
+                
                 <div class="card card-default">
                   <div class="card-header card-header-border-bottom">
                     <h2>Target DataFrame</h2>
@@ -110,36 +152,7 @@
 
     </div>
   </div>
-
-  <script src="/assets/plugins/jquery/jquery.min.js"></script>
-
-
-
-<script src="/assets/plugins/slimscrollbar/jquery.slimscroll.min.js"></script>
-<script src="/assets/plugins/jekyll-search.min.js"></script>
-
-
-
-<script src="/assets/plugins/charts/Chart.min.js"></script>
-  
-
-
-<script src="/assets/plugins/jvectormap/jquery-jvectormap-2.0.3.min.js"></script>
-<script src="/assets/plugins/jvectormap/jquery-jvectormap-world-mill.js"></script>
-  
-
-
-<script src="/assets/plugins/daterangepicker/moment.min.js"></script>
-<script src="/assets/plugins/daterangepicker/daterangepicker.js"></script>
-  
-
-
-<script src="/assets/plugins/toastr/toastr.min.js"></script>
-  
-
-
-<script src="/assets/js/sleek.bundle.js"></script>
-
+{% include "scripts.html" %}
 </body>
 
 </html>

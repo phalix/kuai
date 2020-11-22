@@ -107,12 +107,29 @@
                         //{% endfor %}
                       </select>
                     </p>
-
-                    <input name="function" class="form-control" placeholder="relplot"></input>
-
+                    <p class="mb-5"> Select Function
+                      <select
+                        class="js-example-basic-multiple form-control"
+                        name="function"
+                        
+                        data-select2-id="function"
+                        tabindex="-1"
+                        aria-hidden="true"
+                      >
+                        //{% for key,value in plotfunctions.items %}
+                        <optgroup label="{{ key }}">
+                          //{% for func in value %}
+                          <option value="{{ func }}">{{func}}</option>
+                          //{% endfor %}
+                        </optgroup>
+                        
+                        //{% endfor %}
+                      </select>
+                    </p>
                     
                     <img id="123"/>
                     <button type="button" class="mb-1 btn btn-block btn-primary" id="definition">Create</button>
+                    <button type="button" class="mb-1 btn btn-block btn-warning" id="savedefinition">Save</button>
 
                     <script type="text/javascript">
                       var getcharturl =
