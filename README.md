@@ -1,4 +1,4 @@
-# kuai
+# kuAI [ka̠i]
 ## This software uses:
 Django (https://www.djangoproject.com/)  
 Keras/TensorFlow (https://www.tensorflow.org/)  
