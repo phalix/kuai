@@ -1,10 +1,12 @@
-# kuai
+# kuAI [ka̠i]
 ## This software uses:
 Django (https://www.djangoproject.com/)  
 Keras/TensorFlow (https://www.tensorflow.org/)  
 Spark (https://spark.apache.org/)  
 MongoDB (https://www.mongodb.com/de)  
 Sleek Dashboard (https://sleek.tafcoder.com/)  
+Seaborn (https://seaborn.pydata.org/)  
+Atlas Dessa (https://www.atlas.dessa.com/)  
 and everything is programmed in Python.  
 
 Integration with https://www.atlas.dessa.com/ or https://www.openml.org/
@@ -28,10 +30,18 @@ pip install pandas Django pyspark tensorflow keras notebook ipywidgets seaborn m
 
 ## runapp
 run "python manage.py runserver"
+## Warning
+Before deploying you should change the SECRET_KEY in mysite/settings.py, e.g. with https://djecrety.ir/  
 
-## todo
+## TODO
 * rename from mysite to kuai
-* generate dimensions automatically for basic types
 * get type from dataframe schema!
-* integrate experiment engine
 * write more tests
+* create docker container for this
+* create udf assistant
+* store diagram definitions and recreate
+* support multiple output
+* enable asynchronous background processes for data transformation
+* permanently store in database and restore
+* support GANs and Auto Encoders through configurable Experiments
+
