@@ -784,38 +784,17 @@ def buildFeatureVector(dataframe,features,target):
 def getXandYFromDataframe(df,project):
     import numpy as np
     featurevalues = list(filter(lambda x:x.startswith("feature"),df.columns))
-
-    currentdf = df.toPandas()
-    
-    '''
-    result = getfeaturedimensionbyproject(project.features.all())
-    x = []
-    if 1 in result:
-            x_1 = currentdf['features_array']
-            x_2 = x_1.tolist()
-            x_3 = np.asarray(x_2)
-            x.append(x_3)
-
-    for (key,value) in result.items():
-        if key > 1:
-            for dim in value.keys():
-                x_1 = currentdf['feature_'+str(dim)]
-                x_2 = x_1.tolist()
-                x_3 = np.asarray(x_2)
-                x.append(x_3)'''
     x = []
     for feature in featurevalues:
-        x_1 = currentdf[feature]
-        x_2 = x_1.tolist()
-        x_3 = np.asarray(x_2)
+        list_x_3 = df.select(feature).rdd.map(lambda r : r[0]).collect()
+        x_3 = np.array(list_x_3)
         x.append(x_3)
-
     #Remove array structure if input is not multiple!
     if len(x) == 1:
         x = x[0]
     targetvalues = list(filter(lambda x:x.startswith("target"),df.columns))
-    y = currentdf["target"]
-    
+    y = df.select("target").rdd.map(lambda r : r[0]).collect()
+    y = np.array(y)
     return {"x":x,"y":y}
 
 
