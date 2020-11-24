@@ -7,6 +7,7 @@ MongoDB (https://www.mongodb.com/de)
 Sleek Dashboard (https://sleek.tafcoder.com/)  
 Seaborn (https://seaborn.pydata.org/)  
 Atlas Dessa (https://www.atlas.dessa.com/)  
+Apache Arrow (https://arrow.apache.org/)  
 and everything is programmed in Python.  
 
 Integration with https://www.atlas.dessa.com/ or https://www.openml.org/
