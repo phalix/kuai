@@ -34,6 +34,8 @@ run "python manage.py runserver"
 Before deploying you should change the SECRET_KEY in mysite/settings.py, e.g. with https://djecrety.ir/  
 
 ## TODO
+* Make Jobs for Dessa Configurable!
+* Make a configuration of Dessa Jobs
 * rename from mysite to kuai
 * get type from dataframe schema!
 * write more tests
