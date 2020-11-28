@@ -28,6 +28,7 @@ urlpatterns = [
     #by projectid
     path('dashboard/<int:project_id>/', dashboard.index), 
     path('saveexecutionmodel/<int:project_id>/', dashboard.saveexecutionmodel, name='saveexecutionmodel'),
+    path('createOrUpdateUDF/<int:project_id>/', dataoperation.createOrUpdateUDF, name='createOrUpdateUDF'),
     path('open/<int:project_id>/', project.index2), 
     path('openproject/<int:project_id>/', dashboard.index,name="openproject"),
     path('datasetup/<int:project_id>/', dataoperation.index),

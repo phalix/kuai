@@ -29,7 +29,7 @@ def modelsummary(request,project_id):
     # add feature transition!
     # feature extraction
     # model training
-    template = loader.get_template('modelsummary.html')
+    template = loader.get_template('ai/modelsummary.html')
     
     model = buildmodel(project_id,'mse',['accuracy'])
     project = get_object_or_404(Project, pk=project_id)
@@ -68,7 +68,7 @@ def modelsummary(request,project_id):
 
 
 def index(request,project_id):
-    template = loader.get_template('neuralnetworksetup.html')
+    template = loader.get_template('ai/neuralnetworksetup.html')
     project = get_object_or_404(Project, pk=project_id)
     nn = None
     layers = None
@@ -303,7 +303,7 @@ def aiupload(request,project_id):
     return HttpResponseRedirect('/ai/'+str(project_id))
 
 def parameter(request,project_id):
-    template = loader.get_template('optimizer.html')
+    template = loader.get_template('ai/optimizer.html')
     project = get_object_or_404(Project, pk=project_id)
     context = {
         "project" : project,
@@ -316,7 +316,7 @@ def parameter(request,project_id):
     return HttpResponse(template.render(context, request))
 
 def optimizer(request,project_id):
-    template = loader.get_template('neuralnetworkoptandout.html')
+    template = loader.get_template('ai/neuralnetworkoptandout.html')
     project = get_object_or_404(Project, pk=project_id)
     optimizername = ""
     availablelayers = []

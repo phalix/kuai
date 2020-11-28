@@ -31,6 +31,15 @@ CV_DATA_QUALIFIER = 3
 
 displaylimit = 10
 
+def createOrUpdateUDF(request,project_id):
+    columns = request.POST['columns']
+    udfcode = request.POST['udfcode1']
+    outputtype = request.POST['outputtype']
+    
+    import json
+    return HttpResponse(json.dumps({}))
+
+
 
 def evalUDFFunction(request,project_id):
     func = request.GET['func']
@@ -122,7 +131,7 @@ def analysisbychart(request,project_id):
 
 
 def analysis(request,project_id):
-    template = loader.get_template('dataanalysis.html')
+    template = loader.get_template('data/dataanalysis.html')
     project = get_object_or_404(Project, pk=project_id)
     
     df = readfromcassandra(project_id,1)
@@ -165,7 +174,7 @@ def analysis(request,project_id):
 
 
 def index(request,project_id):
-    template = loader.get_template('datasetup.html')
+    template = loader.get_template('data/datasetup.html')
     project = get_object_or_404(Project, pk=project_id)
     context = {
         "project" : project,
@@ -180,7 +189,7 @@ def index(request,project_id):
 
 
 def setuptransformdata(request,project_id):
-    template = loader.get_template('datatransformation.html')
+    template = loader.get_template('data/datatransformation.html')
     project = get_object_or_404(Project, pk=project_id)
     df = readfromcassandra(project_id,1).limit(displaylimit).cache()
     
@@ -313,7 +322,7 @@ def uploaddata(request,project_id):
 
 def dataclassification(request,project_id):
     
-    template = loader.get_template('dataclassification.html')
+    template = loader.get_template('data/dataclassification.html')
     project = get_object_or_404(Project, pk=project_id)
     nn = None
     if project.neuralnetwork:

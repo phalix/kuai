@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  {% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+  
+  <script>
+    NProgress.configure({ showSpinner: false });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+  
+  <div id="toaster"></div>
+  
+
+  <div class="wrapper">
+    {% include "includes/leftsidebar.html" %}
+
+    
+
+    <div class="page-wrapper">
+                
+                {% include "includes/header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">		
+          <div class="col-lg">
+            <form action="{% url 'setupdataclassifcation' project.pk %}" method='POST'>
+              {% csrf_token %}
+            <div class="card card-default">
+                <div class="card-header card-header-border-bottom">
+                  <h2>Feature and Target Selection</h2>
+                </div>
+                <div class="card-body">
+                    
+                    
+                      
+                      
+                      <table class="table">
+                          <thead>
+                            <tr>
+                              <th scope="col">#</th>
+                              <th scope="col">Name</th>
+                              <th scrope="col">Example</th>
+                              <th scope="col">Type</th>
+                              <!--<th scrope="col">Reformat</th>-->
+                              <th scope="col">Transformation Method</th>
+                              <th scrope="col">Transition Preview</th>
+                              <th scope="col">Set Dimensions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {% for o in types %}
+                            <tr>
+                              <th scope="row">
+                                <input type="checkbox" {% if o.0 in featurenames  %} checked="checked" {% endif %} {% ifequal o.0 target  %} checked="checked" {% endifequal %} name="feature_{{o.0}}">
+                              </th>
+                              <td>{{o.0}}</td>
+                              <td>
+                                {% for key,value in firstrow_transformed.items %}
+                                  {% ifequal o.0 key %}{{value}}{% endifequal %}
+                                {% endfor %}
+                              </td>
+                              <td>
+                                <input value="{{o.1}}" name="fttype_{{o.0}}" class="form-control" readonly/>
+                                
+                              </td>
+                              <!--<td>
+                                <input class="form-control input-lg" type="text" placeholder="Datatype Reformat Rule" name="ftreformat_{{o.0}}" value="{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.reformat}}{% endifequal %}{% endfor %}"/>
+                              </td>-->
+                              <td>
+                                
+                                <select class="form-control" name="fttransition_{{o.0}}">
+                                  <option value="0">None</option>
+                                  {% for key,value in pipelines.items %}
+                                    
+                                      <option
+                                      {% for feat in features %}
+                                        {% ifequal feat.fieldname o.0%}
+                                          {% ifequal feat.transition value.0%}
+                                            selected=True
+                                          {% endifequal%}
+                                        {% endifequal %}
+                                      {% endfor %}
+                                      {% ifequal target o.0%}
+                                        {% ifequal targetfeature.transition value.0%}
+                                          selected=True  
+                                        {% endifequal %}
+                                      {% endifequal %}
+                                      value="{{value.0}}">{{value.1}}</option
+                                        >
+                                    
+                                  {% endfor %}
+                                </select>
+                              </td>
+                              <td>
+                                {% for key,value in firstrow_indexed.items %}
+                                  {% ifequal o.0 key %}{{value}}{% endifequal %}
+                                {% endfor %}
+                              </td>
+                              <td>
+                                <input name="dimension_{{o.0}}" class="form-control" {% ifequal o.2 1 %}readonly{% endifequal %} value="{% ifequal o.2 1 %}{{o.2}}{% else %}{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.dimension}}{% endifequal %}{% endfor %}{% ifequal o.0 target  %}{{targetfeature.dimension}}{% endifequal %}{% endifequal %}" />
+                              </td>
+                              
+                            </tr>
+                            <tr>
+                              <td colspan=7>
+                                <input class="form-control input-lg" type="text" placeholder="Datatype Reformat Rule" name="ftreformat_{{o.0}}" value="{% for feat in features %}{% ifequal feat.fieldname o.0%}{{feat.reformat}}{% endifequal %}{% endfor %}{% ifequal o.0 target  %} {{targetfeature.reformat}} {% endifequal %}"/>
+                              </td>
+                            </tr>
+                            {% endfor %}
+                          </tbody>
+                        </table>
+                        
+
+                      {% for o in columns %}
+
+                      <!--<label class="control control-checkbox">{{o}}
+													<input type="checkbox" {% if o in features %} checked="checked" {% endif %} name="feature_{{o}}">
+													<div class="control-indicator"></div>
+												</label>-->
+                      {% endfor %}
+                      
+                      
+                    
+                  </div>
+                </div>
+
+                
+
+
+                <div class="card card-default">
+                  <div class="card-header card-header-border-bottom">
+                    <h2>DataFrame Preview</h2>
+                  </div>    
+                  
+                  <div id="dataframepreview" class="card-body">
+                    {% autoescape off %}
+                      {{dataframe}}
+                    {% endautoescape %}
+                  </div>
+                </div>
+
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Feature Vector</h2>
+              </div>
+              <div class="card-body">
+                
+                
+                <table>
+                <tr><td></td>
+                  {% for value in features %}
+                    
+                  <td style="padding:5px">{{value.fieldname}}</td>
+                {% endfor%}
+              </tr>
+                  <tr><td></td>
+                    {% for value in featurevector %}
+                    <td  style="padding:5px">{{value}}</td>
+                    {% endfor %}
+                  </tr>
+                  
+                  
+                </table>
+              </div>
+            </div> 
+            
+            
+            
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Target Selection</h2>
+              </div>    
+              <div class="card-body">
+                
+                <table class="table">
+                  <thead>
+                    <tr>
+                      
+                      <th scope="col">Selection</th>
+                      <th scrope="col">Example</th>
+                      <th scope="col">Transition Preview</th>
+                      
+                      
+                    </tr>
+                  </thead>
+                  <tbody>
+                    
+                    <tr>
+                      
+                      <td>
+                        <div class="form-group">
+                        <select class="form-control" id="targetselection" name="targetselection">
+                          {% for o in columns %}
+                          <option {% if target == o %} selected="selected" {% endif %}>{{o}}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </td>
+                      <td>
+                        {% for key,value in firstrow_transformed.items %}
+                          {% ifequal target key %}{{value}}{% endifequal %}
+                        {% endfor %}
+                      </td>
+                      
+                      
+                      <td>
+                        {% for key,value in firstrow_indexed.items %}
+                          {% ifequal target key %}{{value}}{% endifequal %}
+                        {% endfor %}
+                      </td>
+                     
+                      
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+              
+            </div>
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>DataFrame Preview</h2>
+              </div>    
+              
+              <div id="dataframepreview" class="card-body">
+                {% autoescape off %}
+                  {{dataframe_fv_tar}}
+                {% endautoescape %}
+              </div>
+            </div>
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Commit Changes</h2>
+              </div>    
+              <div class="card-body">
+                <button type="submit" class="btn btn-primary">Commit</button>
+              </div>
+              
+            </div>
+          </form>
+                  
+                  
+
+
+						
+
+						
+
+						
+
+						
+</div>
+
+        
+
+
+      </div>
+
+                <footer class="footer mt-auto">
+            <div class="copyright bg-white">
+              <p>
+                &copy; <span id="copy-year">2019</span> Copyright Sleek Dashboard Bootstrap Template by
+                <a
+                  class="text-primary"
+                  href="http://www.iamabdus.com/"
+                  target="_blank"
+                  >Abdus</a
+                >.
+              </p>
+            </div>
+            <script>
+                var d = new Date();
+                var year = d.getFullYear();
+                document.getElementById("copy-year").innerHTML = year;
+            </script>
+          </footer>
+
+    </div>
+  </div>
+ 
+ {% include "includes/scripts.html"%}
+
+</body>
+
+</html>

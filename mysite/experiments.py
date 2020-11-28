@@ -2,34 +2,14 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
 from django.shortcuts import render,get_object_or_404
-
 from datetime import datetime
-
 from django import forms
-
 from mysite.models import Project,Experiment,Result,Sample,Metrics,Loss,LayerWeights
-
 import mysite.neuralnetwork
-
 import mysite.dataoperation
-
-
 import asyncio
 import threading
-
 import tensorflow as tf
-
-def index(request,project_id):
-    template = loader.get_template('neuralnetworksetup.html')
-    project = get_object_or_404(Project, pk=project_id)
-    context = {
-        "project" : project,
-        "project_id" : project_id,
-        "menuactive":5,
-
-    }
-    
-    return HttpResponse(template.render(context, request))
 
 def createnewexperimentinproject(project):
     exp = Experiment()
@@ -64,7 +44,7 @@ def experimentsetup(request,project_id,experiment_id):
 
     #get callbacks etc.!
 
-    template = loader.get_template('experiment.html')
+    template = loader.get_template('experiments/experiment.html')
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
@@ -321,7 +301,7 @@ def run(request,project_id,experiment_id):
     #TODO: just add a button to run the experiments
     #TODO: make epochs configurable
     #TODO: make it possible to cancel experiment
-    template = loader.get_template('runexperiment.html')
+    template = loader.get_template('experiments/runexperiment.html')
     project = get_object_or_404(Project, pk=project_id)
     experiment_id = getlatestexperiment(project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
@@ -401,7 +381,7 @@ def deleteExperimentData(request,project_id,experiment_id):
     return HttpResponse(json.dumps({}), content_type='application/json')
 
 def parameter(request,project_id):
-    template = loader.get_template('parameterfixing.html')
+    template = loader.get_template('experiments/parameterfixing.html')
     project = get_object_or_404(Project, pk=project_id)
     context = {
         "project" : project,

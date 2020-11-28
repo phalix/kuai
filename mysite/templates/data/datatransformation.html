@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+    <script>
+        NProgress.configure({
+            showSpinner: false
+        });
+        NProgress.start();
+    </script>
+
+    <div class="mobile-sticky-body-overlay"></div>
+
+
+    <div id="toaster"></div>
+
+
+    <div class="wrapper">
+
+        {% include "includes/leftsidebar.html" %}
+
+
+
+        <div class="page-wrapper">
+            <!-- Header -->
+            {% include "includes/header.html" %}
+
+
+            <div class="content-wrapper">
+                <div class="content">
+
+                    <div class="card card-default" id="dataframepreview">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Source DataFrame</h2>
+                        </div>
+                        <div class="card-body">
+
+                            {% autoescape off %} {{dataframe}} {% endautoescape %}
+                        </div>
+                        <div class="card-footer d-flex flex-wrap bg-white">
+                            <button id="addudf" type="button" class="btn btn-block btn-primary">Add UDF</button>
+                        </div>
+                        <script>
+                            $('#addudf').click(
+                                function () {
+                                    //newudfinput = $('#originaludfinput').clone()
+                                    newudfinput = $.parseHTML(
+                                        '<div id="originaludfinput" class="card card-default">                <div class="card-header card-header-border-bottom">                  <h2>Define UDF</h2>                </div>                <div class="card-body">                  <p> Select Input Column from Dataframe <select                        class="js-example-basic-multiple form-control"                        name="columns"                        multiple="multiple"                        data-select2-id="columns1"                        tabindex="-1"                        aria-hidden="true"                      >                        //{% for c in columns %}                        <option value="{{ c }}">{{c}}</option>                        //{% endfor %}                      </select></p>                   <p>TextArea Python Code                  <textarea name="udfcode1" class="form-control" id="exampleFormControlTextarea1" rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;" ></textarea>                                    </p>                  <p>Multiple Selection of DataType                  <select                        class="js-example-basic-multiple form-control"                        name="columns"                        multiple="multiple"                        data-select2-id="output1"                        tabindex="-1"                        aria-hidden="true"                      >                        //{% for c in types %}                        <option value="{{ c }}">{{c}}</option>                        //{% endfor %}                      </select>                  </p>                  <br/>                  <p>                                                      <p>TODO: On creation; create preselect</p>                  </div>                  <div class="card-footer d-flex flex-wrap bg-white">                              <button type="button" class="btn btn-block btn-warning">Remove</button><p/>                            </div>                </div>'
+                                        );
+                                    $(newudfinput).find('[data-select2-id="output1"]').attr('data-select2-id',
+                                        'ooxxx')
+                                    $(newudfinput).find('[data-select2-id="columns1"]').attr('data-select2-id',
+                                        'ccxxx')
+                                    $('#dataframepreview').after(newudfinput)
+                                    $('[data-select2-id="ooxxx"]').select2()
+                                    $('[data-select2-id="ccxxx"]').select2()
+                                }
+                            )
+                        </script>
+                    </div>
+                    <div id="originaludfinput" class="card card-default">
+                        <form id="originaludfinputForm" enctype="multipart/form-data"
+                            action="{% url 'transformdata' project.pk %}" method='POST'>
+                            {% csrf_token %}
+                            <div class="card-header card-header-border-bottom">
+                                <h2>Define UDF</h2>
+                            </div>
+                            <div class="card-body">
+                                <p> Select Input Column from Dataframe <select
+                                        class="js-example-basic-multiple form-control" name="columns"
+                                        multiple="multiple" data-select2-id="columns1" tabindex="-1" aria-hidden="true">
+                                        //{% for c in columns %}
+                                        <option value="{{ c }}">{{c}}</option>
+                                        //{% endfor %}
+                                    </select></p>
+                                <p>TextArea Python Code
+                                    <div id="container_1" class="monacoeditor notready" style="height:200px"></div>
+                                </p>
+                                <p>Multiple Selection of DataType
+                                    <select class="js-example-basic-multiple form-control" name="outputtype"
+                                        multiple="multiple" data-select2-id="output1" tabindex="-1" aria-hidden="true">
+                                        //{% for c in types %}
+                                        <option value="{{ c }}">{{c}}</option>
+                                        //{% endfor %}
+                                    </select>
+                                </p>
+                                <br />
+                                <p>TODO: On creation; create preselect</p>
+                            </div>
+                            <div class="card-footer d-flex flex-wrap bg-white">
+                                <button type="button" id="saveandtestudffunction" class="btn btn-block btn-primary">Add</button>
+                                <button type="button" class="btn btn-block btn-warning">Remove</button>
+                                <br/>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card card-default">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Apply Transformation</h2>
+                        </div>
+                        <div class="card-body">
+                            <form enctype="multipart/form-data" action="{% url 'transformdata' project.pk %}"
+                                method='POST'>
+                                {% csrf_token %}
+                                <label for="exampleFormControlTextarea1">Define UDFs</label>
+                                <textarea name="udfclasses" class="form-control" id="exampleFormControlTextarea1"
+                                    rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;"
+                                    value="{{udfclasses}}">{{udfclasses}}</textarea>
+                                <label for="exampleFormControlInput1">Provide Select Statement</label>
+                                <input type="text" name="selectstatement" class="form-control"
+                                    id="exampleFormControlInput1" placeholder='select("*")' value="{{selectstatement}}">
+                                <br />
+                                <button type="submit" class="btn btn-primary">Transform</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Target DataFrame</h2>
+                        </div>
+                        <div class="card-body">
+
+                            {% autoescape off %} {{dataframe2}} {% endautoescape %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer mt-auto">
+                <div class="copyright bg-white">
+                    <p>
+                        &copy; <span id="copy-year">2019</span> Copyright Sleek Dashboard Bootstrap Template by
+                        <a class="text-primary" href="http://www.iamabdus.com/" target="_blank">Abdus</a>.
+                    </p>
+                </div>
+                <script>
+                    var d = new Date();
+                    var year = d.getFullYear();
+                    document.getElementById("copy-year").innerHTML = year;
+                </script>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        function setupMonacoEditor() {
+            alleditors = $(".monacoeditor, .notready")
+            alleditors.each(
+                function(){
+                    this.editor = monaco.editor.create(this, {
+                    value: "return output",
+                    language: "python",
+                    automaticLayout: true
+                });
+                }
+            )
+            alleditors.removeClass("notready")
+            
+        }
+        if (!monaco) {
+            setTimeout(setupMonacoEditor, 200)
+        } else {
+            setupMonacoEditor()
+        }
+
+        $("#saveandtestudffunction").click(function (e) {
+            var udfvalue = $('#container_1')[0].editor.getValue()
+
+            $("#exampleFormControlTextarea_1").val(udfvalue)
+
+            $.post("{% url 'createOrUpdateUDF' project.pk %}", 
+                {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    "udfcode1": udfvalue,
+                    "columns": $("[name=columns]").select2('data').map(x => x.text).join(","),
+                    "outputtype":$("[name=outputtype]").select2('data').map(x => x.text).join(",")
+                },
+                function (data) {
+                    console.log(data.message);
+                    
+                });
+            e.preventDefault();
+        });
+    </script>
+
+
+    {% include "includes/scripts.html" %}
+</body>
+
+</html>
