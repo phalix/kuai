@@ -61,6 +61,7 @@
                             )
                         </script>
                     </div>
+                    <!--
                     <div id="originaludfinput" class="card card-default">
                         <form id="originaludfinputForm" enctype="multipart/form-data"
                             action="{% url 'transformdata' project.pk %}" method='POST'>
@@ -97,6 +98,7 @@
                             </div>
                         </form>
                     </div>
+                    -->
                     <div class="card card-default">
                         <div class="card-header card-header-border-bottom">
                             <h2>Apply Transformation</h2>
@@ -107,8 +109,9 @@
                                 {% csrf_token %}
                                 <label for="exampleFormControlTextarea1">Define UDFs</label>
                                 <textarea name="udfclasses" class="form-control" id="exampleFormControlTextarea1"
-                                    rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;"
+                                    rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;visibility:hidden;display:None"
                                     value="{{udfclasses}}">{{udfclasses}}</textarea>
+                                <div id="udfclassesmonacoeditor" class="monacoeditor notready" style="height:200px"></div>
                                 <label for="exampleFormControlInput1">Provide Select Statement</label>
                                 <input type="text" name="selectstatement" class="form-control"
                                     id="exampleFormControlInput1" placeholder='select("*")' value="{{selectstatement}}">
@@ -130,24 +133,16 @@
                 </div>
             </div>
 
-            <footer class="footer mt-auto">
-                <div class="copyright bg-white">
-                    <p>
-                        &copy; <span id="copy-year">2019</span> Copyright Sleek Dashboard Bootstrap Template by
-                        <a class="text-primary" href="http://www.iamabdus.com/" target="_blank">Abdus</a>.
-                    </p>
-                </div>
-                <script>
-                    var d = new Date();
-                    var year = d.getFullYear();
-                    document.getElementById("copy-year").innerHTML = year;
-                </script>
-            </footer>
+            {% include "includes/footer.html" %}
 
         </div>
     </div>
 
     <script>
+        $("form").submit(function(e){
+            value = $("#udfclassesmonacoeditor")[0].editor.getModel().getValue()
+            $("[name=udfclasses]").val(value)
+        })
         function setupMonacoEditor() {
             alleditors = $(".monacoeditor, .notready")
             alleditors.each(
@@ -160,6 +155,9 @@
                 }
             )
             alleditors.removeClass("notready")
+            value = $("[name=udfclasses]").val()
+            $("#udfclassesmonacoeditor")[0].editor.getModel().setValue(value)
+
             
         }
         if (!monaco) {
