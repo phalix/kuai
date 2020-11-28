@@ -73,5 +73,7 @@ urlpatterns = [
     path('startExperimentsPerProject/<int:project_id>/<int:experiment_id>/', experiments.startExperimentsPerProject, name='start_experiment'),
     path('stopExperimentsPerProject/<int:project_id>/<int:experiment_id>/', experiments.stopExperimentsPerProject, name='stop_experiment'),
     path('deleteExperimentsPerProject/<int:project_id>/<int:experiment_id>/', experiments.deleteExperimentData, name='delete_experiment'),
+    path('writetodessa/<int:project_id>/<int:experiment_id>/', experiments.writetodessa, name='writetodessa'),
+
 
 ]

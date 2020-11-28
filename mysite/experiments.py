@@ -148,8 +148,12 @@ def retrieveExperimentStats(project_id):
     return expDict
 
 
-def prepareModel(project,experiment,lossfunction,metrics):
-    
+def prepareModel(project,experiment):
+    cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
+    metrics = []
+    for m in cur_metrics:
+        metrics.append(m.name)
+    lossfunction = experiment.loss.name
     model = mysite.neuralnetwork.getcurrentmodel(project.id,lossfunction,metrics)
     #restore weights
     loadmodelweights(experiment.id,model)
@@ -180,13 +184,14 @@ def runexperiment(project_id,experiment_id):
         currentepoch = 0
     
     
-    model = prepareModel(project,exp,lossfunction,metrics)
+    model = prepareModel(project,exp)
     saveModelInProjectFolder(model,project_id)
     
     
     train_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
     test_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
+    saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
 
 
     submitDessaJob(project_id)
@@ -354,10 +359,8 @@ active = False
 
 def startExperimentsPerProject(request,project_id,experiment_id):
     import json
-    active = True
-    
+    #active = True
     experiment = get_object_or_404(Experiment, pk=experiment_id)
-    print("hi")
     if True or experiment.status in (0,3):
         startexperiment(project_id,experiment.id)
     experiment.status = 1
@@ -367,7 +370,7 @@ def startExperimentsPerProject(request,project_id,experiment_id):
 
 def stopExperimentsPerProject(request,project_id,experiment_id):
     import json
-    active = False
+    #active = False
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     experiment.status = 2
     experiment.save()
@@ -426,6 +429,26 @@ def loadmodelweights(experiment_id,model):
                 print(layer.name)
             traceback.print_exc(file=sys.stdout)
 
+
+def writetodessa(request,project_id,experiment_id):
+    import json
+    project = get_object_or_404(Project, pk=project_id)
+    experiment = get_object_or_404(Experiment, pk=experiment_id)
+    
+    createProjectDessa(project_id)
+
+    model = prepareModel(project,experiment)
+    saveModelInProjectFolder(model,project_id)
+
+    train_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+    test_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
+    saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
+    saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
+
+
+    return HttpResponse(json.dumps({}), content_type='application/json')
+
+
 def getMainDir():
     return "D:\\Entwicklung\kuai" #TODO: be configurable
 
@@ -439,10 +462,10 @@ def createProjectDessa(project_id):
     import os
     import subprocess
     import foundations
-    projectdir = "D:\\Entwicklung\kuai\projects" #TODO: be configurable
     maindir = getMainDir()
+    projectdir = getMainDir()+"\\projects"
     os.chdir(projectdir)
-    path = os.getcwd()
+    
     if str(project_id) not in os.listdir():
         #os.mkdir(str(project_id))
         #os.chdir(str(project_id))
@@ -453,7 +476,6 @@ def createProjectDessa(project_id):
         os.mkdir("data")
     if "model" not in os.listdir():
         os.mkdir("model")
-    #proc = subprocess.Popen(['python', 'main.py'], stdout=subprocess.PIPE, shell=True)
     os.chdir(maindir)
 
 
@@ -461,12 +483,9 @@ def saveModelInProjectFolder(model,project_id):
     model.save(getProjectDir(project_id)+"\\model\\")
 
 def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
-    #dataframe.write.parquet(getProjectDataDir(project_id)+"\\"+str(qualifier)+".parquet")
     import os
-    #os.chdir(getProjectDataDir(project_id))
     dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"\\"+str(qualifier)+".parquet")
-    #os.chdir(getMainDir())
-
+    
 def submitDessaJob(project_id):
     try:
         import foundations

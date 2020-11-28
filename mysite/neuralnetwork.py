@@ -421,15 +421,18 @@ def getinputshape(project_id):
     inputs = {}
     project = get_object_or_404(Project, pk=project_id)
     cur_features = project.features.all()
-    inputshapes = mysite.dataoperation.getfeaturedimensionbyproject(cur_features)
+    #inputshapes = mysite.dataoperation.getfeaturedimensionbyproject(cur_features)
+    inputshapes = mysite.dataoperation.getinputschema(project_id)
     idx = 1
     for (key,value) in inputshapes.items():
         
-        for (k,v) in value.items():
-            name=("Input"+str(idx)+"_"+str(k)).replace(" ","")
-            inputs[idx] = keras.Input(shape=v,name=name)
-            idx = idx + 1
-    
+        #for (k,v) in value.items():
+            #name=("Input"+str(idx)+"_"+str(k)).replace(" ","")
+            #inputs[idx] = keras.Input(shape=v,name=name)
+            #idx = idx + 1
+        name=("Input"+str(idx)+"_"+str(key)).replace(" ","")
+        inputs[idx] = keras.Input(shape=value,name=name)
+        idx = idx + 1
     return inputs
 
 

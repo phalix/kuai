@@ -110,8 +110,8 @@ def analysisbychart(request,project_id):
     
     project = get_object_or_404(Project, pk=project_id)
     
-    df = readfromcassandra(project_id,1)
-    df2 = transformdataframe(project,df)
+    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
 
     #assert x in df2.columns
     #assert y in df2.columns
@@ -134,10 +134,20 @@ def analysis(request,project_id):
     template = loader.get_template('data/dataanalysis.html')
     project = get_object_or_404(Project, pk=project_id)
     
-    df = readfromcassandra(project_id,1)
-    df2 = transformdataframe(project,df)
-
+    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    df_test = readfromcassandra(project_id,TEST_DATA_QUALIFIER)
+    df_cv = readfromcassandra(project_id,CV_DATA_QUALIFIER)
+    print(df.count())
+    print(df_test.count())
+    print(df_cv.count())
+    df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
+    df2_test = transformdataframe(project,df_test,TEST_DATA_QUALIFIER)
+    df2_cv = transformdataframe(project,df_cv,CV_DATA_QUALIFIER)
+    
     dfdescription = df2.describe().toPandas().to_html()
+    dfdescription_test = df2_test.describe().toPandas().to_html()
+    dfdescription_cv = df2_cv.describe().toPandas().to_html()
+
     if project and project.target and project.target.fieldname:
         target = project.target.fieldname
     else:
@@ -164,6 +174,8 @@ def analysis(request,project_id):
         "projects": Project.objects.all(),
         "menuactive":3,
         "dfdescription":dfdescription,
+        "dfdescription_test":dfdescription_test,
+        "dfdescription_cv":dfdescription_cv,
         "distribution":distributionbytarget_html,
         "columns":columns,
         "plotfunctions":seabornfunctions,
@@ -191,10 +203,10 @@ def index(request,project_id):
 def setuptransformdata(request,project_id):
     template = loader.get_template('data/datatransformation.html')
     project = get_object_or_404(Project, pk=project_id)
-    df = readfromcassandra(project_id,1).limit(displaylimit).cache()
+    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     
-    df2 = transformdataframe(project,df)
-    
+    df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
+    df = df.drop('type')
     b = createDataFrameHTMLPreview(df)
 
     #Spark ResultTypes:
@@ -239,7 +251,7 @@ def transformdata(request,project_id):
     
     
     from pyspark.sql import SQLContext
-    spark = getsparksession(project.id,1)
+    spark = getsparksession(project.id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
     try:
         sqlContext.uncacheTable("transform_temp_table")
@@ -266,51 +278,33 @@ def uploaddata(request,project_id):
     testshare = float(request.POST['testshare'])
     cvshare = float(request.POST['cvshare'])
     subm_file = request.POST['folderfile']
+    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
+    
     if request.POST['datatype'] == "csv":
-        ###TODO: seperator must be configurable
-        #TODO: Change to spark read csv
-        df = pd.read_csv(subm_file,sep=";")
         
+        df = spark.read.format("csv").option("delimiter",";").option("header","true").load(subm_file)
         
-        if shuffle:
-            df = df.sample(frac=1)
-        lendf = len(df)
-        
-
-        msk1 = np.random.rand(lendf) < trainshare
-        msk2 = np.random.rand(lendf) < testshare/(1-trainshare) 
-        msk3 = np.random.rand(lendf) < cvshare/(1-trainshare+testshare)
-        
-        traindata = df[msk1]
-        testdata = df[msk2]
-        cvdata = df[msk3]
-        
-        savetocassandra(project_id,traindata,1)
-        savetocassandra(project_id,testdata,2)
-        savetocassandra(project_id,cvdata,3)
     elif request.POST['datatype'] == "img":
         from pyspark.ml.image import ImageSchema 
         
-        spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
         df = spark.read.format("image").option("dropInvalid", True).load(subm_file) 
-        #TODO: undo again
-        #if shuffle:
-        #    df = df.sample(frac=1)
-        splitted = df.randomSplit([trainshare,testshare,cvshare])
-        #TODO: undo again, just for testing or come up with a different solution
-        splitted = [df,df,df]
         
-        
-        
-        savetocassandra_writesparkdataframe(splitted[0])
-        spark = getsparksession(project_id,TEST_DATA_QUALIFIER)
-        
-        savetocassandra_writesparkdataframe(splitted[1])
-        spark = getsparksession(project_id,CV_DATA_QUALIFIER)
-        savetocassandra_writesparkdataframe(splitted[2])
+    if shuffle:
+        df = df.sample(1.0)
+    #lendf = df.count()    
+    
+    from pyspark.sql.functions import col,lit
+    traindata,testdata,cvdata = df.randomSplit([trainshare,testshare,cvshare])
+    traindata = traindata.withColumn('type',lit(TRAIN_DATA_QUALIFIER))
+    testdata = testdata.withColumn('type',lit(TEST_DATA_QUALIFIER))
+    cvdata = cvdata.withColumn('type',lit(CV_DATA_QUALIFIER))
 
+    data = traindata.union(testdata).union(cvdata)
+
+    savetocassandra(project_id,data,TRAIN_DATA_QUALIFIER)
+    
     from pyspark.sql import SQLContext
-    spark = getsparksession(project_id,1)
+    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
     try:
         sqlContext.uncacheTable("temp_table")
@@ -343,8 +337,8 @@ def dataclassification(request,project_id):
     else:
         target = ""
     
-    df = readfromcassandra(project_id,1)
-    df = transformdataframe(project,df).cache()
+    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    df = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
     
     
     from pyspark.sql import functions as F
@@ -475,10 +469,8 @@ def setupdataclassifcation(request,project_id):
 
 
 
-def savetocassandra(project_id,df,type=TRAIN_DATA_QUALIFIER):
-    spark = getsparksession(project_id,type)
-    sparkdf = spark.createDataFrame(df)
-    savetocassandra_writesparkdataframe(sparkdf)
+def savetocassandra(project_id,df,type):
+    savetocassandra_writesparkdataframe(df)
     
 
 def savetocassandra_writesparkdataframe(sparkdf):
@@ -486,14 +478,13 @@ def savetocassandra_writesparkdataframe(sparkdf):
     
 
 
-def readfromcassandra(project_id,type=TRAIN_DATA_QUALIFIER):
+def readfromcassandra(project_id,type):
     from pyspark.sql import SQLContext
     
-    spark = getsparksession(project_id,type)
+    spark = getsparksession(project_id,1)
     sqlContext = SQLContext(spark)
     try:
         df = sqlContext.sql("select * from temp_table")
-
     except:
         traceback.print_exc()
         df = spark.read.format("mongo").load()
@@ -569,17 +560,16 @@ def createSparkConfig(project_id,type):
     
     return conf
 
-def transformdataframe(project,dataframe,type=1):
+def transformdataframe(project,dataframe,type):
     #apply project.selectstatement
     #apply project.udfclasses
     from pyspark.sql import SQLContext
     from pyspark import StorageLevel
 
-    spark = getsparksession(project.id,type)
+    spark = getsparksession(project.id,1)
     sqlContext = SQLContext(spark)
     try:
         df2 = sqlContext.sql("select * from transform_temp_table")
-
     except:
         traceback.print_exc()
         
@@ -606,7 +596,6 @@ def transformdataframe(project,dataframe,type=1):
 
 def createDataFrameHTMLPreview(dataframe):
     from pyspark.sql.functions import substring
-    #dataframe.limit(displaylimit).toPandas().to_html()
     #remove id
     #cast to string, limit to 50
     removeid = filter(lambda x: x != "_id", dataframe.columns)
@@ -807,10 +796,12 @@ def getXandYFromDataframe(df,project):
     return {"x":x,"y":y}
 
 
-def getTransformedData(project_id,qualifier=1):
+def getTransformedData(project_id,qualifier):
     project = get_object_or_404(Project, pk=project_id)
     #1 = mysite.dataoperation.TRAIN_DATA_QUALIFIER
     train_df = mysite.dataoperation.readfromcassandra(project_id,qualifier)
+    train_df = train_df.filter(train_df.type == qualifier)
+    train_df = train_df.drop('type')
     train_df = mysite.dataoperation.transformdataframe(project,train_df)
     train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
     train_df3 = train_df1

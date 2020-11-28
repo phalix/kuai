@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  {% include "head.html" %}
+  {% include "includes/head.html" %}
 
 <body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
   
@@ -16,13 +16,13 @@
   
 
   <div class="wrapper">
-    {% include "leftsidebar.html" %}
+    {% include "includes/leftsidebar.html" %}
         
 
     
 
     <div class="page-wrapper">
-      {% include "header.html" %}
+      {% include "includes/header.html" %}
 
 
       <div class="content-wrapper">
@@ -44,6 +44,7 @@
                     var startUrl = "{% url 'start_experiment' project.pk experiment.pk %}"
                     var stopUrl = "{% url 'stop_experiment' project.pk experiment.pk %}"
                     var deleteUrl = "{% url 'delete_experiment' project.pk experiment.pk %}"
+                    var writeToDessaUrl = "{% url 'writetodessa' project.pk experiment.pk %}"
                     function stopExperiment(){
                       fetch(stopUrl).then()
                     }
@@ -52,6 +53,9 @@
                     }
                     function deleteExperiment(){
                       fetch(deleteUrl).then()
+                    }
+                    function writeToDessa(){
+                      fetch(writeToDessaUrl).then()
                     }
                   </script>
                   <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment()">Start</button>
@@ -361,6 +365,7 @@
               </div>	
               
             <button type="button" class="mb-1 btn btn-block btn-danger" onclick="deleteExperiment()">Delete</button>
+            <button type="button" class="mb-1 btn btn-block btn-primary" onclick="writeToDessa()">Write to Dessa</button>
             </form> 
     </div>
 
