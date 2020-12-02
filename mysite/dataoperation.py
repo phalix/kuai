@@ -32,12 +32,35 @@ CV_DATA_QUALIFIER = 3
 displaylimit = 10
 
 def createOrUpdateUDF(request,project_id):
+    from pyspark.sql.functions import udf
+
     columns = request.POST['columns']
     udfcode = request.POST['udfcode1']
     outputtype = request.POST['outputtype']
     
+    print(columns)
+    print(udfcode)
+    print(outputtype)
+    left = ""
+    right = ""
+    for col in outputtype.split(','):
+        left = left + 'pyspark.sql.types.'+col+'('
+        right = ')'+right
+    
+    outputtypeeval = eval(left+right)
+    exec('def a(output): '+udfcode)
+    a_udf = eval('udf(a, outputtypeeval)')
+    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    result = df.select(a_udf(columns)).limit(1).collect()
+    
+
+    
+
     import json
-    return HttpResponse(json.dumps({}))
+    return HttpResponse(json.dumps({
+        'result':result,
+        'works':'True'
+    }))
 
 
 
@@ -203,14 +226,46 @@ def index(request,project_id):
 def setuptransformdata(request,project_id):
     template = loader.get_template('data/datatransformation.html')
     project = get_object_or_404(Project, pk=project_id)
+    
+    #Spark ResultTypes:
+    relevanttypes = ['ArrayType','StringType','IntegerType','FloatType']
+    #sparktypes = list(map(lambda x: x[0],filter(lambda x: (x[0].endswith("Type") and x[0] in relevanttypes,inspect.getmembers(pyspark.sql.types)))))
+    
+    sparktypes = dict(map(lambda x: (x[0],len(inspect.signature(x[1]).parameters)>0),filter(lambda x: x[0].endswith("Type") and x[0] in relevanttypes,inspect.getmembers(pyspark.sql.types))))
+    
+
+    print(len(inspect.signature(pyspark.sql.types.ArrayType).parameters))
+    print(len(inspect.signature(pyspark.sql.types.StringType).parameters))
+    print(len(inspect.signature(pyspark.sql.types.FloatType).parameters))
+    print(len(inspect.signature(pyspark.sql.types.FloatType).parameters))
+    print(len(inspect.signature(pyspark.sql.types.StructType).parameters))
+    
+    
+    print(sparktypes)
+    
+    
     df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     
     df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
     df = df.drop('type')
     b = createDataFrameHTMLPreview(df)
+    
+    fields = df.schema
 
-    #Spark ResultTypes:
-    sparktypes = list(map(lambda x: x[0],filter(lambda x: x[0].endswith("Type"),inspect.getmembers(pyspark.sql.types))))
+    def getFields(prefix,input):
+        result = []
+        fields = input.fields
+        
+        for f in fields:
+            result.append(prefix+f.name)
+            if hasattr(f.dataType,'fields'):
+                result = result + getFields(prefix+f.name+'.',f.dataType)
+        return result
+
+    allfields = getFields('',fields)
+    
+
+
     try:
         a = createDataFrameHTMLPreview(df2)
     except:
@@ -225,7 +280,7 @@ def setuptransformdata(request,project_id):
         "dataframe2":a, 
         "selectstatement":project.selectstatement,
         "udfclasses":project.udfclasses,
-        "columns":df.columns,
+        "columns":allfields,
         "types":sparktypes,
         
     }

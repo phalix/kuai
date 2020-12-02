@@ -47,7 +47,7 @@
                             $('#addudf').click(
                                 function () {
                                     //newudfinput = $('#originaludfinput').clone()
-                                    newudfinput = $.parseHTML(
+                                    /*newudfinput = $.parseHTML(
                                         '<div id="originaludfinput" class="card card-default">                <div class="card-header card-header-border-bottom">                  <h2>Define UDF</h2>                </div>                <div class="card-body">                  <p> Select Input Column from Dataframe <select                        class="js-example-basic-multiple form-control"                        name="columns"                        multiple="multiple"                        data-select2-id="columns1"                        tabindex="-1"                        aria-hidden="true"                      >                        //{% for c in columns %}                        <option value="{{ c }}">{{c}}</option>                        //{% endfor %}                      </select></p>                   <p>TextArea Python Code                  <textarea name="udfcode1" class="form-control" id="exampleFormControlTextarea1" rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;" ></textarea>                                    </p>                  <p>Multiple Selection of DataType                  <select                        class="js-example-basic-multiple form-control"                        name="columns"                        multiple="multiple"                        data-select2-id="output1"                        tabindex="-1"                        aria-hidden="true"                      >                        //{% for c in types %}                        <option value="{{ c }}">{{c}}</option>                        //{% endfor %}                      </select>                  </p>                  <br/>                  <p>                                                      <p>TODO: On creation; create preselect</p>                  </div>                  <div class="card-footer d-flex flex-wrap bg-white">                              <button type="button" class="btn btn-block btn-warning">Remove</button><p/>                            </div>                </div>'
                                         );
                                     $(newudfinput).find('[data-select2-id="output1"]').attr('data-select2-id',
@@ -56,12 +56,14 @@
                                         'ccxxx')
                                     $('#dataframepreview').after(newudfinput)
                                     $('[data-select2-id="ooxxx"]').select2()
-                                    $('[data-select2-id="ccxxx"]').select2()
+                                    $('[data-select2-id="ccxxx"]').select2()*/
+                                    var newinput = $("#originaludfinput").clone()
+                                    $('#dataframepreview').after(newinput)
                                 }
                             )
                         </script>
                     </div>
-                    <!--
+                    
                     <div id="originaludfinput" class="card card-default">
                         <form id="originaludfinputForm" enctype="multipart/form-data"
                             action="{% url 'transformdata' project.pk %}" method='POST'>
@@ -81,24 +83,36 @@
                                     <div id="container_1" class="monacoeditor notready" style="height:200px"></div>
                                 </p>
                                 <p>Multiple Selection of DataType
-                                    <select class="js-example-basic-multiple form-control" name="outputtype"
-                                        multiple="multiple" data-select2-id="output1" tabindex="-1" aria-hidden="true">
-                                        //{% for c in types %}
-                                        <option value="{{ c }}">{{c}}</option>
-                                        //{% endfor %}
-                                    </select>
+                                
+                                <ol class="breadcrumb breadcrumb-inverse">
+                                    <li class="breadcrumb-item">
+                                        <a onclick="removeBredCrump(this)">StringType</a>
+                                    </li>
+                                </ol>
+                                
+                                <div class="dropdown d-inline-block mb-1">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-display="static">
+                                        Add Type
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                        <!--{% for c in types %}-->
+                                        <a class="dropdown-item" onclick="addBredCrump(this,'{{c}}')">{{c}}</a>
+                                        <!--{% endfor %}-->
+                                    </div>
+                                </div>
                                 </p>
+                                
                                 <br />
                                 <p>TODO: On creation; create preselect</p>
                             </div>
                             <div class="card-footer d-flex flex-wrap bg-white">
-                                <button type="button" id="saveandtestudffunction" class="btn btn-block btn-primary">Add</button>
-                                <button type="button" class="btn btn-block btn-warning">Remove</button>
+                                <button type="button" id="saveandtestudffunction" class="btn btn-block btn-primary">Save and Test UDF</button>
+                                <button type="button" class="btn btn-block btn-warning">Remove UDF</button>
                                 <br/>
                             </div>
                         </form>
                     </div>
-                    -->
+                    
                     <div class="card card-default">
                         <div class="card-header card-header-border-bottom">
                             <h2>Apply Transformation</h2>
@@ -139,6 +153,29 @@
     </div>
 
     <script>
+        function removeBredCrump(e){
+            $(e).parent().remove()
+        }
+
+        function getTypeValueOfBredCrump(){
+            return $.map($('#originaludfinputForm').find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
+        }
+        
+        sparktypes = {}
+        //{% for key,value in types.items %}
+        sparktypes['{{key}}'] = '{{value}}';
+        //{% endfor %}
+        
+
+        function addBredCrump(e,type){
+            txt = '<li class="breadcrumb-item"><a onclick="removeBredCrump(this)" >'+type+'</a></li>'
+            
+            var tocheck = $(e).parent().parent().parent().parent().find('ol.breadcrumb').find('a').last().text()
+            if(sparktypes[tocheck] != "False"){
+                $(e).parent().parent().parent().parent().find('ol.breadcrumb').append(txt)
+            }
+        }
+
         $("form").submit(function(e){
             value = $("#udfclassesmonacoeditor")[0].editor.getModel().getValue()
             $("[name=udfclasses]").val(value)
@@ -167,19 +204,18 @@
         }
 
         $("#saveandtestudffunction").click(function (e) {
-            var udfvalue = $('#container_1')[0].editor.getValue()
-
-            $("#exampleFormControlTextarea_1").val(udfvalue)
-
+            var udfvalue = $(e.target).parent().parent().find('.monacoeditor')[0].editor.getValue()
+            var outputtype = $.map($(e.target).parent().parent().find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
+            
             $.post("{% url 'createOrUpdateUDF' project.pk %}", 
                 {
                     "csrfmiddlewaretoken":"{{ csrf_token }}",
                     "udfcode1": udfvalue,
-                    "columns": $("[name=columns]").select2('data').map(x => x.text).join(","),
-                    "outputtype":$("[name=outputtype]").select2('data').map(x => x.text).join(",")
+                    "columns": $(e.target).parent().parent().find('[name=columns]').select2('data').map(x => x.text).join(","),
+                    "outputtype": outputtype
                 },
                 function (data) {
-                    console.log(data.message);
+                    console.log(data);
                     
                 });
             e.preventDefault();
