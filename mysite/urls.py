@@ -48,6 +48,7 @@ urlpatterns = [
     path('parameter/<int:project_id>/', experiments.parameter),
     path('experimentsetup/<int:project_id>/<int:experiment_id>/', experiments.experimentsetup),
     path('experimentsetup/<int:project_id>/', experiments.experimentsetuplastexperiment),
+    path('experimentresults/<int:project_id>/', experiments.experimentresults),
     path('setparameter/<int:project_id>/', experiments.setparameter,name="setparameter"),
     path('runexperiment/<int:project_id>/<int:experiment_id>/', experiments.run),
     path('runexperiment/<int:project_id>/', experiments.runlatestexperiment),

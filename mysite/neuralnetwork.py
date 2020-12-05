@@ -211,7 +211,7 @@ def aiupload(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     if project.neuralnetwork:
         nn = project.neuralnetwork
-        nn.layers.filter(outputlayer=False)
+        nn.layers.filter(outputlayer=False).delete()
     else:
         nn = NeuralNetwork()
     nn.save()

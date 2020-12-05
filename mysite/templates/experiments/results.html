@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+  <script>
+    NProgress.configure({
+      showSpinner: false
+    });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+
+  <div id="toaster"></div>
+
+
+  <div class="wrapper">
+
+    {% include "includes/leftsidebar.html" %}
+
+
+
+    <div class="page-wrapper">
+
+      {% include "includes/header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">
+        <h2>Project {{name}}</h2>
+          
+        
+            {% for job in jobs %}
+            <pre>
+            <code>
+            
+            Job created by {{job.user}}
+            
+            {% for metric in job.output_metrics%}
+                {{metric.name}}
+                {% if metric.value|length > 0 %}
+                    {% for val in metric.value%}
+                        {{val}} 
+                    {% endfor %}
+                {% else %}
+                    {{metric.value}}
+                {% endif %}
+
+                
+            {% endfor %}
+            
+            {{job.status}}
+            {{job.duration}}
+            </code>
+            </pre>
+          {% endfor %}
+        
+         <pre>
+        <code>
+        Metrics
+          {{metrics}}
+        </code>
+        </pre>
+         <pre>
+        <code>
+        Parameters
+          {{parameters}}
+        </code>
+        </pre>
+        <h3>
+        <a target="_blank" href="{{urltoatlas}}" >Go to Dessa</a>
+        </h3>
+        </div>
+      </div>
+
+      {% include "includes/footer.html" %}
+
+    </div>
+  </div>
+  {% include "includes/scripts.html" %}
+
+
+</body>
+
+</html>

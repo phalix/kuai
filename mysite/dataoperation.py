@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
 from django.shortcuts import render,get_object_or_404
-from mysite.models import Project,Feature,NeuralNetwork
+from mysite.models import Project,Feature,NeuralNetwork,UDF
 import pandas as pd
 
 pd.set_option("display.max_colwidth",20)
@@ -33,34 +33,107 @@ displaylimit = 10
 
 def createOrUpdateUDF(request,project_id):
     from pyspark.sql.functions import udf
+    import json
 
     columns = request.POST['columns']
     udfcode = request.POST['udfcode1']
     outputtype = request.POST['outputtype']
+    udfpk = request.POST['id']
+    action = request.POST['action']
     
-    print(columns)
-    print(udfcode)
-    print(outputtype)
+    from pyspark.sql import SQLContext
+    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
+    sqlContext = SQLContext(spark)
+    try:
+        sqlContext.uncacheTable("transform_temp_table")
+    except:
+        print("nothing to uncache")
+    try:
+        sqlContext.sql("drop table transform_temp_table")
+    except:
+        print("nothing to drop")
+
+    if action == "REMOVE":
+        result = ""
+        try:
+            newudf = get_object_or_404(UDF, pk=udfpk)
+            newudf.delete()
+            result = "Deletion successfull"
+        except:
+            result = "Nothing to Delete"
+    
+        return HttpResponse(json.dumps({
+            'result':result,
+            'works':'True'
+        }))
+
+
+    project = get_object_or_404(Project, pk=project_id)
+    
+    
+    try:
+        newudf = get_object_or_404(UDF, pk=udfpk)
+        newudf.input = columns
+        newudf.udfexecutiontext = udfcode
+        newudf.outputtype = outputtype
+    except:
+        newudf = UDF(input=columns,udfexecutiontext=udfcode,outputtype=outputtype,project=project)
+
+    
+    newudf.save()
+
+    errorlog = ""
+    result = ""
+    try:
+        a_udf = generateUDFonUDF(newudf)
+        df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+        result = df.select(a_udf[1].alias(str(newudf.pk))).limit(1).collect()
+    except Exception as e:
+        import traceback
+        import io
+        from contextlib import redirect_stdout
+        with io.StringIO() as buf, redirect_stdout(buf):
+            traceback.print_exc()
+            errorlog = str(e)+"\n"+buf.getvalue()
+    
+    return HttpResponse(json.dumps({
+        'result':result,
+        'works':'True',
+        'errorlog':errorlog,
+        'id':newudf.pk
+    }))
+
+
+def evaluateUDFOnDataFrame(project,dataframe):
+    udfs = collectUDFSOnProject(project)
+    return dataframe.select(list(udfs.values()))
+    
+def collectUDFSOnProject(project):
+    udfs = UDF.objects.filter(project=project.pk).all()
+    functionarray = {}
+    for udf in udfs:
+        a = generateUDFonUDF(udf)
+        functionarray[a[0]] = a[1]
+    
+    return functionarray
+
+def generateUDFonUDF(udfdefinition):
+    from pyspark.sql.functions import udf
+    outputtype = udfdefinition.outputtype
     left = ""
     right = ""
     for col in outputtype.split(','):
         left = left + 'pyspark.sql.types.'+col+'('
         right = ')'+right
-    
     outputtypeeval = eval(left+right)
-    exec('def a(output): '+udfcode)
-    a_udf = eval('udf(a, outputtypeeval)')
-    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
-    result = df.select(a_udf(columns)).limit(1).collect()
     
+    udfcode = udfdefinition.udfexecutiontext
+    functionname = 'udf'+str(udfdefinition.pk)
+    exec('def '+functionname+'(output): \n\t'+udfcode.replace("\n","\n\t"))
+    a_udf = eval('udf('+functionname+', outputtypeeval)')
+    b_udf = a_udf(udfdefinition.input).alias(functionname)
+    return [functionname,b_udf]
 
-    
-
-    import json
-    return HttpResponse(json.dumps({
-        'result':result,
-        'works':'True'
-    }))
 
 
 
@@ -233,17 +306,6 @@ def setuptransformdata(request,project_id):
     
     sparktypes = dict(map(lambda x: (x[0],len(inspect.signature(x[1]).parameters)>0),filter(lambda x: x[0].endswith("Type") and x[0] in relevanttypes,inspect.getmembers(pyspark.sql.types))))
     
-
-    print(len(inspect.signature(pyspark.sql.types.ArrayType).parameters))
-    print(len(inspect.signature(pyspark.sql.types.StringType).parameters))
-    print(len(inspect.signature(pyspark.sql.types.FloatType).parameters))
-    print(len(inspect.signature(pyspark.sql.types.FloatType).parameters))
-    print(len(inspect.signature(pyspark.sql.types.StructType).parameters))
-    
-    
-    print(sparktypes)
-    
-    
     df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     
     df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
@@ -271,6 +333,11 @@ def setuptransformdata(request,project_id):
     except:
         a = b
     
+    ##GET Already Defined udfs
+    from django.core.serializers import serialize
+    alludfsperproject = UDF.objects.filter(project=project_id).all()
+    udfsPerJson = serialize('json', alludfsperproject)
+
     context = {
         "project" : project,
         "project_id" : project_id,
@@ -282,6 +349,7 @@ def setuptransformdata(request,project_id):
         "udfclasses":project.udfclasses,
         "columns":allfields,
         "types":sparktypes,
+        "udfs": udfsPerJson,
         
     }
 
@@ -292,8 +360,6 @@ def transformdata(request,project_id):
     
     selectstatement = request.POST["selectstatement"]
     udfclasses = request.POST["udfclasses"]
-    print(selectstatement)
-    print(udfclasses)
     
     if len(selectstatement)==0:
         selectstatement = 'select("*")'
@@ -363,7 +429,7 @@ def uploaddata(request,project_id):
     sqlContext = SQLContext(spark)
     try:
         sqlContext.uncacheTable("temp_table")
-        df2 = sqlContext.sql("drop table temp_table")
+        sqlContext.sql("drop table temp_table")
     except:
         print("nothing to drop")
 
@@ -473,7 +539,7 @@ def setupdataclassifcation(request,project_id):
     project.input = ""
     project.save()
     #project.target.delete()
-    print(request.POST)
+    
     targetselection = request.POST['targetselection']
     targettransition = request.POST['fttransition_'+targetselection]
     reformattransition = request.POST['ftreformat_'+targetselection]
@@ -536,7 +602,7 @@ def savetocassandra_writesparkdataframe(sparkdf):
 def readfromcassandra(project_id,type):
     from pyspark.sql import SQLContext
     
-    spark = getsparksession(project_id,1)
+    spark = getsparksession(project_id,type)
     sqlContext = SQLContext(spark)
     try:
         df = sqlContext.sql("select * from temp_table")
@@ -631,11 +697,12 @@ def transformdataframe(project,dataframe,type):
         
         if project.selectstatement:
             tobeeval = "dataframe."+project.selectstatement
-            print(tobeeval)
+            #print(tobeeval)
             
             try:
-                exec(project.udfclasses)
-                df2 = eval(tobeeval)
+                #exec(project.udfclasses)
+                #df2 = eval(tobeeval)
+                df2 = evaluateUDFOnDataFrame(project,dataframe)
                 df2.registerTempTable("transform_temp_table")
                 #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
                 sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
@@ -857,7 +924,7 @@ def getTransformedData(project_id,qualifier):
     train_df = mysite.dataoperation.readfromcassandra(project_id,qualifier)
     train_df = train_df.filter(train_df.type == qualifier)
     train_df = train_df.drop('type')
-    train_df = mysite.dataoperation.transformdataframe(project,train_df)
+    train_df = mysite.dataoperation.transformdataframe(project,train_df,qualifier)
     train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
     train_df3 = train_df1
     return train_df3

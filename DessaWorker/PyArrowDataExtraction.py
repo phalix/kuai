@@ -1,4 +1,5 @@
 def getXandYFromPyArrow(table):
+    import numpy as np
     ### This needs to be done since for multi dim arrays, the numpy shape is lost...
     ### pyarrow to pylist crashed
     ### numpy to_list does not work recursively

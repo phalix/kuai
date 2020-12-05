@@ -36,6 +36,40 @@ def experimentsetuplastexperiment(request,project_id):
     latestexp = getlatestexperiment(project_id)
     return experimentsetup(request,project_id,latestexp)
 
+def experimentresults(request,project_id):
+    #define earlystopping, after how many epochs
+    #define in general how many epochs should run
+    #define save val_loss, loss etc.
+
+    #get callbacks etc.!
+
+    template = loader.get_template('experiments/results.html')
+    project = get_object_or_404(Project, pk=project_id)
+    
+    urlatlasdessa = "http://localhost:5555"
+    import requests
+    results_dessa = requests.get(urlatlasdessa+"/foundations_rest_api/api/v2beta/projects/"+str(project_id)+"/job_listing")
+    import json
+    results_json = json.loads(results_dessa.text)
+    name = results_json['name']
+    jobs = results_json['jobs']
+    metrics = results_json['output_metric_names']
+    parameters = results_json['parameters']
+    context = {
+        "project" : project,
+        "project_id" : project_id,
+        "menuactive":5,
+        "results":results_json,
+        "name":name,
+        "jobs":jobs,
+        "metrics":metrics,
+        "parameters":parameters,
+        "urltoatlas":urlatlasdessa,
+
+    }
+    
+    return HttpResponse(template.render(context, request))
+
 
 def experimentsetup(request,project_id,experiment_id):
     #define earlystopping, after how many epochs
@@ -424,6 +458,7 @@ def loadmodelweights(experiment_id,model):
                 modellayer.set_weights(weights)
                 
         except:
+            lw.delete()
             print("Could not load model layer with name: "+str(lw.name))        
             for layer in model.layers:
                 print(layer.name)
@@ -444,7 +479,7 @@ def writetodessa(request,project_id,experiment_id):
     test_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
     saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
-
+    print("done writing to dessa")
 
     return HttpResponse(json.dumps({}), content_type='application/json')
 
@@ -465,7 +500,8 @@ def createProjectDessa(project_id):
     maindir = getMainDir()
     projectdir = getMainDir()+"\\projects"
     os.chdir(projectdir)
-    
+    import shutil
+    #usage shutil.copyfile('file1.txt', 'file2.txt')
     if str(project_id) not in os.listdir():
         #os.mkdir(str(project_id))
         #os.chdir(str(project_id))
@@ -476,6 +512,12 @@ def createProjectDessa(project_id):
         os.mkdir("data")
     if "model" not in os.listdir():
         os.mkdir("model")
+    shutil.copyfile(maindir+"/DessaWorker/DefaultWorker.py",projectdir+"/"+str(project_id)+"/DefaultWorker.py")
+    shutil.copyfile(maindir+"/DessaWorker/PyArrowDataExtraction.py",projectdir+"/"+str(project_id)+"/PyArrowDataExtraction.py")
+    shutil.copyfile(maindir+"/DessaWorker/DessaCallback.py",projectdir+"/"+str(project_id)+"/DessaCallback.py")
+    shutil.copyfile(maindir+"/DessaWorker/requirements.txt",projectdir+"/"+str(project_id)+"/requirements.txt")
+
+    
     os.chdir(maindir)
 
 
@@ -488,7 +530,10 @@ def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     
 def submitDessaJob(project_id):
     try:
-        import foundations
-        foundations.submit(job_directory=getProjectDir(project_id),command=["main.py"])
+        #import foundations
+        #foundations.submit(job_directory=getProjectDir(project_id),command=["DefaultWorker.py"])
+        import subprocess
+        proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
+        
     except Exception as e:
         print(e)

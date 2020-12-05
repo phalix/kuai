@@ -64,7 +64,13 @@ class Project(models.Model):
     selectstatement = models.TextField(null=True)
     udfclasses = models.TextField(null=True)
     
-    #parameters, optimizer etc.
+
+class UDF(models.Model):
+    input = models.CharField(max_length=350)
+    udfexecutiontext = models.TextField(null=False)
+    outputtype = models.CharField(max_length=350)
+    project = models.ForeignKey(Project,on_delete=models.CASCADE,null=False)
+
 
 class Loss(models.Model):
     name = models.CharField(max_length=150)

@@ -1,6 +1,7 @@
 from tensorflow import keras
 
 class CustomDessaCallback(keras.callbacks.Callback):
+    import foundations
     def loggingtofoundations(self,logs=None):
         if logs:
             for key,value in logs.items():
