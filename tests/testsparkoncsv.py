@@ -71,7 +71,7 @@ class TestKuaiCase(TestCase):
         self.assertEqual(md.getfeaturedimensionbyproject(project.features.all()),{1: {'cc22': [1]}, 3: {'image': [720, 1280, 3]}})
 
         df = md.readfromcassandra(project_id,1)
-        df2 = md.transformdataframe(project,df)
+        df2 = md.transformdataframe(project,df,1)
         
         project = get_object_or_404(Project, pk=1)
 

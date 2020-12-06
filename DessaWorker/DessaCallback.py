@@ -1,8 +1,10 @@
 from tensorflow import keras
 
+
 class CustomDessaCallback(keras.callbacks.Callback):
-    import foundations
+    
     def loggingtofoundations(self,logs=None):
+        import foundations
         if logs:
             for key,value in logs.items():
                 foundations.log_metric(key, value)

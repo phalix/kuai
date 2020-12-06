@@ -124,11 +124,6 @@ def uploadexpsetup(request,project_id,experiment_id):
             metric.save()
             #experiment.metrics.add(metric)
 
-
-
-    for parameter in request.POST:
-        print(parameter)
-        print(request.POST[parameter])
     return HttpResponseRedirect('/runexperiment/'+str(project_id))
 
 def retrieveExperimentStats(project_id):
@@ -182,13 +177,8 @@ def retrieveExperimentStats(project_id):
     return expDict
 
 
-def prepareModel(project,experiment):
-    cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
-    metrics = []
-    for m in cur_metrics:
-        metrics.append(m.name)
-    lossfunction = experiment.loss.name
-    model = mysite.neuralnetwork.getcurrentmodel(project.id,lossfunction,metrics)
+def prepareModel(project,experiment,loss,metrics,neuralnetwork,optimizer,features,target,inputschema):
+    model = mysite.neuralnetwork.getcurrentmodel(project,loss,metrics,neuralnetwork,optimizer,features,target,inputschema)
     #restore weights
     loadmodelweights(experiment.id,model)
 
@@ -196,29 +186,19 @@ def prepareModel(project,experiment):
 
 
 
-def runexperiment(project_id,experiment_id):
-    
+def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema):
+    ##TODO: remove any database transactions
     import sys, traceback
-    project = get_object_or_404(Project, pk=project_id)
-    exp = get_object_or_404(Experiment, pk=experiment_id)
     
-    createProjectDessa(project.id)    
+    exp = experiment
+    experiment_id = exp.id
+    project_id = project.id
+    createProjectDessa(project_id)    
 
-    cur_metrics = Metrics.objects.filter(experiment=experiment_id).all()
-    metrics = []
-    for m in cur_metrics:
-        metrics.append(m.name)
-    lossfunction = exp.loss.name
+    lossfunction = loss
 
-    from django.db.models import Max
-    results = Result.objects.filter(experiment=experiment_id).all()
-    maxepochno = results.aggregate(Max('epochno'))
-    currentepoch = maxepochno['epochno__max']
-    if not currentepoch:
-        currentepoch = 0
     
-    
-    model = prepareModel(project,exp)
+    model = prepareModel(project,exp,loss,metrics,neuralnetwork,optimizer,features,target,inputschema)
     saveModelInProjectFolder(model,project_id)
     
     
@@ -229,7 +209,7 @@ def runexperiment(project_id,experiment_id):
 
 
     submitDessaJob(project_id)
-
+    '''
     #random split to required batch size
     # 1. get count of train_df3
     # 2. 1/train_df3/batch_size = share
@@ -326,7 +306,7 @@ def runexperiment(project_id,experiment_id):
     exp = get_object_or_404(Experiment, pk=experiment_id)
     exp.status = 3
     exp.save()
-    savemodelweights(experiment_id,model)
+    savemodelweights(experiment_id,model)'''
 
 
 def runlatestexperiment(request,project_id):
@@ -338,7 +318,6 @@ import threading
 def run(request,project_id,experiment_id):
 
     #TODO: just add a button to run the experiments
-    #TODO: make epochs configurable
     #TODO: make it possible to cancel experiment
     template = loader.get_template('experiments/runexperiment.html')
     project = get_object_or_404(Project, pk=project_id)
@@ -364,10 +343,34 @@ def run(request,project_id,experiment_id):
     
     return HttpResponse(template.render(context, request))   
 
-def startexperiment(project_id,experiment_id):
-    thread = threading.Thread(target=runexperiment, args=(project_id,experiment_id))
-    thread.daemon = True 
-    thread.start()
+def startexperiment(project,experiment):
+    loss = experiment.loss.name
+    
+    cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
+    metrics = []
+    for m in cur_metrics:
+        metrics.append(m.name)
+    
+    from django.db.models import Max
+    results = Result.objects.filter(experiment=experiment.id).all()
+    maxepochno = results.aggregate(Max('epochno'))
+    currentepoch = maxepochno['epochno__max']
+    if not currentepoch:
+        currentepoch = 0
+
+    features = list(project.features.all())
+    target = project.target.fieldname
+
+    #inputschema = mysite.dataoperation.getinputschema(project.id)
+    inputschema = mysite.neuralnetwork.getinputshape(project)
+
+    neuralnetwork = mysite.neuralnetwork.getNeuralNetworkStructureAsPlainPython(project)
+    optimizer = mysite.neuralnetwork.getOptimizerAsPlainPython(project)
+
+    #thread = threading.Thread(target=runexperiment, args=(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema))
+    #thread.daemon = True 
+    #thread.start()
+    runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema)
 
 
 def getexperimentsstasperproject(request,project_id,experiment_id):
@@ -394,9 +397,10 @@ active = False
 def startExperimentsPerProject(request,project_id,experiment_id):
     import json
     #active = True
+    project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     if True or experiment.status in (0,3):
-        startexperiment(project_id,experiment.id)
+        startexperiment(project,experiment)
     experiment.status = 1
     experiment.save()
     
@@ -471,8 +475,20 @@ def writetodessa(request,project_id,experiment_id):
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
     createProjectDessa(project_id)
+    features = list(project.features.all())
+    
+    
+    cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
+    metrics = []
+    for m in cur_metrics:
+        metrics.append(m.name)
 
-    model = prepareModel(project,experiment)
+
+    inputschema = mysite.neuralnetwork.getinputshape(project)
+    
+    neuralnetwork = mysite.neuralnetwork.getNeuralNetworkStructureAsPlainPython(project)
+    optimizer = mysite.neuralnetwork.getOptimizerAsPlainPython(project)
+    model = prepareModel(project,experiment,experiment.loss.name,metrics,neuralnetwork,optimizer,features,project.target.fieldname,inputschema)
     saveModelInProjectFolder(model,project_id)
 
     train_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
@@ -534,6 +550,6 @@ def submitDessaJob(project_id):
         #foundations.submit(job_directory=getProjectDir(project_id),command=["DefaultWorker.py"])
         import subprocess
         proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
-        
+        #proc.wait()
     except Exception as e:
         print(e)

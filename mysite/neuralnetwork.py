@@ -30,9 +30,12 @@ def modelsummary(request,project_id):
     # feature extraction
     # model training
     template = loader.get_template('ai/modelsummary.html')
-    
-    model = buildmodel(project_id,'mse',['accuracy'])
     project = get_object_or_404(Project, pk=project_id)
+    inputs = mysite.neuralnetwork.getinputshape(project)
+    neuralnetwork = getNeuralNetworkStructureAsPlainPython(project)
+    optimizer = getOptimizerAsPlainPython(project)
+    model = buildmodel(project,neuralnetwork,optimizer,list(project.features.all()),'mse',['accuracy'],project.target.fieldname,inputs)
+    
 
     import pandas as pd
     #from sklearn.linear_model import LogisticRegression
@@ -73,7 +76,7 @@ def index(request,project_id):
     nn = None
     layers = None
     
-    inputs = getinputshape(project_id)
+    inputs = getinputshape(project)
 
     if project.neuralnetwork:
         nn = project.neuralnetwork
@@ -219,7 +222,7 @@ def aiupload(request,project_id):
     project.save()
 
     #input layer needs to be defined
-    inputs = getinputshape(project_id)
+    inputs = getinputshape(project)
     inputlayers = {}
     for (inp,value) in inputs.items():
         inplayer = Layer(index=inp,inputlayer=True)
@@ -320,7 +323,7 @@ def optimizer(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     optimizername = ""
     availablelayers = []
-    inputs = getinputshape(project_id)
+    inputs = getinputshape(project)
     optconfs = []
     if project.neuralnetwork:
         for l in project.neuralnetwork.layers.filter(inputlayer=False,outputlayer=False):
@@ -410,70 +413,79 @@ def getkeraslayeroptions(libstr):
 
 currentmodel = None
 
-def getcurrentmodel(project_id,loss,metrics):
-    #global currentmodel
-    #if not currentmodel:
-    currentmodel = buildmodel(project_id,loss,metrics)
+def getcurrentmodel(project,loss,metrics,neuralnetwork,optimizer,features,target,inputschema):
+    currentmodel = buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inputschema)
     return currentmodel
 
 
-def getinputshape(project_id):
+def getinputshape(project):
     inputs = {}
-    project = get_object_or_404(Project, pk=project_id)
-    cur_features = project.features.all()
-    #inputshapes = mysite.dataoperation.getfeaturedimensionbyproject(cur_features)
+    project_id = project.id
+    #cur_features = project.features.all()
     inputshapes = mysite.dataoperation.getinputschema(project_id)
     idx = 1
     for (key,value) in inputshapes.items():
-        
-        #for (k,v) in value.items():
-            #name=("Input"+str(idx)+"_"+str(k)).replace(" ","")
-            #inputs[idx] = keras.Input(shape=v,name=name)
-            #idx = idx + 1
         name=("Input"+str(idx)+"_"+str(key)).replace(" ","")
         inputs[idx] = keras.Input(shape=value,name=name)
         idx = idx + 1
     return inputs
 
 
+def getNeuralNetworkStructureAsPlainPython(project):
+    return list(map(lambda x: {\
+        'idx':x.index,
+        'isinput':x.inputlayer,
+        'isoutput':x.outputlayer,
+        'type':x.layertype,
+        'inputs':list(map(lambda y:y.index,list(x.inputlayers.filter(inputlayer=True).all()))), 
+        'intermediates':list(map(lambda y:y.index,list(x.inputlayers.filter(inputlayer=False).all()))), 
+        'conf': dict(map(lambda y: [y.fieldname,y.option] ,list(x.configuration.all()))),
+        },list(project.neuralnetwork.layers.all())))
+
+def getOptimizerAsPlainPython(project):
+    a = {}
+    a['conf'] = dict(map(lambda x: [x.fieldname,x.option],list(project.neuralnetwork.optimizer.configuration.all())))
+    a['name'] = project.neuralnetwork.optimizer.name
+    return a
+
 ## generate keras model from database definition
-def buildmodel(project_id,loss,metrics):
-    project = get_object_or_404(Project, pk=project_id)
-    nn = project.neuralnetwork
-    myfeatures = project.features.all()
-    
-    
-    target_array = []
-    target_array.append(project.target.fieldname)
+def buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inputschema):
+    nn = neuralnetwork
     
     #Build Tensorflow Model
-    inputs = getinputshape(project_id)
+    inputs = inputschema#getinputshape(project)
     previouslayers = {}
-    for layer in nn.layers.filter(inputlayer=False):
+    
+    alllayersnoinput = list(filter(lambda x:x['isinput']==False,neuralnetwork))
+
+    #for layer in nn.layers.filter(inputlayer=False):
+    for layer in alllayersnoinput:
         calldict = {}
-        for attr in layer.configuration.all():
-            #TODO: dynamictiy of parameters
+        configuration = layer['conf']
+        #for attr in layer.configuration.all():
+        for key,value in configuration.items():
             option = None
             try:
-                option = eval(attr.option)
-                calldict[attr.fieldname] = option
+                option = eval(value)
+                calldict[key] = option
             except:
-                option = attr.option
+                option = value
                 if len(option)>0:
-                    calldict[attr.fieldname] = option
-        calldict["name"]= "tobesaved_"+str(layer.id)  
+                    calldict[key] = option
+        calldict["name"]= "tobesaved_"+str(layer['idx'])  
         #y.name = "tobesaved_"+str(layer.id)    
             
         #initiate by actual predecessor
-        y = getattr(keras.layers, layer.layertype)(**calldict)
-        inputsinput = []
+        y = getattr(keras.layers, layer['type'])(**calldict)
+        '''inputsinput = []
         for inpim in layer.inputlayers.filter(inputlayer=True):
             inputsinput.append(inpim.index)
         intermedinputs = []
         for inpim in layer.inputlayers.filter(inputlayer=False):
             intermedinputs.append(inpim.index)
         
-        previouslayers[layer.index] = (y,inputsinput,intermedinputs,layer.id)
+        previouslayers[layer.index] = (y,inputsinput,intermedinputs,layer.id)'''
+        previouslayers[layer['idx']] = (y,layer['inputs'],layer['intermediates'],layer['idx'])
     
     previouslayer_inst = {}
     removed = True
@@ -500,22 +512,19 @@ def buildmodel(project_id,loss,metrics):
 
     model = keras.Model(inputs=list(inputs.values()),outputs=y)
     
-    configuration = nn.optimizer.configuration.all()
+    #configuration = nn.optimizer.configuration.all()
+    configuration = optimizer['conf']
     configdict = {}
-    for conf in configuration:
+    for key,value in configuration:
         try:
-            option = eval(conf.option)
-            configdict[conf.fieldname] = option
+            option = eval(value)
+            configdict[key] = option
         except:
-            option = conf.option
+            option = value
             if len(option)>0:
-                configdict[conf.fieldname] = option
-        
-
-    optimizer = eval(librarystring3+"."+nn.optimizer.name)(**configdict)
-
-    
-    
+                configdict[key] = value
+    #optimizer = eval(librarystring3+"."+nn.optimizer.name)(**configdict)
+    optimizer = eval(librarystring3+"."+optimizer['name'])(**configdict)
 
     model.compile(optimizer=optimizer,
                 loss=loss,
