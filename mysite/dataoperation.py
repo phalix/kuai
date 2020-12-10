@@ -97,9 +97,9 @@ def createOrUpdateUDF(request,project_id):
             errorlog = str(e)+"\n"+buf.getvalue()
     
     return HttpResponse(json.dumps({
-        'result':result,
+        'result':str(result)[0:5000],
         'works':'True',
-        'errorlog':errorlog,
+        'errorlog':str(errorlog)[0:5000],
         'id':newudf.pk
     }))
 
@@ -925,6 +925,7 @@ def getTransformedData(project_id,qualifier):
     train_df = train_df.filter(train_df.type == qualifier)
     train_df = train_df.drop('type')
     train_df = mysite.dataoperation.transformdataframe(project,train_df,qualifier)
+    train_df = applyfeaturetransition(train_df,project.features.all(),project.target)
     train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
     train_df3 = train_df1
     return train_df3

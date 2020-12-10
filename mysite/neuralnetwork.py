@@ -426,7 +426,12 @@ def getinputshape(project):
     idx = 1
     for (key,value) in inputshapes.items():
         name=("Input"+str(idx)+"_"+str(key)).replace(" ","")
-        inputs[idx] = keras.Input(shape=value,name=name)
+        shape = None
+        if type(value) == list and type(value[0]) == list:
+            shape = value[0]
+        else:
+            shape = value
+        inputs[idx] = keras.Input(shape=shape,name=name)
         idx = idx + 1
     return inputs
 

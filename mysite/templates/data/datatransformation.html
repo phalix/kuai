@@ -102,14 +102,15 @@
                                         </div>
                                     </div>
                                     </p>
-                                    <div style="visibility:hidden;background: #ffc; padding: 10px 20px;" class="errorlog">
-
-                                    </div>
+                                    
                                 </div>
                                 <div class="card-footer d-flex flex-wrap bg-white">
                                     <button name="ADD" type="button" onclick="saveandtestudffunction(event)" class="btn btn-block btn-primary">Save and Test UDF</button>
                                     <button name="REMOVE" type="button" onclick="saveandtestudffunction(event)" class="btn btn-block btn-warning">Remove UDF</button>
                                     <br/>
+                                    <div style="visibility:hidden;background: #ffc; padding: 10px 20px;" class="errorlog">
+
+                                    </div>
                                 </div>
                             </form>
                         </div>`
@@ -238,7 +239,7 @@
                     $(e.target).parent().parent().find(".errorlog").css('visibility',"visible")
                     
                     dataJson = JSON.parse(data)
-                    $(e.target).parent().parent().find(".errorlog").text(dataJson.result[0]+dataJson.errorlog)
+                    $(e.target).parent().parent().find(".errorlog").text(dataJson.result+dataJson.errorlog)
                     $(e.target).parent().parent().find("[name=primarykey]").val(dataJson.id)
                     
                     console.log(data);

@@ -40,6 +40,33 @@ class TestKuaiCase(TestCase):
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
+
+        response = c.post('/createOrUpdateUDF/'+project_id_str+'/',{
+            'id':0,
+            'action':'ADD',
+            'outputtype':'ArrayType,ArrayType,ArrayType,IntegerType',
+            'columns':'image.data',
+            'udfcode1':'import numpy as np\n#print(np.reshape(output,(720,1280,3)).dtype)\nreturn np.reshape(output,(720,1280,3)).tolist()'
+        })
+
+        json.loads(response.content)['id']
+
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
+        response = c.post('/createOrUpdateUDF/'+project_id_str+'/',{
+            'id':0,
+            'action':'ADD',
+            'outputtype':'FloatType',
+            'columns':'image.height',
+            'udfcode1':'return float(output)'
+        })
+
+        json.loads(response.content)['id']
+
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
         response = c.post('/datatransform/'+project_id_str+'/', {
             'selectstatement': 'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))',
             'udfclasses': """def category(value):

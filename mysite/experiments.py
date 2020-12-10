@@ -55,6 +55,10 @@ def experimentresults(request,project_id):
     jobs = results_json['jobs']
     metrics = results_json['output_metric_names']
     parameters = results_json['parameters']
+    
+    
+    
+    
     context = {
         "project" : project,
         "project_id" : project_id,
