@@ -51,7 +51,7 @@ def piStrOneHotEncoding(featurename,dataframe):
     toDenseVectorUdfInt = F.udf(convertSparseVectortoDenseVectorInt, T.ArrayType(T.IntegerType()))
 
 
-    indexed = indexed.drop(featurename).drop(featurename+"HE").withColumn(featurename,toDenseVectorUdfInt(featurename+"OHE"))
+    indexed = indexed.drop(featurename).drop(featurename+"HE").drop(featurename+"OHE").withColumn(featurename,toDenseVectorUdfInt(featurename+"OHE"))
     #indexer = VectorIndexer(inputCol=featurename+"OHE", outputCol=featurename+"tHE", maxCategories=10)
     #indexerModel = indexer.fit(indexed)
     #indexed = indexerModel.transform(indexed)

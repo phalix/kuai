@@ -88,6 +88,7 @@ def createOrUpdateUDF(request,project_id):
         a_udf = generateUDFonUDF(newudf)
         df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
         result = df.select(a_udf[1].alias(str(newudf.pk))).limit(1).collect()
+        result = result[0][0]
     except Exception as e:
         import traceback
         import io
@@ -106,6 +107,7 @@ def createOrUpdateUDF(request,project_id):
 
 def evaluateUDFOnDataFrame(project,dataframe):
     udfs = collectUDFSOnProject(project)
+    udfs['type'] = col("type") # do not loose type, train test cv
     return dataframe.select(list(udfs.values()))
     
 def collectUDFSOnProject(project):
@@ -128,9 +130,14 @@ def generateUDFonUDF(udfdefinition):
     outputtypeeval = eval(left+right)
     
     udfcode = udfdefinition.udfexecutiontext
-    functionname = 'udf'+str(udfdefinition.pk)
+    import re
+    pattern = re.compile("[^A-Za-z]")
+    aliasname = pattern.sub("",udfdefinition.input)
+
+    functionname = aliasname+'_'+str(udfdefinition.pk)
     exec('def '+functionname+'(output): \n\t'+udfcode.replace("\n","\n\t"))
     a_udf = eval('udf('+functionname+', outputtypeeval)')
+    
     b_udf = a_udf(udfdefinition.input).alias(functionname)
     return [functionname,b_udf]
 
@@ -409,7 +416,9 @@ def uploaddata(request,project_id):
         from pyspark.ml.image import ImageSchema 
         
         df = spark.read.format("image").option("dropInvalid", True).load(subm_file) 
-        
+    elif request.POST['datatype'] == "json":
+        df  = spark.read.json(subm_file, multiLine = "true")
+    
     if shuffle:
         df = df.sample(1.0)
     #lendf = df.count()    
@@ -460,7 +469,11 @@ def dataclassification(request,project_id):
     
     df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
-    
+    try:
+        indexed = applyfeaturetransition(project,df,cur_features,project.target)
+    except:
+        print("feature transition not successfull")
+        indexed = df
     
     from pyspark.sql import functions as F
     from pyspark.ml.feature import OneHotEncoder
@@ -469,13 +482,12 @@ def dataclassification(request,project_id):
     print("Imports Done")
     
     
-    mytypes = gettypesanddimensionsofdataframe(df)
+    mytypes = gettypesanddimensionsofdataframe(indexed)
 
     print("Types sdone")
     
     firstrow_transformed = df.first().asDict()
     try:
-        indexed = applyfeaturetransition(df,cur_features,project.target)
         firstrow_indexed = indexed.first().asDict()
         print("First row done")
         featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
@@ -574,7 +586,16 @@ def setupdataclassifcation(request,project_id):
             appFeat = Feature(fieldname=x[13:],reformat=request.POST["addfieldrule_"+x[13:]],transition=request.POST["addfieldtransition_"+x[13:]],type=request.POST["addfieldtype_1"+x[13:]])
             appFeat.save()
             project.appendFeature=appFeat
-
+    
+    from pyspark.sql import SQLContext
+    
+    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
+    sqlContext = SQLContext(spark)
+    try:
+        sqlContext.uncacheTable("indexed_temp_table")
+        sqlContext.sql("drop table indexed_temp_table")
+    except:
+        print("nothing to uncache")
     
     project.save()
     return HttpResponseRedirect('/dataclassification/'+str(project_id))
@@ -729,31 +750,58 @@ def createDataFrameHTMLPreview(dataframe):
     return html
 
 
-def applyfeaturetransition(dataframe,features,target):
-    indexed = dataframe
-    assert features != None
-    assert target != None
+def applyfeaturetransition(project,dataframe,features,target):
 
-    for feat in features:
-        try:
-            if(feat.transition>0):
-                indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
-            else:
-                #indexed = fp.applytransition(0,feat.fieldname,isndexed)
-                print("no transformation needed")
-            
-        except Exception as e:
-            print("error on transformation")
-            print(e)
-    #target
-    
+    from pyspark.sql import SQLContext
+    from pyspark import StorageLevel
+
+    spark = getsparksession(project.id,1)
+    sqlContext = SQLContext(spark)
     try:
-        if(target.transition>0):
-            indexed = fp.applytransition(target.transition,target.fieldname,indexed)
-    except Exception as e:
-            print("error on transformation")
-            print(e)
+        indexed = sqlContext.sql("select * from indexed_temp_table")
+    except:
+        traceback.print_exc()
+        
+        try:
+            indexed = dataframe
+            assert features != None
+            assert target != None
+
+            for feat in features:
+                try:
+                    if(feat.transition>0):
+                        indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
+                    else:
+                        #indexed = fp.applytransition(0,feat.fieldname,isndexed)
+                        print("no transformation needed")
+                    
+                except Exception as e:
+                    print("error on transformation")
+                    print(e)
+            #target
+            
+            try:
+                if(target.transition>0):
+                    indexed = fp.applytransition(target.transition,target.fieldname,indexed)
+            except Exception as e:
+                    print("error on transformation")
+                    print(e)
+            
+
+            
+            indexed.registerTempTable("indexed_temp_table")
+            #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
+            sqlContext.sql("CACHE TABLE indexed_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
+
+        except:
+            traceback.print_exc()
+            #project.selectstatement = ""
+            #project.save()
+            indexed = dataframe
+        
     return indexed
+
+    
 
 
 
@@ -820,16 +868,6 @@ def gettypesanddimensionsofdataframe(df):
     mytypes_filter = filter(lambda x:x[0]!='_id',df.dtypes)
     mytypes_nodim = list(mytypes_filter)
     
-    #mytypes_dict  = dict(mytypes)
-    
-    #mytypes = list(filter(lambda x:not (x[0]+"Piped" in mytypes_dict.keys()),mytypes ))
-    #def reformatPipedPre(x):
-    #    if x[0].endswith("Piped"):
-    #        a= x[0][:(len(x[0])-5)]
-    #    else:
-    #        a = x[0]
-    #    return (a,x[1])
-
     mytypes =[]
     #Figure out dimension
     for item in mytypes_nodim:
@@ -897,6 +935,7 @@ def buildFeatureVector(dataframe,features,target):
     selector.append(psf.col(target.fieldname).alias("target"))
 
     #train_df3 = train_df3.withColumn("target",train_df3[target.fieldname])
+    selector.append(col('type'))
     train_df3 = train_df3.select(selector)
     return train_df3
 
@@ -922,10 +961,11 @@ def getTransformedData(project_id,qualifier):
     project = get_object_or_404(Project, pk=project_id)
     #1 = mysite.dataoperation.TRAIN_DATA_QUALIFIER
     train_df = mysite.dataoperation.readfromcassandra(project_id,qualifier)
-    train_df = train_df.filter(train_df.type == qualifier)
-    train_df = train_df.drop('type')
     train_df = mysite.dataoperation.transformdataframe(project,train_df,qualifier)
-    train_df = applyfeaturetransition(train_df,project.features.all(),project.target)
+    train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
     train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
+    if qualifier > 0:
+        train_df1 = train_df1.filter(train_df.type == qualifier)
+    train_df = train_df.drop('type')
     train_df3 = train_df1
     return train_df3

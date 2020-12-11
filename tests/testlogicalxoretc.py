@@ -61,7 +61,7 @@ class TestKuaiCase(TestCase):
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
         
-        self.assertEqual(json.loads(response.content)['result'][0][0]>=0, True)
+        self.assertEqual(int(json.loads(response.content)['result'])>=0, True)
 
         response = c.post('/createOrUpdateUDF/'+project_id_str+'/',{
             'id':0,
@@ -72,7 +72,7 @@ class TestKuaiCase(TestCase):
         })
 
         json.loads(response.content)['id']
-
+        self.assertEqual(int(json.loads(response.content)['result'])>=0, True)
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
@@ -85,7 +85,7 @@ class TestKuaiCase(TestCase):
         })
 
         json.loads(response.content)['id']
-
+        self.assertEqual(int(json.loads(response.content)['result'])>=0, True)
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
@@ -98,7 +98,7 @@ class TestKuaiCase(TestCase):
         })
 
         json.loads(response.content)['id']
-
+        self.assertEqual(int(json.loads(response.content)['result'])>=0, True)
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
@@ -111,7 +111,7 @@ class TestKuaiCase(TestCase):
         })
 
         json.loads(response.content)['id']
-
+        self.assertEqual(int(json.loads(response.content)['result'])>=0, True)
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
@@ -124,7 +124,7 @@ class TestKuaiCase(TestCase):
             'selectstatement': selectstmt,
             'udfclasses': udfclasses
         })
-
+        
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
         
@@ -136,32 +136,32 @@ class TestKuaiCase(TestCase):
                          selectstmt)
         
         response = c.post('/setupdataclassifcation/'+project_id_str+'/', {
-            'feature_udf1': 'on', 
-            'fttype_udf1': 'int', 
-            'fttransition_udf1': '0', 
-            'dimension_udf1': '1', 
-            'ftreformat_udf1': '                                        ', 
-            'feature_udf2': 'on', 
-            'fttype_udf2': 'int', 
-            'fttransition_udf2': '0', 
-            'dimension_udf2': '1', 
-            'ftreformat_udf2': '                                        ',
-            'feature_udf3': 'on', 
-            'fttype_udf3': 'int', 
-            'fttransition_udf3': '0', 
-            'dimension_udf3': '1', 
-            'ftreformat_udf3': '                                        ',
-            'feature_udf4': 'on', 
-            'fttype_udf4': 'int', 
-            'fttransition_udf4': '0', 
-            'dimension_udf4': '1', 
-            'ftreformat_udf4': '                                        ',
-            'feature_udf5': 'on', 
-            'fttype_udf5': 'int', 
-            'fttransition_udf5': '0', 
-            'dimension_udf5': '1', 
-            'ftreformat_udf5': '                                        ',
-            'targetselection': 'udf5'
+            'feature_inputx_1': 'on', 
+            'fttype_inputx_1': 'int', 
+            'fttransition_inputx_1': '0', 
+            'dimension_inputx_1': '1', 
+            'ftreformat_inputx_1': '                                        ', 
+            'feature_inputy_2': 'on', 
+            'fttype_inputy_2': 'int', 
+            'fttransition_inputy_2': '0', 
+            'dimension_inputy_2': '1', 
+            'ftreformat_inputy_2': '                                        ',
+            'feature_outputand_3': 'on', 
+            'fttype_outputand_3': 'int', 
+            'fttransition_outputand_3': '0', 
+            'dimension_outputand_3': '1', 
+            'ftreformat_outputand_3': '                                        ',
+            'feature_outputor_4': 'on', 
+            'fttype_outputor_4': 'int', 
+            'fttransition_outputor_4': '0', 
+            'dimension_outputor_4': '1', 
+            'ftreformat_outputor_4': '                                        ',
+            'feature_outputxor_5': 'on', 
+            'fttype_outputxor_5': 'int', 
+            'fttransition_outputxor_5': '0', 
+            'dimension_outputxor_5': '1', 
+            'ftreformat_outputxor_5': '                                        ',
+            'targetselection': 'outputxor_5'
             
         })
         

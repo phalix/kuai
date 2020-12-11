@@ -4,7 +4,7 @@ from django.test import Client
 from mysite import dataoperation
 from django.shortcuts import render, get_object_or_404
 from mysite.models import Project, Feature, NeuralNetwork
-
+import json
 
 class TestKuaiCase(TestCase):
     def setUp(self):
@@ -95,7 +95,18 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
                          'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))')
         
         response = c.post('/setupdataclassifcation/'+project_id_str+'/', {
-            'feature_category': 'on', 'fttype_category': 'float', 'fttransition_category': '0', 'dimension_category': '1', 'ftreformat_category': '                                        ', 'feature_cc22': 'on', 'fttype_cc22': 'float', 'fttransition_cc22': '3', 'dimension_cc22': '1', 'ftreformat_cc22': '', 'feature_image': 'on', 'fttype_image': 'array<array<array<int>>>', 'fttransition_image': '0', 'dimension_image': '720,1280,3', 'ftreformat_image': '', 'fttype_cc22Pre': 'double', 'fttransition_cc22Pre': '0', 'dimension_cc22Pre': '', 'ftreformat_cc22Pre': '', 'targetselection': 'category'
+            'feature_imagedata_1': 'on', 
+            'fttype_imagedata_1': 'ArrayType,ArrayType,ArrayType,IntegerType', 
+            'fttransition_imagedata_1': '0', 
+            'dimension_imagedata_1': '720,1280,3', 
+            'ftreformat_imagedata_1': '                                        ', 
+            'feature_imageheight_2': 'on', 
+            'fttype_imageheight_2': 'IntegerType', 
+            'fttransition_imageheight_2': '3', 
+            'dimension_imageheight_2': '1', 
+            'ftreformat_imageheight_2': '',
+            'targetselection': 'imageheight_2'
+            
         })
         
         self.assertEqual(response.status_code >
@@ -107,17 +118,65 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
 
         import mysite.dataoperation as md
         print(md.getinputschema(project_id))
-        self.assertEqual(md.getinputschema(project_id), {1: [1], 3: [[720, 1280, 3]]})
+        self.assertEqual(md.getinputschema(project_id), {3: [[720, 1280, 3]]})
         print(md.getfeaturedimensionbyproject(project.features.all()))
-        self.assertEqual(md.getfeaturedimensionbyproject(project.features.all()),{1: {'cc22': [1]}, 3: {'image': [720, 1280, 3]}})
+        self.assertEqual(md.getfeaturedimensionbyproject(project.features.all()),{3: {'imagedata_1': [720, 1280, 3]}})
 
-        df = md.readfromcassandra(project_id,1)
-        df2 = md.transformdataframe(project,df,1)
+
+        response = c.post('/aiupload/'+project_id_str+'/', {
+            'layer1':'Conv2D',
+            'para1$filters%5':'1',
+            'para1$kernel_size%5':'(720,1280)',
+            'states[]1':'Input1_(720,1280,3,None)',
+            'layer2':'Flatten',
+            'states[]2':'1',
+
+        })
+
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
         
-        project = get_object_or_404(Project, pk=1)
+        response = c.post('/aioptandoutupload/'+project_id_str+'/', {
+            'layer3':'Dense',
+            'para3$units%5':'1',
+            'para3$activation%5':'sigmoid',
+            'states[]3':'2',
+            'optimizerselect':'Adam',
+        })
+        
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+        
+        response = c.post('/modelsummary/'+project_id_str+'/', {
+        })
+        
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
 
-        a = md.buildFeatureVector(df2,project.features.all(),project.target)
-        b = md.getXandYFromDataframe(a,project)
-        a.show()
-        print(b)
-        ##TODO: to be complted!
+        print(response.content)
+
+
+       ## DESSA Integration
+        import mysite.experiments as me
+        exp_id = me.getlatestexperiment(project_id)
+        exp_id_str = str(exp_id)
+        response = c.post('/uploadexpsetup/'+project_id_str+'/'+exp_id_str+'/', {
+            'loss':'categorical_crossentropy',
+            'metrics[]':' categorical_crossentropy,MSE,MAE',
+            'noofepochs':'5',
+            'batchsize':'4',
+        })
+        
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
+        response = c.post("/writetodessa/"+project_id_str+"/"+exp_id_str+"/", {})
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+        
+        #write to dessa and run
+        response = c.post("/startExperimentsPerProject/"+project_id_str+"/"+exp_id_str+"/", {})
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+        print("done")

@@ -49,33 +49,4 @@ class TestKuaiCase(TestCase):
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
-        project = get_object_or_404(Project, pk=project_id)
-        self.assertEqual(project.selectstatement,
-                         selectstmt)
         
-        response = c.post('/setupdataclassifcation/'+project_id_str+'/', {
-            'feature_category': 'on', 'fttype_category': 'float', 'fttransition_category': '0', 'dimension_category': '1', 'ftreformat_category': '                                        ', 'feature_cc22': 'on', 'fttype_cc22': 'float', 'fttransition_cc22': '3', 'dimension_cc22': '1', 'ftreformat_cc22': '', 'feature_image': 'on', 'fttype_image': 'array<array<array<int>>>', 'fttransition_image': '0', 'dimension_image': '720,1280,3', 'ftreformat_image': '', 'fttype_cc22Pre': 'double', 'fttransition_cc22Pre': '0', 'dimension_cc22Pre': '', 'ftreformat_cc22Pre': '', 'targetselection': 'category'
-        })
-        
-        self.assertEqual(response.status_code >
-                         199 and response.status_code < 400, True)
-
-        response = c.post('/dataclassification/'+project_id_str+'/', {})
-        self.assertEqual(response.status_code >
-                         199 and response.status_code < 400, True)
-
-        import mysite.dataoperation as md
-        print(md.getinputschema(project_id))
-        self.assertEqual(md.getinputschema(project_id), {1: [1], 3: [[720, 1280, 3]]})
-        print(md.getfeaturedimensionbyproject(project.features.all()))
-        self.assertEqual(md.getfeaturedimensionbyproject(project.features.all()),{1: {'cc22': [1]}, 3: {'image': [720, 1280, 3]}})
-
-        df = md.readfromcassandra(project_id,1)
-        df2 = md.transformdataframe(project,df,1)
-        
-        project = get_object_or_404(Project, pk=1)
-
-        a = md.buildFeatureVector(df2,project.features.all(),project.target)
-        b = md.getXandYFromDataframe(a,project)
-        a.show()
-        print(b)
