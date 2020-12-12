@@ -46,7 +46,7 @@ print("____________________________________________")
 pds = pq.ParquetDataset(parquet_files2)
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
-a = model.evaluate(x=xy['x'],y=xy['y'])
+a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=[dc.CustomDessaCallback()])
 print(a)
 
 # Log some hyper-parameters
