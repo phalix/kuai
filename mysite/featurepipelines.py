@@ -1,3 +1,40 @@
+
+def getAllSparkFeatureModifiers():
+    from pyspark import ml
+    import inspect
+    return dict(inspect.getmembers(ml.feature))['__all__'] ##all relevant encoders
+
+
+def applySetOfFeatureModifiers(modifiersString,feature,dataframe):
+    from pyspark import ml
+    modifiers = modifiersString.split(",")
+    for modifier in modifiers:
+        eModifier = eval("ml.feature."+modifier)
+        dataframe = applyFeatureModifiers(eModifier,feature,dataframe)
+    return dataframe
+
+def applyFeatureModifiers(modifier,feature,dataframe):
+    import inspect
+    tempsuffix = '_applied'
+    kwargs = {}
+    if 'inputCol' in list(inspect.signature(modifier).parameters):
+        kwargs['inputCol'] = feature
+    else:
+        kwargs['inputCols'] = [feature]
+    if 'outputCol' in list(inspect.signature(modifier).parameters):
+        kwargs['outputCol'] = feature+tempsuffix
+    else:
+        kwargs['outputCols'] = [feature+tempsuffix]
+    
+    compiledModifier = modifier(**kwargs)
+    if 'fit' in dict(inspect.getmembers(compiledModifier)).keys():
+        compiledModifier = compiledModifier.fit(dataframe)
+    if 'transform' in dict(inspect.getmembers(compiledModifier)).keys():
+        dataframe = compiledModifier.transform(dataframe)
+        dataframe = dataframe.drop(feature).withColumnRenamed(feature+tempsuffix,feature)
+    return dataframe
+
+
 #TODO: transformers needs to be saved!
 #TODO: type transformation!!!
 def piNone(featurename,dataframe):
@@ -49,9 +86,12 @@ def piStrOneHotEncoding(featurename,dataframe):
         return new_array
 
     toDenseVectorUdfInt = F.udf(convertSparseVectortoDenseVectorInt, T.ArrayType(T.IntegerType()))
-
-
-    indexed = indexed.drop(featurename).drop(featurename+"HE").drop(featurename+"OHE").withColumn(featurename,toDenseVectorUdfInt(featurename+"OHE"))
+    
+    from pyspark.ml.feature import Interaction, VectorAssembler
+    assembler1 = VectorAssembler(inputCols=[featurename+"OHE"], outputCol="vec1")
+    assembled1 = assembler1.transform(indexed)
+    a = assembled1.toPandas()
+    indexed = indexed.drop(featurename).drop(featurename+"HE").withColumn(featurename,toDenseVectorUdfInt(featurename+"OHE")).drop(featurename+"OHE")
     #indexer = VectorIndexer(inputCol=featurename+"OHE", outputCol=featurename+"tHE", maxCategories=10)
     #indexerModel = indexer.fit(indexed)
     #indexed = indexerModel.transform(indexed)
@@ -60,17 +100,8 @@ def piStrOneHotEncoding(featurename,dataframe):
 
 def piNumStandardScaler(featurename,dataframe):
     from pyspark.sql.functions import mean,stddev,max,min
-    print("meanstart")
     mean_age, sttdev_age,max_age,min_age = dataframe.select(mean(featurename), stddev(featurename),max(featurename),min(featurename)).first()
-    print(mean_age)
-    print(sttdev_age)
-    print(max_age)
-    print(min_age)
-    print("meanend")
-    #return dataframe.withColumn(featurename, (dataframe[featurename] - mean_age) / sttdev_age) #standardization
-    print((dataframe[featurename] - min_age) / (max_age-min_age))
     a = dataframe.withColumn(featurename, (dataframe[featurename] - min_age) / (max_age-min_age)) #min max scale
-    a.show()
     return a
     
 
@@ -80,18 +111,12 @@ def piStrCountVectorizer(featurename,dataframe):
     from pyspark.sql.functions import col, udf
     from pyspark.sql.types import IntegerType
     df = dataframe
-    
     tokenizer = Tokenizer(inputCol=featurename, outputCol=featurename+"Words")
     df = tokenizer.transform(df)
     # fit a CountVectorizerModel from the corpus.
     cv = CountVectorizer(inputCol=featurename+"Words", outputCol=featurename+"Pre", vocabSize=999999, minDF=2.0)
-
     model = cv.fit(df)
-
     result = model.transform(df)
-
-    #result = result.withColumn(featurename+"Pre", toDenseVectorUdf(featurename+"Pre2"))
-
     return result
 
 def indexPipelines():
@@ -110,8 +135,6 @@ def applytransition(id,featurename,dataframe):
         mytuple = ip[id]
     else:
         mytuple = ip[0]
-    if mytuple is None:
-        raise    
     return mytuple[2](featurename,dataframe)
 
 import  pyspark.sql.functions as psf

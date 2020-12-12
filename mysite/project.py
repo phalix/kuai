@@ -39,7 +39,12 @@ def new(request):
 def createnewproject(request):
     authorname = request.POST['authorNameInput']
     projectname = request.POST['projectNameInput']
+    
     p = Project(author=authorname,projectname=projectname,datacreated=datetime.now())
+    if 'pk' in request.POST:
+        pk = request.POST['pk']
+        p.pk = pk
+    
     p.save()
     return HttpResponseRedirect('/dashboard/'+str(p.pk))
     

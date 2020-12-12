@@ -555,5 +555,6 @@ def submitDessaJob(project_id):
         import subprocess
         proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
         #proc.wait()
+        print("started")
     except Exception as e:
         print(e)

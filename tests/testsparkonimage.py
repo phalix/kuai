@@ -15,15 +15,16 @@ class TestKuaiCase(TestCase):
         projectname = 'testproject'
 
         c = Client()
+        project_id = 9554
         response = c.post(
-            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname})
+            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname,'pk':project_id})
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
-        project = get_object_or_404(Project, pk=1)
+        project = get_object_or_404(Project, pk=project_id)
         self.assertEqual(project.author, author)
         self.assertEqual(project.projectname, projectname)
 
-        project_id = 1
+        
         project_id_str = str(project_id)
         response = c.get('/dashboard/'+project_id_str+'/')
         self.assertEqual(response.status_code >
@@ -67,6 +68,19 @@ class TestKuaiCase(TestCase):
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
 
+        response = c.post('/createOrUpdateUDF/'+project_id_str+'/',{
+            'id':0,
+            'action':'ADD',
+            'outputtype':'StringType',
+            'columns':'image.origin',
+            'udfcode1':'return output.split("/")[5]'
+        })
+
+        json.loads(response.content)['id']
+
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+
         response = c.post('/datatransform/'+project_id_str+'/', {
             'selectstatement': 'select(udfcategory("image.origin").alias("category"),udfcategory("image.origin").alias("cc22"),udfimage("image").alias("image"))',
             'udfclasses': """def category(value):
@@ -100,12 +114,17 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
             'fttransition_imagedata_1': '0', 
             'dimension_imagedata_1': '720,1280,3', 
             'ftreformat_imagedata_1': '                                        ', 
-            'feature_imageheight_2': 'on', 
-            'fttype_imageheight_2': 'IntegerType', 
-            'fttransition_imageheight_2': '3', 
-            'dimension_imageheight_2': '1', 
-            'ftreformat_imageheight_2': '',
-            'targetselection': 'imageheight_2'
+            #'feature_imageheight_2': 'on', 
+            #'fttype_imageheight_2': 'IntegerType', 
+            #'fttransition_imageheight_2': '0', 
+            #'dimension_imageheight_2': '1', 
+            #'ftreformat_imageheight_2': '',
+            'feature_imageorigin_3': 'on', 
+            'fttype_imageorigin_3': 'StringType', 
+            'fttransition_imageorigin_3': '0', 
+            'dimension_imageorigin_3': '18', 
+            'ftreformat_imageorigin_3': 'StringIndexer,OneHotEncoder,VectorAssembler',
+            'targetselection': 'imageorigin_3'
             
         })
         
@@ -139,7 +158,7 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
         
         response = c.post('/aioptandoutupload/'+project_id_str+'/', {
             'layer3':'Dense',
-            'para3$units%5':'1',
+            'para3$units%5':'17',
             'para3$activation%5':'sigmoid',
             'states[]3':'2',
             'optimizerselect':'Adam',
@@ -163,7 +182,7 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
         exp_id_str = str(exp_id)
         response = c.post('/uploadexpsetup/'+project_id_str+'/'+exp_id_str+'/', {
             'loss':'categorical_crossentropy',
-            'metrics[]':' categorical_crossentropy,MSE,MAE',
+            'metrics[]':'MAE',
             'noofepochs':'5',
             'batchsize':'4',
         })

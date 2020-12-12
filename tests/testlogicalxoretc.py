@@ -17,15 +17,16 @@ class TestKuaiCase(TestCase):
         projectname = 'testproject'
 
         c = Client()
+        project_id = 882233
         response = c.post(
-            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname})
+            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname,'pk':882233})
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
-        project = get_object_or_404(Project, pk=1)
+        project = get_object_or_404(Project, pk=project_id)
         self.assertEqual(project.author, author)
         self.assertEqual(project.projectname, projectname)
 
-        project_id = 1
+        
         project_id_str = str(project_id)
         response = c.get('/dashboard/'+project_id_str+'/')
         self.assertEqual(response.status_code >
@@ -37,7 +38,7 @@ class TestKuaiCase(TestCase):
         outputand = [0,0,0,1]
         outputxor = [0,1,1,0]
         outputor = [0,1,1,1]
-        typea = [0,0,0,0]
+        typea = [1,1,1,1]
 
         pdf = pd.DataFrame(list(zip(inputx, inputy,outputand,outputxor,outputor,typea)), 
                columns =['inputx', 'inputy','outputand','outputxor','outputor','type']) 
@@ -138,12 +139,12 @@ class TestKuaiCase(TestCase):
         response = c.post('/setupdataclassifcation/'+project_id_str+'/', {
             'feature_inputx_1': 'on', 
             'fttype_inputx_1': 'int', 
-            'fttransition_inputx_1': '0', 
+            'fttransition_inputx_1': '3', 
             'dimension_inputx_1': '1', 
             'ftreformat_inputx_1': '                                        ', 
             'feature_inputy_2': 'on', 
             'fttype_inputy_2': 'int', 
-            'fttransition_inputy_2': '0', 
+            'fttransition_inputy_2': '3', 
             'dimension_inputy_2': '1', 
             'ftreformat_inputy_2': '                                        ',
             'feature_outputand_3': 'on', 

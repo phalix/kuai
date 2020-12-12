@@ -4,7 +4,9 @@ from tensorflow import keras
 import numpy as np
 import pyarrow.parquet as pq
 
+logdir = "./logs"
 parquet_files = "./data/1.parquet"
+parquet_files2 = "./data/2.parquet"
 model = keras.models.load_model('./model')
 print("____________________________________________")
 print("_________________Model______________________")
@@ -97,23 +99,28 @@ def getXandYFromPyArrow(table):
 
 
 
-logdir = "./logs"
+
 tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 foundations.set_tensorboard_logdir(logdir)
 
 epochs = 5
 depth = 3
-batch_size = 256
+batch_size = 1
 lrate = 1e-3
 
 pds = pq.ParquetDataset(parquet_files)
 table = pds.read()
 xy = getXandYFromPyArrow(table)
-model.fit(x=xy['x'],y=xy['y'],epochs=epochs,callbacks=[tensorboard_callback,CustomCallback()])
+model.fit(x=xy['x'],y=xy['y'],epochs=epochs,batch_size = batch_size,callbacks=[tensorboard_callback,CustomCallback()])
 
 print("____________________________________________")
 print("_________________TRAIN______________________")
 print("____________________________________________")
+
+pds = pq.ParquetDataset(parquet_files2)
+table = pds.read()
+xy = getXandYFromPyArrow(table)
+model.evaluate(x=xy['x'],y=xy['y'],callbacks=[tensorboard_callback,CustomCallback()])
 
 # Log some hyper-parameters
 foundations.log_param('depth', depth)

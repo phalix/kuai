@@ -44,15 +44,10 @@ def createOrUpdateUDF(request,project_id):
     from pyspark.sql import SQLContext
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
-    try:
+    if 'transform_temp_table' in sqlContext.tableNames():
         sqlContext.uncacheTable("transform_temp_table")
-    except:
-        print("nothing to uncache")
-    try:
         sqlContext.sql("drop table transform_temp_table")
-    except:
-        print("nothing to drop")
-
+    
     if action == "REMOVE":
         result = ""
         try:
@@ -70,14 +65,16 @@ def createOrUpdateUDF(request,project_id):
 
     project = get_object_or_404(Project, pk=project_id)
     
-    
-    try:
-        newudf = get_object_or_404(UDF, pk=udfpk)
-        newudf.input = columns
-        newudf.udfexecutiontext = udfcode
-        newudf.outputtype = outputtype
-    except:
+    if udfpk == '0':
         newudf = UDF(input=columns,udfexecutiontext=udfcode,outputtype=outputtype,project=project)
+    else:
+        try:
+            newudf = get_object_or_404(UDF, pk=udfpk)
+            newudf.input = columns
+            newudf.udfexecutiontext = udfcode
+            newudf.outputtype = outputtype
+        except:
+            newudf = UDF(input=columns,udfexecutiontext=udfcode,outputtype=outputtype,project=project)
 
     
     newudf.save()
@@ -237,16 +234,18 @@ def analysis(request,project_id):
     template = loader.get_template('data/dataanalysis.html')
     project = get_object_or_404(Project, pk=project_id)
     
-    df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
-    df_test = readfromcassandra(project_id,TEST_DATA_QUALIFIER)
-    df_cv = readfromcassandra(project_id,CV_DATA_QUALIFIER)
-    print(df.count())
-    print(df_test.count())
-    print(df_cv.count())
-    df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
-    df2_test = transformdataframe(project,df_test,TEST_DATA_QUALIFIER)
-    df2_cv = transformdataframe(project,df_cv,CV_DATA_QUALIFIER)
-    
+    df2 = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    df2 = mysite.dataoperation.transformdataframe(project,df2,TRAIN_DATA_QUALIFIER)
+    df2 = applyfeaturetransition(project,df2,project.features.all(),project.target)
+
+    df2_test = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    df2_test = mysite.dataoperation.transformdataframe(project,df2_test,TRAIN_DATA_QUALIFIER)
+    df2_test = applyfeaturetransition(project,df2_test,project.features.all(),project.target)
+
+    df2_cv = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
+    df2_cv = mysite.dataoperation.transformdataframe(project,df2_cv,TRAIN_DATA_QUALIFIER)
+    df2_cv = applyfeaturetransition(project,df2_cv,project.features.all(),project.target)
+
     dfdescription = df2.describe().toPandas().to_html()
     dfdescription_test = df2_test.describe().toPandas().to_html()
     dfdescription_cv = df2_cv.describe().toPandas().to_html()
@@ -381,11 +380,10 @@ def transformdata(request,project_id):
     from pyspark.sql import SQLContext
     spark = getsparksession(project.id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
-    try:
+    if 'transform_temp_table' in sqlContext.tableNames():
         sqlContext.uncacheTable("transform_temp_table")
         sqlContext.sql("drop table transform_temp_table")
-    except:
-        print("nothing to drop")
+    
 
     return HttpResponseRedirect('/transform/'+str(project_id))
 
@@ -436,12 +434,10 @@ def uploaddata(request,project_id):
     from pyspark.sql import SQLContext
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
-    try:
+    if 'temp_table' in sqlContext.tableNames():
         sqlContext.uncacheTable("temp_table")
         sqlContext.sql("drop table temp_table")
-    except:
-        print("nothing to drop")
-
+    
     return HttpResponseRedirect('/transform/'+str(project_id)+"/")
 
 def dataclassification(request,project_id):
@@ -471,6 +467,7 @@ def dataclassification(request,project_id):
     df = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
     try:
         indexed = applyfeaturetransition(project,df,cur_features,project.target)
+        
     except:
         print("feature transition not successfull")
         indexed = df
@@ -486,11 +483,17 @@ def dataclassification(request,project_id):
 
     print("Types sdone")
     
-    firstrow_transformed = df.first().asDict()
+    
     try:
+        firstrow_transformed = df.first().asDict()
         firstrow_indexed = indexed.first().asDict()
         print("First row done")
         featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
+        
+        df = df.drop('type')
+        indexed = indexed.drop('type')
+        featurevector_df = featurevector_df.drop('type')
+        
         print("featurevector_df")
         featurevector = dict(filter(lambda x:x[0]!='target',featurevector_df.first().asDict().items()))
         print("featurevector")
@@ -500,27 +503,23 @@ def dataclassification(request,project_id):
         dataframe_html = ""
         dataframe_html = createDataFrameHTMLPreview(indexed) 
         print("dataframe_html preview done")
-        
+        for key in firstrow_indexed:
+            firstrow_indexed[key] = str(firstrow_indexed[key])[0:50]
+
+        for key in firstrow_transformed:
+            firstrow_transformed[key] = str(firstrow_transformed[key])[0:50]
             
     
     except Exception as e:
         print(e)
         traceback.print_exc()
-        firstrow_indexed = firstrow_transformed
+        firstrow_indexed = []
+        firstrow_transformed = []
         featurevector = []
         featurevector_df_html = ""
         dataframe_html = ""
     
-    for key in firstrow_indexed:
-        firstrow_indexed[key] = str(firstrow_indexed[key])[0:50]
 
-    for key in firstrow_transformed:
-        firstrow_transformed[key] = str(firstrow_transformed[key])[0:50]
-
-    print(firstrow_transformed)
-    print(firstrow_indexed)
-    
-    print("provision done")
 
     context = {
         "project" : project,
@@ -591,11 +590,10 @@ def setupdataclassifcation(request,project_id):
     
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
-    try:
+    if 'indexed_temp_table' in sqlContext.tableNames():
         sqlContext.uncacheTable("indexed_temp_table")
         sqlContext.sql("drop table indexed_temp_table")
-    except:
-        print("nothing to uncache")
+    
     
     project.save()
     return HttpResponseRedirect('/dataclassification/'+str(project_id))
@@ -625,9 +623,9 @@ def readfromcassandra(project_id,type):
     
     spark = getsparksession(project_id,type)
     sqlContext = SQLContext(spark)
-    try:
+    if 'temp_table' in sqlContext.tableNames():
         df = sqlContext.sql("select * from temp_table")
-    except:
+    else:
         traceback.print_exc()
         df = spark.read.format("mongo").load()
         df.registerTempTable("temp_table")
@@ -642,32 +640,32 @@ def getsparksession(project_id,type):
     # 1 = train
     # 2 = test
     # 3 = cross validation
-    if type in [1,2,3]:
+    #if type in [1,2,3]:
 
-        import os
-        #relevant for selecting right version
-        #TODO: must be configurable
-        #os.environ['PYSPARK_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
-        #os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
+    import os
+    #relevant for selecting right version
+    #TODO: must be configurable
+    #os.environ['PYSPARK_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
+    #os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
 
-        #os.environ['PYSPARK_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
-        #os.environ['PYSPARK_DRIVER_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
+    #os.environ['PYSPARK_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
+    #os.environ['PYSPARK_DRIVER_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
 
-        conf = createSparkConfig(project_id,type)
-        
-        from django.conf import settings
-        db_path = settings.DATABASES['default']['NAME']
+    conf = createSparkConfig(project_id,type)
+    
+    from django.conf import settings
+    db_path = settings.DATABASES['default']['NAME']
 
 
-        
-        from pyspark.sql import SparkSession
-        
-        spark = SparkSession.builder.appName('kuai') \
-            .master("local[16]")\
-            .config(conf=conf)\
-            .getOrCreate()
-        return spark
-    raise TypeError("type")
+    
+    from pyspark.sql import SparkSession
+    
+    spark = SparkSession.builder.appName('kuai') \
+        .master("local[16]")\
+        .config(conf=conf)\
+        .getOrCreate()
+    return spark
+    #raise TypeError("type")
 
 def createSparkConfig(project_id,type):
     
@@ -678,7 +676,7 @@ def createSparkConfig(project_id,type):
     #TODO: must be configurable
     conf.set('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0')
     url = "mongodb://localhost/test.test"
-    detailedurl = url+str(project_id)+"_"+str(type)
+    detailedurl = url+str(project_id)+"_"+"1"#str(type)
     conf.set("spark.mongodb.input.uri", detailedurl)
     conf.set("spark.mongodb.output.uri", detailedurl)
 
@@ -710,9 +708,9 @@ def transformdataframe(project,dataframe,type):
 
     spark = getsparksession(project.id,1)
     sqlContext = SQLContext(spark)
-    try:
+    if 'transform_temp_table' in sqlContext.tableNames():
         df2 = sqlContext.sql("select * from transform_temp_table")
-    except:
+    else:
         traceback.print_exc()
         
         
@@ -757,9 +755,9 @@ def applyfeaturetransition(project,dataframe,features,target):
 
     spark = getsparksession(project.id,1)
     sqlContext = SQLContext(spark)
-    try:
+    if 'indexed_temp_table' in sqlContext.tableNames():
         indexed = sqlContext.sql("select * from indexed_temp_table")
-    except:
+    else:
         traceback.print_exc()
         
         try:
@@ -769,6 +767,8 @@ def applyfeaturetransition(project,dataframe,features,target):
 
             for feat in features:
                 try:
+                    if(len(feat.reformat.strip())>0):
+                        fp.applySetOfFeatureModifiers(feat.reformat.strip(),feat.fieldname,indexed)
                     if(feat.transition>0):
                         indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
                     else:
@@ -781,6 +781,8 @@ def applyfeaturetransition(project,dataframe,features,target):
             #target
             
             try:
+                if(len(target.reformat.strip())>0):
+                    indexed = fp.applySetOfFeatureModifiers(target.reformat.strip(),target.fieldname,indexed)
                 if(target.transition>0):
                     indexed = fp.applytransition(target.transition,target.fieldname,indexed)
             except Exception as e:
@@ -890,6 +892,7 @@ def isTypeSimpleType(type):
 def sparkSimpleTypes():
     return ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data')
 
+
 def buildFeatureVector(dataframe,features,target):
     ###
     assert target != None
@@ -909,9 +912,7 @@ def buildFeatureVector(dataframe,features,target):
     if 1 in feature_dict:
         feature_array = list(feature_dict[1].keys())
         vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
-        train_df.show()
         train_df3 = vector_assembler.transform(train_df)
-        train_df3.show()
         from pyspark.sql import types as T
         from pyspark.sql import functions as F
         from pyspark.ml.linalg import DenseVector
@@ -924,15 +925,36 @@ def buildFeatureVector(dataframe,features,target):
         train_df = train_df3
         selector.append(psf.col('features_array'))
     
-    
     train_df3 = train_df
     for (key,value) in feature_dict.items():
         if key > 1:
             for (key2,value2) in value.items():
                 selector.append(psf.col(key2).alias('feature_'+str(key2)))
-                #train_df3 = train_df3.withColumn('feature_'+str(key2),train_df[key2])
-                
-    selector.append(psf.col(target.fieldname).alias("target"))
+    
+    target_dict = getfeaturedimensionbyproject([target])
+    if 1 in target_dict:
+        target_array = list(target_dict[1].keys())
+        vector_assembler = VectorAssembler(inputCols=target_array, outputCol="target")
+        train_df3 = vector_assembler.transform(train_df)
+        from pyspark.sql import types as T
+        from pyspark.sql import functions as F
+        from pyspark.ml.linalg import DenseVector
+        def convertSparseVectortoDenseVector(v):
+            v = DenseVector(v)
+            new_array = list([float(x) for x in v])
+            return new_array
+        toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
+        train_df3 = train_df3.withColumn('target_array', toDenseVectorUdf('target'))
+        train_df = train_df3
+        selector.append(psf.col('target_array').alias("target"))#TODO: remove alias on compability for multiple outputs
+    
+    for (key,value) in target_dict.items():
+            if key > 1:
+                for (key2,value2) in value.items():
+                    selector.append(psf.col(key2).alias('target_'+str(key2)))
+
+
+    #selector.append(psf.col(target.fieldname).alias("target"))
 
     #train_df3 = train_df3.withColumn("target",train_df3[target.fieldname])
     selector.append(col('type'))
@@ -966,6 +988,6 @@ def getTransformedData(project_id,qualifier):
     train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
     if qualifier > 0:
         train_df1 = train_df1.filter(train_df.type == qualifier)
-    train_df = train_df.drop('type')
+    train_df1 = train_df1.drop('type')
     train_df3 = train_df1
     return train_df3
