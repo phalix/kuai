@@ -24,6 +24,8 @@ librarystring3 = 'keras.optimizers'
 librarystring4 = 'keras.metrics'
 
 
+
+
 def modelsummary(request,project_id):
     #TODO: split this function, into
     # add feature transition!
@@ -36,7 +38,15 @@ def modelsummary(request,project_id):
     optimizer = getOptimizerAsPlainPython(project)
     model = buildmodel(project,neuralnetwork,optimizer,list(project.features.all()),'mse',['accuracy'],project.target.fieldname,inputs)
     
+    iputs = model.inputs
+    for iput in iputs:
+        print(iput.shape)
+    oputs = model.outputs
+    for oput in oputs:
+        print(oput.shape)
 
+    datframeshapes = mysite.dataoperation.getDimensionsByProject(project)
+    
     import pandas as pd
     #from sklearn.linear_model import LogisticRegression
     from pyspark.sql.functions import pandas_udf, PandasUDFType
@@ -62,6 +72,12 @@ def modelsummary(request,project_id):
         #"neuralnetwork": nn,
         #"layers": layers,
         "output":output,
+        "modelinputs":iputs,
+        "modeloutputs":oputs,
+        "datainputs":datframeshapes[0],
+        "dataoutputs":datframeshapes[1],
+
+
 
     }
     

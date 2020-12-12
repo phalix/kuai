@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+  <script>
+    NProgress.configure({
+      showSpinner: false
+    });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+
+  <div id="toaster"></div>
+
+
+  <div class="wrapper">
+    {% include "includes/leftsidebar.html" %}
+
+
+
+    <div class="page-wrapper">
+      {% include "includes/header.html" %}
+
+      <div class="content-wrapper">
+        <div class="content">
+          <div class="card card-default">
+            <div class="card-header card-header-border-bottom">
+              <h2>Project: {{ project.projectname }}</h2>
+            </div>
+            <div class="card-body">
+              <form action="{% url 'saveexecutionmodel' project_id %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                  <label for="exampleFormControlTextarea1">Example textarea</label>
+                  <textarea name="execution_text" class="form-control" id="exampleFormControlTextarea1"
+                    rows="3">{{ project.execution_text }}</textarea>
+                </div>
+                <div class="form-footer pt-4 pt-5 mt-4 border-top">
+                  <button type="submit" class="btn btn-primary btn-default">Submit</button>
+                  <button type="submit" class="btn btn-secondary btn-default">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
+
+        </div>
+      </div>
+    </div>
+
+
+
+
+  </div>
+
+  {% include "includes/footer.html" %}
+
+  </div>
+  </div>
+
+  {% include "includes/scripts.html" %}
+
+</body>
+
+</html>

@@ -7,10 +7,10 @@ from datetime import datetime
 
 from django import forms
 
-from .models import Project
+from .models import Project,Configuration
 
 def index(request):
-    template = loader.get_template('projects.html')
+    template = loader.get_template('project/projects.html')
     
     context = {
         "projects": Project.objects.all(),
@@ -19,7 +19,7 @@ def index(request):
     return HttpResponse(template.render(context, request))
 
 def index2(request,project_id):
-    template = loader.get_template('projects.html')
+    template = loader.get_template('project/projects.html')
     
     context = {
         "projects": Project.objects.all(),
@@ -29,7 +29,7 @@ def index2(request,project_id):
     return HttpResponse(template.render(context, request))
 
 def new(request):
-    template = loader.get_template('newproject.html')
+    template = loader.get_template('project/newproject.html')
     
     context = {
     
@@ -47,5 +47,60 @@ def createnewproject(request):
     
     p.save()
     return HttpResponseRedirect('/dashboard/'+str(p.pk))
+
+defaultValues = {
+    "DessaServer":"localhost:5555",
+    'spark.jars.packages': 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0',
+    'Author':'Sebastian',
+    'maindir':"d:/Entwicklung/kuai"
+}
+
+def getSetting(project_id,fieldname):
+    project = get_object_or_404(Project,pk=project_id)
+    checkSettingConsistency(project)
+    curConfig = project.configuration.filter(fieldname=fieldname).all()
+    result = []
+    for config in curConfig:
+        result.append(config.option)
+    return result
+    
+
+
+def setupSettings(request,project_id):
+    project = get_object_or_404(Project,pk=project_id)
+    checkSettingConsistency(project)
+    curConfig = project.configuration.all()
+    for value in request.POST:
+        if value.startswith("Option"):
+            fieldname = value[7:]
+            c = curConfig.filter(fieldname=fieldname).all()
+            for c_2 in c:
+                c_2.option = request.POST[value]
+                c_2.save()
+    return HttpResponseRedirect('/settings/'+str(project_id))
+
+
+def editProjectSettings(request,project_id):
+    template = loader.get_template('project/settings.html')
+    project = get_object_or_404(Project,pk=project_id)
+    checkSettingConsistency(project)
+    
+    curConfig = project.configuration.all()
+
+    context = {
+        "curConfig":curConfig,
+        "project_id":project_id,
+        "project":project,
+    }
+    return HttpResponse(template.render(context, request))
+
+def checkSettingConsistency(project):
+    curConfig = project.configuration.all()
+    for key,value in defaultValues.items():
+        if len(list(curConfig.filter(fieldname=key)))==0:
+            c = Configuration(fieldname=key,option=value)
+            c.save()
+            project.configuration.add(c)
+            project.save()
     
     

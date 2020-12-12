@@ -105,7 +105,9 @@ def createOrUpdateUDF(request,project_id):
 def evaluateUDFOnDataFrame(project,dataframe):
     udfs = collectUDFSOnProject(project)
     udfs['type'] = col("type") # do not loose type, train test cv
-    return dataframe.select(list(udfs.values()))
+    udflist = list(udfs.values())
+    udflist = udflist + dataframe.columns
+    return dataframe.select(udflist)
     
 def collectUDFSOnProject(project):
     udfs = UDF.objects.filter(project=project.pk).all()
@@ -236,27 +238,24 @@ def analysis(request,project_id):
     
     df2 = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df2 = mysite.dataoperation.transformdataframe(project,df2,TRAIN_DATA_QUALIFIER)
-    df2 = applyfeaturetransition(project,df2,project.features.all(),project.target)
+    #df2 = applyfeaturetransition(project,df2,project.features.all(),project.target)
+    df2 = df2.drop('type')
 
     df2_test = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df2_test = mysite.dataoperation.transformdataframe(project,df2_test,TRAIN_DATA_QUALIFIER)
-    df2_test = applyfeaturetransition(project,df2_test,project.features.all(),project.target)
+    #df2_test = applyfeaturetransition(project,df2_test,project.features.all(),project.target)
+    df2_test = df2_test.drop('type')
 
     df2_cv = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df2_cv = mysite.dataoperation.transformdataframe(project,df2_cv,TRAIN_DATA_QUALIFIER)
-    df2_cv = applyfeaturetransition(project,df2_cv,project.features.all(),project.target)
+    #df2_cv = applyfeaturetransition(project,df2_cv,project.features.all(),project.target)
+    df2_cv = df2_cv.drop('type')
 
     dfdescription = df2.describe().toPandas().to_html()
     dfdescription_test = df2_test.describe().toPandas().to_html()
     dfdescription_cv = df2_cv.describe().toPandas().to_html()
 
-    if project and project.target and project.target.fieldname:
-        target = project.target.fieldname
-    else:
-        target = df2.columns[0]
     
-    distributionbytarget = df2.groupby(target).count()
-    distributionbytarget_html = distributionbytarget.toPandas().to_html()
     ### restrict columns to simple types
     columns = list(dict(filter(lambda x:isTypeSimpleType(x[1]),df2.dtypes)).keys())
     
@@ -278,7 +277,6 @@ def analysis(request,project_id):
         "dfdescription":dfdescription,
         "dfdescription_test":dfdescription_test,
         "dfdescription_cv":dfdescription_cv,
-        "distribution":distributionbytarget_html,
         "columns":columns,
         "plotfunctions":seabornfunctions,
     }
@@ -316,6 +314,8 @@ def setuptransformdata(request,project_id):
     
     df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
     df = df.drop('type')
+    df2 = df2.drop('type')
+
     b = createDataFrameHTMLPreview(df)
     
     fields = df.schema
@@ -465,11 +465,19 @@ def dataclassification(request,project_id):
     
     df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
+    
     try:
-        indexed = applyfeaturetransition(project,df,cur_features,project.target)
         
-    except:
+        indexed = applyfeaturetransition(project,df,cur_features,project.target)
+        distributionbytarget = df.groupby(project.target.fieldname).count()
+        distributionbytarget_html = distributionbytarget.toPandas().to_html()
+    except Exception as e:
+        
+        traceback.print_exc()
+        print(e)
+
         print("feature transition not successfull")
+        distributionbytarget_html = ""
         indexed = df
     
     from pyspark.sql import functions as F
@@ -537,6 +545,7 @@ def dataclassification(request,project_id):
         "featurevector": featurevector,
         "dataframe":dataframe_html,#
         "dataframe_fv_tar": featurevector_df_html,
+        "distribution":distributionbytarget_html,
     }
     
     
@@ -626,7 +635,6 @@ def readfromcassandra(project_id,type):
     if 'temp_table' in sqlContext.tableNames():
         df = sqlContext.sql("select * from temp_table")
     else:
-        traceback.print_exc()
         df = spark.read.format("mongo").load()
         df.registerTempTable("temp_table")
         sqlContext.sql("CACHE TABLE temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
@@ -711,28 +719,23 @@ def transformdataframe(project,dataframe,type):
     if 'transform_temp_table' in sqlContext.tableNames():
         df2 = sqlContext.sql("select * from transform_temp_table")
     else:
-        traceback.print_exc()
+        #tobeeval = "dataframe."+project.selectstatement
         
-        
-        if project.selectstatement:
-            tobeeval = "dataframe."+project.selectstatement
-            #print(tobeeval)
-            
-            try:
-                #exec(project.udfclasses)
-                #df2 = eval(tobeeval)
-                df2 = evaluateUDFOnDataFrame(project,dataframe)
-                df2.registerTempTable("transform_temp_table")
-                #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
-                sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
+        try:
+            #exec(project.udfclasses)
+            #df2 = eval(tobeeval)
+            df2 = evaluateUDFOnDataFrame(project,dataframe)
+            df2.registerTempTable("transform_temp_table")
+            #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
+            sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
 
-            except:
-                traceback.print_exc()
-                #project.selectstatement = ""
-                #project.save()
-                df2 = dataframe
-        else:
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            #project.selectstatement = ""
+            #project.save()
             df2 = dataframe
+        
     return df2
 
 def createDataFrameHTMLPreview(dataframe):
@@ -778,6 +781,7 @@ def applyfeaturetransition(project,dataframe,features,target):
                 except Exception as e:
                     print("error on transformation")
                     print(e)
+                    traceback.print_exc()
             #target
             
             try:
@@ -786,8 +790,10 @@ def applyfeaturetransition(project,dataframe,features,target):
                 if(target.transition>0):
                     indexed = fp.applytransition(target.transition,target.fieldname,indexed)
             except Exception as e:
-                    print("error on transformation")
-                    print(e)
+                print("error on transformation")
+                print(e)
+                traceback.print_exc()
+        
             
 
             
@@ -795,7 +801,8 @@ def applyfeaturetransition(project,dataframe,features,target):
             #sqlContext.cacheTable("transform_temp_table",StorageLevel.DISK_ONLY)
             sqlContext.sql("CACHE TABLE indexed_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
 
-        except:
+        except Exception as e:
+            print(e)
             traceback.print_exc()
             #project.selectstatement = ""
             #project.save()
@@ -867,16 +874,34 @@ def getinputschema(project_id):
 
 def gettypesanddimensionsofdataframe(df):
     #Remove id, since sometimes mongodb adds this
-    mytypes_filter = filter(lambda x:x[0]!='_id',df.dtypes)
+    mytypes_filter = filter(lambda x:x[0] not in ('_id','type'),df.dtypes)
     mytypes_nodim = list(mytypes_filter)
     
+    totestwith = df.limit(1).collect()[0].asDict()
+    
+    iterabletypes = [list,pyspark.ml.linalg.SparseVector,pyspark.ml.linalg.DenseVector]
     mytypes =[]
     #Figure out dimension
     for item in mytypes_nodim:
         if isTypeSimpleType(item[1]):
-           cur = item + (1,)
+           cur = item + ("1",)
         else:
-            cur = item + (0,)
+            tovalidate = totestwith[item[0]]
+            tovalidatetype = type(tovalidate)
+            if(tovalidatetype in iterabletypes):
+                mytuple = []
+                checkfield = tovalidate
+                while type(checkfield) in iterabletypes:
+                    mytuple.append(len(checkfield))
+                    checkfield = checkfield[0]
+                mytuple = str(mytuple).replace("[","").replace("]","").replace(" ","")
+                cur = item + (mytuple,)
+
+            else:
+                print(str(tovalidatetype)+" is not iterable cannot infer")
+                cur = item + ("0",)
+            
+            
         mytypes.append(cur)
 
     #mytypes = list(map(lambda x:reformatPipedPre(x),mytypes))
@@ -977,6 +1002,20 @@ def getXandYFromDataframe(df,project):
     y = df.select("target").rdd.map(lambda r : r[0]).collect()
     y = np.array(y)
     return {"x":x,"y":y}
+
+
+def getDimensionsByProject(project):
+    
+    project_id = project.pk
+    train_df = mysite.dataoperation.readfromcassandra(project_id,0)
+    train_df = mysite.dataoperation.transformdataframe(project,train_df,0)
+    train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
+    mytypes = gettypesanddimensionsofdataframe(train_df)
+    featurenames = list(map(lambda x:x.fieldname,project.features.all()))
+    inputdimensions = list(filter(lambda x:x[0] in featurenames,mytypes))
+    outputdimensions = list(filter(lambda x:x[0] in [project.target.fieldname],mytypes))
+
+    return [inputdimensions,outputdimensions]
 
 
 def getTransformedData(project_id,qualifier):

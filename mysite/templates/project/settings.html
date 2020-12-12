@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+  <script>
+    NProgress.configure({
+      showSpinner: false
+    });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+
+  <div id="toaster"></div>
+
+
+  <div class="wrapper">
+    {% include "includes/leftsidebar.html" %}
+
+
+
+    <div class="page-wrapper">
+
+      {% include "includes/header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">
+        <form action="{% url 'setupsettings' project.pk %}" method='POST'>
+              {% csrf_token %}
+          <div class="card card-default">
+            <div class="card-header card-header-border-bottom">
+              <h2>Edit Settings</h2>
+            </div>
+            <div class="card-body">
+              {% for config in curConfig %}
+                <div class="form-group">
+                  <label for="Option_{{config.fieldname}}">Enter {{config.fieldname}}</label>
+                  <input type="input" class="form-control" id="Option{{config.fieldname}}" name="Option_{{config.fieldname}}" value="{{config.option}}">
+                </div>
+              {% endfor %}
+
+              
+            </div>
+            <div class="card-footer d-flex flex-wrap bg-white">
+                <button type="submit" class="btn btn-block btn-primary">Submit Settings</button>
+            </div>
+          </div>
+          </form>
+
+        </div>
+
+
+
+
+      </div>
+
+      {% include "includes/footer.html" %}
+
+    </div>
+  </div>
+  {% include "includes/scripts.html" %}
+
+</body>
+
+</html>

@@ -63,6 +63,7 @@ class Project(models.Model):
     input = models.CharField(max_length=250)
     selectstatement = models.TextField(null=True)
     udfclasses = models.TextField(null=True)
+    configuration = models.ManyToManyField(Configuration)
     
 
 class UDF(models.Model):

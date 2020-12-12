@@ -9,7 +9,7 @@ from django import forms
 from .models import Project
 
 def index(request,project_id):
-    template = loader.get_template('dashboard.html')
+    template = loader.get_template('project/dashboard.html')
     project = get_object_or_404(Project, pk=project_id)
     context = {
         "project" : project,

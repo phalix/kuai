@@ -40,6 +40,22 @@
                       {{ output }}
 
                   </textarea>
+                  Model Inputs:</br>
+                  {% for mi in modelinputs %}
+                    {{ mi }} </br>
+                  {% endfor %}
+                  Model Outputs:</br>
+                  {% for mo in modeloutputs %}
+                    {{ mo }} </br>
+                  {% endfor %}
+                  Data Inputs:</br>
+                  {% for di in datainputs %}
+                    {{ di }} </br>
+                  {% endfor %}
+                  Data Outputs:</br>
+                  {% for do in dataoutputs %}
+                    {{ do }} </br>
+                  {% endfor %}
 
                   </div>
 

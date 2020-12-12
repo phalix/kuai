@@ -25,6 +25,10 @@ urlpatterns = [
     path('new/', project.new), 
     
     path('createnewproject/', project.createnewproject, name='createnewproject'),
+    path('settings/<int:project_id>/', project.editProjectSettings, name='editProjectSettings'),
+    path('setupsettings/<int:project_id>/', project.setupSettings, name='setupsettings'),
+    
+    
     #by projectid
     path('dashboard/<int:project_id>/', dashboard.index), 
     path('saveexecutionmodel/<int:project_id>/', dashboard.saveexecutionmodel, name='saveexecutionmodel'),

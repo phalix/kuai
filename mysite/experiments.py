@@ -197,7 +197,7 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     exp = experiment
     experiment_id = exp.id
     project_id = project.id
-    createProjectDessa(project_id)    
+    createProjectDessa(project,exp)    
 
     lossfunction = loss
 
@@ -478,7 +478,7 @@ def writetodessa(request,project_id,experiment_id):
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
-    createProjectDessa(project_id)
+    createProjectDessa(project,experiment)
     features = list(project.features.all())
     
     
@@ -504,21 +504,24 @@ def writetodessa(request,project_id,experiment_id):
     return HttpResponse(json.dumps({}), content_type='application/json')
 
 
-def getMainDir():
-    return "D:\\Entwicklung\kuai" #TODO: be configurable
-
+def getMainDir(project_id):
+    import mysite.project as mp
+    return mp.getSetting(project_id,'maindir')[0]
+    
 def getProjectDir(project_id):
-    return getMainDir()+"\\projects\\"+str(project_id)
+    return getMainDir(project_id)+"/projects/"+str(project_id)
 
 def getProjectDataDir(project_id):
-    return getProjectDir(project_id)+"\\"+"data"
+    return getProjectDir(project_id)+"/"+"data"
 
-def createProjectDessa(project_id):
+def createProjectDessa(project,experiment):
     import os
     import subprocess
     import foundations
-    maindir = getMainDir()
-    projectdir = getMainDir()+"\\projects"
+    project_id = project.pk
+    
+    maindir = getMainDir(project_id)
+    projectdir = getMainDir(project_id)+"/projects"
     os.chdir(projectdir)
     import shutil
     #usage shutil.copyfile('file1.txt', 'file2.txt')
@@ -532,7 +535,13 @@ def createProjectDessa(project_id):
         os.mkdir("data")
     if "model" not in os.listdir():
         os.mkdir("model")
-    shutil.copyfile(maindir+"/DessaWorker/DefaultWorker.py",projectdir+"/"+str(project_id)+"/DefaultWorker.py")
+    
+    overwriteDefaultWorkerWithFollowingOptions(maindir+"/DessaWorker/DefaultWorker.py",
+        projectdir+"/"+str(project_id)+"/DefaultWorker.py",
+        projectdir+"/"+str(project_id),
+        experiment.noofepochs,
+        experiment.batchsize)
+    #shutil.copyfile(maindir+"/DessaWorker/DefaultWorker.py",projectdir+"/"+str(project_id)+"/DefaultWorker.py")
     shutil.copyfile(maindir+"/DessaWorker/PyArrowDataExtraction.py",projectdir+"/"+str(project_id)+"/PyArrowDataExtraction.py")
     shutil.copyfile(maindir+"/DessaWorker/DessaCallback.py",projectdir+"/"+str(project_id)+"/DessaCallback.py")
     shutil.copyfile(maindir+"/DessaWorker/requirements.txt",projectdir+"/"+str(project_id)+"/requirements.txt")
@@ -558,3 +567,17 @@ def submitDessaJob(project_id):
         print("started")
     except Exception as e:
         print(e)
+
+def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,epochs,batchsize):
+    f = open(fromfile, "r")
+    defaultworker = f.read()
+    import re
+    re.compile("prjdir = ''#prjdir")
+    defaultworker = re.sub("prjdir = ''#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
+    defaultworker = re.sub("epochs = 5 #epochs","epochs = "+str(epochs)+" #epochs",defaultworker)
+    defaultworker = re.sub("batch_size = 1 #batchsize","batch_size = "+str(batchsize)+" #batchsize",defaultworker)
+    f2 = open(tofile, "w")
+    f2.write(defaultworker)
+    f2.close()
+    f.close()
+    
