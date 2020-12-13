@@ -5,3 +5,4 @@
 tempfile*
 temp*
 /__pycache__
+/logs
