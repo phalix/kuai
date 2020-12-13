@@ -3,3 +3,4 @@
 .pytest*
 *.log
 tempfile*
+/__pycache__
