@@ -567,18 +567,24 @@ def dataclassification(request,project_id):
 def setupdataclassifcation(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     project.features.all().delete()
+    project.targets.all().delete()
     project.input = ""
     project.save()
     #project.target.delete()
     
-    targetselection = request.POST['targetselection']
-    targettransition = request.POST['fttransition_'+targetselection]
-    reformattransition = request.POST['ftreformat_'+targetselection]
-    targetdimension = request.POST['dimension_'+targetselection]
-    targettype = request.POST['fttype_'+targetselection]
-    target = Feature(fieldname=targetselection,transition=targettransition,reformat=reformattransition,type=targettype,dimension=targetdimension)
-    target.save()
-    project.target = target
+    #targetselection = request.POST['targetselection']
+    targetselection = request.POST.getlist('targetselection')
+    if type(targetselection) != list:
+        targetselection = [targetselection]
+    for targetname in targetselection:
+        targettransition = request.POST['fttransition_'+targetname]
+        reformattransition = request.POST['ftreformat_'+targetname]
+        targetdimension = request.POST['dimension_'+targetname]
+        targettype = request.POST['fttype_'+targetname]
+        target = Feature(fieldname=targetname,transition=targettransition,reformat=reformattransition,type=targettype,dimension=targetdimension)
+        target.save()
+        project.targets.add(target)
+        project.target = target
     
     for x in request.POST:
         if x.startswith('feature_') and x[8:]!=targetselection:
@@ -586,8 +592,8 @@ def setupdataclassifcation(request,project_id):
             transition = request.POST['fttransition_'+x[8:]]
             reformat = request.POST['ftreformat_'+x[8:]]
             dimension = request.POST['dimension_'+x[8:]]
-            type = request.POST['fttype_'+x[8:]]
-            curfeat = Feature(fieldname=x[8:],transition=transition,reformat=reformat,type=type,dimension=dimension)
+            fttype = request.POST['fttype_'+x[8:]]
+            curfeat = Feature(fieldname=x[8:],transition=transition,reformat=reformat,type=fttype,dimension=dimension)
             curfeat.save()
             project.features.add(curfeat)
             curfeat.save()

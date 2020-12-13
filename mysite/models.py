@@ -57,6 +57,7 @@ class Project(models.Model):
     projectstatistics = models.ForeignKey(Statistics, on_delete=models.DO_NOTHING,null=True)
     datamodel = models.ForeignKey(DataModels, on_delete=models.DO_NOTHING,null=True)
     features = models.ManyToManyField(Feature,related_name="features")
+    targets = models.ManyToManyField(Feature,related_name="targets")
     target = models.ForeignKey(Feature, on_delete=models.DO_NOTHING,null=True,related_name="target")
     neuralnetwork = models.ForeignKey(NeuralNetwork, on_delete=models.DO_NOTHING,null=True)
     appendFeature = models.ForeignKey(Feature,on_delete=models.CASCADE,null=True)

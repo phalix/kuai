@@ -204,7 +204,7 @@
                       
                       <td>
                         <div class="form-group">
-                        <select class="form-control" id="targetselection" name="targetselection">
+                        <select class="js-example-basic-multiple form-control" id="targetselection" name="targetselection" multiple="multiple">
                           {% for o in columns %}
                           <option {% if target == o %} selected="selected" {% endif %}>{{o}}</option>
                           {% endfor %}
