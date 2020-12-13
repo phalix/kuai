@@ -4,7 +4,7 @@ from tensorflow import keras
 import numpy as np
 import pyarrow.parquet as pq
 
-prjdir = ''#prjdir
+prjdir = '.'#prjdir
 logdir = prjdir+"/logs"
 parquet_files = prjdir+"/data/1.parquet"
 parquet_files2 = prjdir+"/data/2.parquet"
@@ -41,7 +41,7 @@ table = pds.read()
 xy = de.getXandYFromPyArrow(table)
 callbacks = []
 callbacks.append(tensorboard_callback)#tensorboard
-callbacks.append(dc.CustomDessaCallback())#foundations
+callbacks.append(dc.CustomDessaCallback("train"))#foundations
 model.fit(x=xy['x'],y=xy['y'],epochs=epochs,batch_size = batch_size,callbacks=callbacks)
 
 print("____________________________________________")
@@ -55,7 +55,7 @@ pds.split_row_groups = True
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
 callbacksEvaluate = []
-callbacksEvaluate.append(dc.CustomDessaCallback())#foundations
+callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations
 a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=callbacksEvaluate)
 print(a)
 b = model.predict(x=xy['x'])

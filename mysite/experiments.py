@@ -46,15 +46,24 @@ def experimentresults(request,project_id):
     template = loader.get_template('experiments/results.html')
     project = get_object_or_404(Project, pk=project_id)
     
-    urlatlasdessa = "http://localhost:5555"
+    import mysite.project as mp
+    urlatlasdessa = mp.getSetting(project_id,'DessaServer')[0]
+    
     import requests
     results_dessa = requests.get(urlatlasdessa+"/foundations_rest_api/api/v2beta/projects/"+str(project_id)+"/job_listing")
     import json
-    results_json = json.loads(results_dessa.text)
-    name = results_json['name']
-    jobs = results_json['jobs']
-    metrics = results_json['output_metric_names']
-    parameters = results_json['parameters']
+    if results_dessa.text == '"This project was not found"\n':
+        result_json = {"error":results_dessa.text}
+        name = []
+        jobs = []
+        metrics = []
+        parameters = []
+    else:
+        results_json = json.loads(results_dessa.text)
+        name = results_json['name']
+        jobs = results_json['jobs']
+        metrics = results_json['output_metric_names']
+        parameters = results_json['parameters']
     
     
     
@@ -197,7 +206,7 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     exp = experiment
     experiment_id = exp.id
     project_id = project.id
-    createProjectDessa(project,exp)    
+    createProjectDessa(project,exp,True)    
 
     lossfunction = loss
 
@@ -576,7 +585,7 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa
     defaultworker = f.read()
     import re
     re.compile("prjdir = ''#prjdir")
-    defaultworker = re.sub("prjdir = ''#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
+    #defaultworker = re.sub("prjdir = '.'#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
     defaultworker = re.sub("epochs = 5 #epochs","epochs = "+str(epochs)+" #epochs",defaultworker)
     defaultworker = re.sub("batch_size = 1 #batchsize","batch_size = "+str(batchsize)+" #batchsize",defaultworker)
 

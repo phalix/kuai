@@ -316,7 +316,7 @@ def setuptransformdata(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     
     #Spark ResultTypes:
-    relevanttypes = ['ArrayType','StringType','IntegerType','FloatType']
+    relevanttypes = ['ArrayType','StringType','IntegerType','FloatType','DoubleType']
     #sparktypes = list(map(lambda x: x[0],filter(lambda x: (x[0].endswith("Type") and x[0] in relevanttypes,inspect.getmembers(pyspark.sql.types)))))
     
     sparktypes = dict(map(lambda x: (x[0],len(inspect.signature(x[1]).parameters)>0),filter(lambda x: x[0].endswith("Type") and x[0] in relevanttypes,inspect.getmembers(pyspark.sql.types))))
@@ -419,7 +419,16 @@ def uploaddata(request,project_id):
     
     if request.POST['datatype'] == "csv":
         
-        df = spark.read.format("csv").option("delimiter",";").option("header","true").load(subm_file)
+        import requests
+        url = subm_file
+        r = requests.get(url, allow_redirects=True)
+        import uuid 
+        tempfile = "temp"+str(uuid.uuid1())
+        open(tempfile, 'wb').write(r.content)
+        import mysite.project as mp
+        delimeter = mp.getSetting(project_id,'delimeter')[0]
+        
+        df = spark.read.format("csv").option("delimiter",delimeter).option("header","true").load(tempfile)
         
     elif request.POST['datatype'] == "img":
         from pyspark.ml.image import ImageSchema 
@@ -567,7 +576,12 @@ def dataclassification(request,project_id):
 def setupdataclassifcation(request,project_id):
     project = get_object_or_404(Project, pk=project_id)
     project.features.all().delete()
-    project.targets.all().delete()
+    
+    try:
+        project.target.delete()
+        project.targets.all().delete()
+    except Exception as e:
+        print(e)
     project.input = ""
     project.save()
     #project.target.delete()
@@ -587,7 +601,7 @@ def setupdataclassifcation(request,project_id):
         project.target = target
     
     for x in request.POST:
-        if x.startswith('feature_') and x[8:]!=targetselection:
+        if x.startswith('feature_') and x[8:] not in targetselection:
             print(x[8:])
             transition = request.POST['fttransition_'+x[8:]]
             reformat = request.POST['ftreformat_'+x[8:]]
@@ -597,7 +611,7 @@ def setupdataclassifcation(request,project_id):
             curfeat.save()
             project.features.add(curfeat)
             curfeat.save()
-        if x.startswith('fttransition_') and x[8:]!=targetselection:
+        if x.startswith('fttransition_') and x[8:] not in targetselection:
             print("transition setup")
             print(x)
             print(request.POST[x])
@@ -636,11 +650,17 @@ def setupdataclassifcation(request,project_id):
 
 
 def savetocassandra(project_id,df,type):
-    savetocassandra_writesparkdataframe(df)
+    savetocassandra_writesparkdataframe(project_id,df)
     
 
-def savetocassandra_writesparkdataframe(sparkdf):
-    sparkdf.write.format("mongo").mode("overwrite").save()   
+def savetocassandra_writesparkdataframe(project_id,sparkdf):
+    sparkdf.write.format("mongo").mode("overwrite").save()  
+    from pyspark.sql import SQLContext
+    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
+    sqlContext = SQLContext(spark)
+    if 'temp_table' in sqlContext.tableNames():
+        sqlContext.uncacheTable("temp_table")
+        sqlContext.sql("drop table temp_table")
     
 
 
@@ -700,8 +720,10 @@ def createSparkConfig(project_id,type):
     #conf.set("spark.executor.instances", 1)
     #TODO: must be configurable
     conf.set('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0')
-    url = "mongodb://localhost/test.test"
-    detailedurl = url+str(project_id)+"_"+"1"#str(type)
+    import mysite.project as mp
+    
+    url = mp.getSetting(project_id,'mongoconnection')[0]
+    detailedurl = url+"/test.test"+str(project_id)+"_"+"1"#str(type)
     conf.set("spark.mongodb.input.uri", detailedurl)
     conf.set("spark.mongodb.output.uri", detailedurl)
 
@@ -788,7 +810,7 @@ def applyfeaturetransition(project,dataframe,features,target):
             for feat in features:
                 try:
                     if(len(feat.reformat.strip())>0):
-                        fp.applySetOfFeatureModifiers(feat.reformat.strip(),feat.fieldname,indexed)
+                        indexed = fp.applySetOfFeatureModifiers(feat.reformat.strip(),feat.fieldname,indexed)
                     if(feat.transition>0):
                         indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
                     else:

@@ -3,11 +3,16 @@ from tensorflow import keras
 
 class CustomDessaCallback(keras.callbacks.Callback):
     
+    def __init__(self,prefix):
+        keras.callbacks.Callback.__init__(self)
+        self.prefix = prefix
+
+
     def loggingtofoundations(self,logs=None):
         import foundations
         if logs:
             for key,value in logs.items():
-                foundations.log_metric(key, value)
+                foundations.log_metric(str(self.prefix)+key, value)
             
 
     def on_train_begin(self, logs=None):
