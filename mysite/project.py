@@ -55,6 +55,18 @@ defaultValues = {
     'maindir':"d:/Entwicklung/kuai"
 }
 
+def getSystemStats(request):
+    import psutil, json
+
+    cpu = psutil.cpu_percent()
+    memory = psutil.swap_memory().percent
+    return HttpResponse(json.dumps({
+        'cpu':cpu,
+        'memory':memory,
+        'gpu':0,
+    }))
+
+
 def getSetting(project_id,fieldname):
     project = get_object_or_404(Project,pk=project_id)
     checkSettingConsistency(project)

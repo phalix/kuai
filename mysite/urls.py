@@ -38,6 +38,8 @@ urlpatterns = [
     path('createOrUpdateUDF/<int:project_id>/', dataoperation.createOrUpdateUDF, name='createOrUpdateUDF'),
     path('customLoadProcedure/<int:project_id>/', dataoperation.customLoadProcedure, name='customLoadProcedure'),
     
+
+    path('systemstats/', project.getSystemStats,name="getSystemStats"),
     path('openproject/<int:project_id>/', dashboard.index,name="openproject"),
     path('datasetup/<int:project_id>/', dataoperation.index),
     path('transform/<int:project_id>/', dataoperation.setuptransformdata),

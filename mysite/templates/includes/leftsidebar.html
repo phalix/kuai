@@ -31,36 +31,56 @@
       <div class="sidebar-footer">
         <div class="sidebar-footer-content">
           <h6 class="text-uppercase">
-            Cpu Uses <span class="float-right">40%</span>
+            Cpu Uses <span class="float-right" id="readlnumbercpu">40%</span>
           </h6>
           <div class="progress progress-xs">
-            <div
+            <div id="realbarcpu"
               class="progress-bar active"
               style="width: 40%;"
               role="progressbar"
             ></div>
           </div>
-          <h6 class="text-uppercase">
-            GPU Uses <span class="float-right">40%</span>
+          <h6 class="text-uppercase" style="visibility:hidden">
+            GPU Uses <span class="float-right" id="readlnumbergpu">40%</span>
           </h6>
-          <div class="progress progress-xs">
-            <div
+          <div class="progress progress-xs" style="visibility:hidden">
+            <div id="realbargpu"
               class="progress-bar bg-success"
               style="width: 50%;"
               role="progressbar"
             ></div>
           </div>
           <h6 class="text-uppercase">
-            Memory Uses <span class="float-right">65%</span>
+            Memory Uses <span class="float-right" id="readlnumbermemory">65%</span>
           </h6>
           <div class="progress progress-xs">
-            <div
+            <div id="realbarmemory"
               class="progress-bar progress-bar-warning"
               style="width: 65%;"
               role="progressbar"
             ></div>
           </div>
         </div>
+        <script type="text/javascript">
+        function updateStats(){
+          fetch("{% url 'getSystemStats' %}").then(response => response.json()).then(
+            data => {
+              $("#readlnumbercpu").text(data.cpu+"%")
+              $("#readlnumbermemory").text(data.memory+"%")
+              $("#readlnumbergpu").text(data.gpu+"%")
+
+              $("#realbarmemory").css("width",data.memory+"%")
+              $("#realbarcpu").css("width",data.cpu+"%")
+              $("#realbargpu").css("width",data.gpu+"%")
+              setTimeout(updateStats,5000)
+            }
+          );
+
+        }
+        
+        $(document).ready(updateStats)
+        
+        </script>
       </div>
     </div>
   </aside>
