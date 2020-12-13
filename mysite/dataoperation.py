@@ -144,8 +144,11 @@ def generateUDFonUDF(udfdefinition):
     functionname = aliasname+'_'+str(udfdefinition.pk)
     exec('def '+functionname+'(output): \n\t'+udfcode.replace("\n","\n\t"))
     a_udf = eval('udf('+functionname+', outputtypeeval)')
-    
-    b_udf = a_udf(udfdefinition.input).alias(functionname)
+    udfColInput = udfdefinition.input
+    if len(udfColInput.split(","))>1:
+        udfColInput = eval("pyspark.sql.functions.array"+str(tuple(udfColInput.split(","))))
+
+    b_udf = a_udf(udfColInput).alias(functionname)
     return [functionname,b_udf]
 
 

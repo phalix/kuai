@@ -36,6 +36,7 @@ batch_size = 1 #batchsize
 lrate = 1e-3
 
 pds = pq.ParquetDataset(parquet_files)
+pds.split_row_groups = True
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
 callbacks = []
@@ -46,15 +47,19 @@ model.fit(x=xy['x'],y=xy['y'],epochs=epochs,batch_size = batch_size,callbacks=ca
 print("____________________________________________")
 print("_________________TRAIN______________________")
 print("____________________________________________")
-
+print("____________________________________________")
+print("_________________TEST_______________________")
+print("____________________________________________")
 pds = pq.ParquetDataset(parquet_files2)
+pds.split_row_groups = True
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
 callbacksEvaluate = []
 callbacksEvaluate.append(dc.CustomDessaCallback())#foundations
 a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=callbacksEvaluate)
 print(a)
-
+b = model.predict(x=xy['x'])
+print(b)
 '''# Log some hyper-parameters
 foundations.log_param('depth', depth)
 foundations.log_params({'epochs': epochs,
@@ -63,3 +68,7 @@ foundations.log_params({'epochs': epochs,
 
 model.save(modeldir)
 #foundations.save_artifact('README.txt', 'Project_README')
+
+print("____________________________________________")
+print("_________________TEST_______________________")
+print("____________________________________________")
