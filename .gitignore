@@ -6,3 +6,4 @@ tempfile*
 temp*
 /__pycache__
 /logs
+/mysite/private*
