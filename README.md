@@ -1,4 +1,5 @@
 # kuAI [ka̠i]
+[![Build Status](https://travis-ci.com/phalix/kuai.svg?branch=master)](https://travis-ci.com/phalix/kuai)
 ## This software uses:
 Django (https://www.djangoproject.com/)  
 Keras/TensorFlow (https://www.tensorflow.org/)  
