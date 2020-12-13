@@ -79,6 +79,8 @@ urlpatterns = [
     path('setparameter/', project.index),
     path('runexperiment/',project.index),
     path('transform/',project.index),
+    path('modelsummary/',project.index),
+
 
     path('getExperimentsPerProject/<int:project_id>/<int:experiment_id>/', experiments.getexperimentsstasperproject, name='experiment_status'),
     path('startExperimentsPerProject/<int:project_id>/<int:experiment_id>/', experiments.startExperimentsPerProject, name='start_experiment'),
