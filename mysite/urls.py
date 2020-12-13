@@ -30,10 +30,14 @@ urlpatterns = [
     
     
     #by projectid
+
+    path('open/<int:project_id>/', project.index2), 
+    
     path('dashboard/<int:project_id>/', dashboard.index), 
     path('saveexecutionmodel/<int:project_id>/', dashboard.saveexecutionmodel, name='saveexecutionmodel'),
     path('createOrUpdateUDF/<int:project_id>/', dataoperation.createOrUpdateUDF, name='createOrUpdateUDF'),
-    path('open/<int:project_id>/', project.index2), 
+    path('customLoadProcedure/<int:project_id>/', dataoperation.customLoadProcedure, name='customLoadProcedure'),
+    
     path('openproject/<int:project_id>/', dashboard.index,name="openproject"),
     path('datasetup/<int:project_id>/', dataoperation.index),
     path('transform/<int:project_id>/', dataoperation.setuptransformdata),

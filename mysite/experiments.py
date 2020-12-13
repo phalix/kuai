@@ -478,7 +478,9 @@ def writetodessa(request,project_id,experiment_id):
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
-    createProjectDessa(project,experiment)
+    writeToDessa = request.POST['writeDessa'] == 'true'
+    
+    createProjectDessa(project,experiment,writeToDessa)
     features = list(project.features.all())
     
     
@@ -514,7 +516,7 @@ def getProjectDir(project_id):
 def getProjectDataDir(project_id):
     return getProjectDir(project_id)+"/"+"data"
 
-def createProjectDessa(project,experiment):
+def createProjectDessa(project,experiment,writeToDessa):
     import os
     import subprocess
     import foundations
@@ -539,6 +541,7 @@ def createProjectDessa(project,experiment):
     overwriteDefaultWorkerWithFollowingOptions(maindir+"/DessaWorker/DefaultWorker.py",
         projectdir+"/"+str(project_id)+"/DefaultWorker.py",
         projectdir+"/"+str(project_id),
+        writeToDessa,
         experiment.noofepochs,
         experiment.batchsize)
     #shutil.copyfile(maindir+"/DessaWorker/DefaultWorker.py",projectdir+"/"+str(project_id)+"/DefaultWorker.py")
@@ -568,7 +571,7 @@ def submitDessaJob(project_id):
     except Exception as e:
         print(e)
 
-def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,epochs,batchsize):
+def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa,epochs,batchsize):
     f = open(fromfile, "r")
     defaultworker = f.read()
     import re
@@ -576,6 +579,20 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,epochs,bat
     defaultworker = re.sub("prjdir = ''#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
     defaultworker = re.sub("epochs = 5 #epochs","epochs = "+str(epochs)+" #epochs",defaultworker)
     defaultworker = re.sub("batch_size = 1 #batchsize","batch_size = "+str(batchsize)+" #batchsize",defaultworker)
+
+    withoutDessa = ["foundations.set_tensorboard_logdir(logdir)#foundations",
+                    "import foundations#foundations",
+                    "callbacks.append(dc.CustomDessaCallback())#foundations",
+                    "callbacksEvaluate.append(dc.CustomDessaCallback())#foundations",
+                    "tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)#tensorboard",
+                    "foundations.set_tensorboard_logdir(logdir)#foundations",
+                    "callbacks.append(tensorboard_callback)#tensorboard"]
+
+    if not writeDessa:
+        for wd in withoutDessa:
+            #defaultworker = re.sub(wd,"",defaultworker)
+            defaultworker = defaultworker.replace(wd,"")
+
     f2 = open(tofile, "w")
     f2.write(defaultworker)
     f2.close()

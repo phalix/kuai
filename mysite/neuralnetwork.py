@@ -536,7 +536,7 @@ def buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inpu
     #configuration = nn.optimizer.configuration.all()
     configuration = optimizer['conf']
     configdict = {}
-    for key,value in configuration:
+    for key,value in configuration.items():
         try:
             option = eval(value)
             configdict[key] = option

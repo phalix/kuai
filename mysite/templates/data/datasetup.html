@@ -92,8 +92,40 @@
               <div class="card-header card-header-border-bottom">
                 <h2>Manual Loading Procedure; close with return a pandas dataframe</h2>
               </div>
-              
-              TODO: Add MonacoEditor!
+              <div class="card-body">
+                <div id="container_1" class="monacoeditor notready" style="height:100%; min-height:200px"></div>
+                <script type="text/javascript">
+                  $(document).ready(function(){
+                    alleditors = $(".monacoeditor.notready")
+                    alleditors.each(
+                        function(){
+                            this.editor = monaco.editor.create(this, {
+                            //value: value,
+                            language: "python",
+                            automaticLayout: true
+                        });
+                        }
+                    )
+                    alleditors.removeClass("notready")
+                  })
+                  function submitloadingprocedure(){
+                    value = $("#container_1")[0].editor.getValue()
+                    
+                    $.post("{% url 'customLoadProcedure' project.pk %}", 
+                    {
+                        "csrfmiddlewaretoken":"{{ csrf_token }}",
+                        "value": value,
+                    },
+                    function (data) {
+                        console.log(data);
+                    });
+
+                  }
+                </script>
+              </div>
+              <div class="card-footer">
+                <input type="button" class="btn btn-primary" onclick="submitloadingprocedure()" name="executecustom" value="Execute"></input>
+              </div>
 
             </div>
           </div>

@@ -1,4 +1,4 @@
-import foundations
+import foundations#foundations
 #from pyspark.sql import SparkSession
 from tensorflow import keras
 import numpy as np
@@ -8,7 +8,8 @@ prjdir = ''#prjdir
 logdir = prjdir+"/logs"
 parquet_files = prjdir+"/data/1.parquet"
 parquet_files2 = prjdir+"/data/2.parquet"
-model = keras.models.load_model(prjdir+'/model')
+modeldir = prjdir+'/model'
+model = keras.models.load_model(modeldir)
 print("____________________________________________")
 print("_________________Model______________________")
 print("____________________________________________")
@@ -26,8 +27,8 @@ import PyArrowDataExtraction as de
 
 
 
-tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)
-foundations.set_tensorboard_logdir(logdir)
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)#tensorboard
+foundations.set_tensorboard_logdir(logdir)#foundations
 
 epochs = 5 #epochs
 depth = 3
@@ -37,7 +38,10 @@ lrate = 1e-3
 pds = pq.ParquetDataset(parquet_files)
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
-model.fit(x=xy['x'],y=xy['y'],epochs=epochs,batch_size = batch_size,callbacks=[tensorboard_callback,dc.CustomDessaCallback()])
+callbacks = []
+callbacks.append(tensorboard_callback)#tensorboard
+callbacks.append(dc.CustomDessaCallback())#foundations
+model.fit(x=xy['x'],y=xy['y'],epochs=epochs,batch_size = batch_size,callbacks=callbacks)
 
 print("____________________________________________")
 print("_________________TRAIN______________________")
@@ -46,13 +50,16 @@ print("____________________________________________")
 pds = pq.ParquetDataset(parquet_files2)
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
-a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=[dc.CustomDessaCallback()])
+callbacksEvaluate = []
+callbacksEvaluate.append(dc.CustomDessaCallback())#foundations
+a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=callbacksEvaluate)
 print(a)
 
-# Log some hyper-parameters
+'''# Log some hyper-parameters
 foundations.log_param('depth', depth)
 foundations.log_params({'epochs': epochs,
                         'batch_size': batch_size,
-                        'learning_rate': lrate})
-#TODO: save trained model!
+                        'learning_rate': lrate})'''
+
+model.save(modeldir)
 #foundations.save_artifact('README.txt', 'Project_README')

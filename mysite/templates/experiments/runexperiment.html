@@ -55,7 +55,17 @@
                       fetch(deleteUrl).then()
                     }
                     function writeToDessa(){
-                      fetch(writeToDessaUrl).then()
+                      $.post(writeToDessaUrl, 
+                      {
+                          "csrfmiddlewaretoken":"{{ csrf_token }}",
+                          "writeDessa": $("[name=writedessaselector]").prop("checked"),
+                      },
+                      function (data) {
+                          
+                          console.log(data);
+
+                      });
+                      
                     }
                   </script>
                   <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment()">Start</button>
@@ -365,6 +375,11 @@
               </div>	
               
             <button type="button" class="mb-1 btn btn-block btn-danger" onclick="deleteExperiment()">Delete</button>
+            
+            <label class="control control-checkbox">Write Dessa Files
+              <input type="checkbox" checked="checked" name="writedessaselector">
+              <div class="control-indicator"></div>
+            </label>
             <button type="button" class="mb-1 btn btn-block btn-primary" onclick="writeToDessa()">Write to Dessa</button>
             </form> 
     </div>

@@ -31,6 +31,14 @@ CV_DATA_QUALIFIER = 3
 
 displaylimit = 10
 
+def customLoadProcedure(request,project_id):
+    import json
+    value = request.POST['value']
+    exec(value)
+    return HttpResponse(json.dumps({
+        'value':value
+    })) 
+
 def createOrUpdateUDF(request,project_id):
     from pyspark.sql.functions import udf
     import json
@@ -915,7 +923,7 @@ def isTypeSimpleType(type):
         return False
 
 def sparkSimpleTypes():
-    return ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data')
+    return ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data','bigint')
 
 
 def buildFeatureVector(dataframe,features,target):
@@ -1002,6 +1010,7 @@ def getXandYFromDataframe(df,project):
     y = df.select("target").rdd.map(lambda r : r[0]).collect()
     y = np.array(y)
     return {"x":x,"y":y}
+
 
 
 def getDimensionsByProject(project):
