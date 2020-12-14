@@ -1,8 +1,15 @@
+.git
 db.sqlite3
 TestDB.db
 mysite/migrations/*.py
 mysite/migrations/*.pyc
 !mysite/migrations/__init__.py
 projects
-.git
 .vscode
+.pytest*
+*.log
+tempfile*
+temp*
+__pycache__
+logs
+mysite/private*
