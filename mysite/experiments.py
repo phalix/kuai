@@ -571,10 +571,10 @@ def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     
 def submitDessaJob(project_id):
     try:
-        #import foundations
-        #foundations.submit(job_directory=getProjectDir(project_id),command=["DefaultWorker.py"])
-        import subprocess
-        proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
+        import foundations
+        foundations.submit(scheduler_config='scheduler',job_directory=getProjectDir(project_id),command=["DefaultWorker.py"])
+        #import subprocess
+        #proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
         #proc.wait()
         print("started")
     except Exception as e:

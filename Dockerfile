@@ -9,6 +9,6 @@ WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 COPY . /code/
-#TODO: run make migrations
-#TODO: run migrate
-#TODO: use docker ignore for sqlite
+RUN python manage.py makemigrations
+RUN python manage.py migrate
+EXPOSE 8000

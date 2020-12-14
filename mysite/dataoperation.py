@@ -34,7 +34,28 @@ displaylimit = 10
 def customLoadProcedure(request,project_id):
     import json
     value = request.POST['value']
+    #valueIndented = value.replace("\n","\n\t")
+    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
+    #valueExecutable = valueIndented +"\n\tdir()"
+    #valueExecutableFunction = "def customloadprocudure(spark):\n\t" +valueIndented +"\n\treturn dir()"
+
     exec(value)
+    variablenames = dir()
+    variables = []
+    for name in variablenames:
+        variables.append(eval(name))
+    #variables = list(map(lambda x:eval(x),variablenames))
+    ## find pandas variable and do the following:
+    sparkvariables = list(filter(lambda x : type(x) == pyspark.sql.dataframe.DataFrame,variables))
+    if len(sparkvariables)>0:
+        df = sparkvariables[len(sparkvariables)-1]
+        savetocassandra(project_id,df,TRAIN_DATA_QUALIFIER)
+    import pandas
+    pandasvariables = list(filter(lambda x : type(x) == pandas.core.frame.DataFrame,variables))
+    if len(pandasvariables)>0:
+        pdf = pandasvariables[len(pandasvariables)-1]
+        df = spark.createDataFrame(pdf)
+        savetocassandra(project_id,df,TRAIN_DATA_QUALIFIER)
     return HttpResponse(json.dumps({
         'value':value
     })) 
@@ -418,13 +439,16 @@ def uploaddata(request,project_id):
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     
     if request.POST['datatype'] == "csv":
+        if not sub_file.startswith("http"):
+            tempfile = subm_file
+        else:
+            import requests
+            url = subm_file
+            r = requests.get(url, allow_redirects=True)
+            import uuid 
+            tempfile = "temp"+str(uuid.uuid1())
+            open(tempfile, 'wb').write(r.content)
         
-        import requests
-        url = subm_file
-        r = requests.get(url, allow_redirects=True)
-        import uuid 
-        tempfile = "temp"+str(uuid.uuid1())
-        open(tempfile, 'wb').write(r.content)
         import mysite.project as mp
         delimeter = mp.getSetting(project_id,'delimeter')[0]
         
