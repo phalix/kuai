@@ -35,17 +35,12 @@ run "python manage.py runserver"
 ## Warning
 Before deploying you should change the SECRET_KEY in mysite/settings.py, e.g. with https://djecrety.ir/  
 
+## Docker
+https://hub.docker.com/r/bittmans/kuai
+
 ## TODO
-* Make Jobs for Dessa Configurable!
-* Make a configuration of Dessa Jobs
 * rename from mysite to kuai
-* get type from dataframe schema!
-* write more tests
-* create docker container for this
-* create udf assistant
-* store diagram definitions and recreate
 * support multiple output
 * enable asynchronous background processes for data transformation
-* permanently store in database and restore
 * support GANs and Auto Encoders through configurable Experiments
 
