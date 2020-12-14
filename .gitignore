@@ -9,6 +9,7 @@ projects
 *.log
 tempfile*
 temp*
+!mysite/templates*
 __pycache__
 logs
 mysite/private*

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+  <script>
+    NProgress.configure({
+      showSpinner: false
+    });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+
+  <div id="toaster"></div>
+
+
+  <div class="wrapper">
+
+    {% include "includes/leftsidebar.html" %}
+
+
+
+    <div class="page-wrapper">
+
+      {% include "includes/header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">
+        <script>
+          function selectionchanged(e){
+            job_id = $(e.target).attr('name').substring(6)
+            selection = $(e.target).select2('val')
+            datasets = []
+            maxlengtharray = []
+            for(sel in selection){
+              cur = {}
+              cur['label'] = selection[sel]
+              cur['data'] = result[job_id][selection[sel]]
+              datasets.push(cur)
+              if(maxlengtharray.length<cur['data'].length){
+                maxlengtharray=cur['data']
+              }
+            }
+            
+            var ctx = document.getElementById('chart'+job_id).getContext('2d');
+            chartdata = {
+                          type: 'line',
+                          data: {
+                              labels: Object.keys(maxlengtharray),
+                              datasets: datasets
+                          }
+                      }
+                        
+            myChart = new Chart(ctx, chartdata,
+              {options: {
+                  scales: {
+                      yAxes: [{
+                          stacked:false,
+                          ticks: {
+                              beginAtZero: true
+                          }
+                      }]
+                  }
+              }})
+          }  
+        </script>
+        <h2>Project {{name}}</h2>
+          
+            
+            {% for job in jobs %}
+            
+
+            Job created by {{job.user}}
+            <select onchange="selectionchanged(event)" name="select{{job.job_id}}" class="js-example-basic-multiple form-control"  multiple="multiple">
+            {% for metric in job.output_metrics%}
+              <option>{{metric.name}}</option>
+            {% endfor %}
+            </select>
+            
+            <script>
+            if (typeof result == 'undefined') {
+                result = {}
+            }
+            curJob = {}
+              {% for metric in job.output_metrics%}
+                  curJob["{{metric.name}}"] = []
+                  {% if metric.value|length > 0 %}
+                      {% for val in metric.value%}
+                          curJob["{{metric.name}}"].push("{{val}}") 
+                      {% endfor %}
+                  {% else %}
+                      curJob["{{metric.name}}"].push("{{metric.value}}") 
+                  {% endif %}
+
+                  
+              {% endfor %}
+              result["{{job.job_id}}"] = curJob
+            </script>
+            <canvas id="chart{{job.job_id}}" width="100%" height="20%"></canvas>
+
+
+            <pre>
+            <code>
+            
+            
+            {% for metric in job.output_metrics%}
+                {{metric.name}}
+                
+                {% if metric.value|length > 0 %}{% for val in metric.value%}
+                {{val}}{% endfor %}{% else %}
+                {{metric.value}}{% endif %}{% endfor %}
+            {{job.status}}
+            {{job.duration}}
+            </code>
+            </pre>
+          {% endfor %}
+        
+         <pre>
+        <code>
+        Metrics
+          {{metrics}}
+        </code>
+        </pre>
+         <pre>
+        <code>
+        Parameters
+          {{parameters}}
+        </code>
+        </pre>
+        <h3>
+        <a target="_blank" href="{{urltoatlas}}" >Go to Dessa</a>
+        </h3>
+        </div>
+      </div>
+
+      {% include "includes/footer.html" %}
+
+    </div>
+  </div>
+  {% include "includes/scripts.html" %}
+
+
+</body>
+
+</html>

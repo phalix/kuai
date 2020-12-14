@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+  <script>
+    NProgress.configure({
+      showSpinner: false
+    });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+
+  <div id="toaster"></div>
+
+
+  <div class="wrapper">
+
+    {% include "includes/leftsidebar.html" %}
+
+
+
+    <div class="page-wrapper">
+      <!-- Header -->
+      {% include "includes/header.html" %}
+
+
+      <div class="content-wrapper">
+        <div class="content">
+          
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Create new Dataset</h2>
+              </div>
+              <div class="card-body">
+                <form enctype="multipart/form-data" action="{% url 'uploaddata' project.pk %}" method='POST'>
+                  {% csrf_token %}
+                  <label class="control control-radio">CSV
+                    <input value="csv" type="radio" name="datatype" checked="checked">
+                    <div class="control-indicator"></div>
+                  </label>
+                  <label class="control control-radio">Images
+                    <input value="img" type="radio" name="datatype">
+                    <div class="control-indicator"></div>
+                  </label>
+                  <label class="control control-radio">JSON
+                    <input value="json" type="radio" name="datatype">
+                    <div class="control-indicator"></div>
+                  </label>
+
+
+
+                  <label for="datasetname">Name for Dataset</label>
+                  <input class="form-control" id="datasetname" name="datasetname"
+                    placeholder="Enter Dataset Name"></input>
+                  <br />
+                  <!--
+                      <label for="filewithdata">Dataset</label>
+                      <input type="file" name="filewithdata" id="filewithdata"/>
+                      <br/>
+                      -->
+                  <label for="folderfile">Folder or File</label>
+                  <input class="form-control" name="folderfile" placeholder="Enter Folder or File Name"></input>
+                  <br />
+                  <br />
+                  <label class="control control-checkbox">Shuffle Data
+                    <input type="checkbox" checked="checked" id="shuffledata" name="shuffledata">
+                    <div class="control-indicator"></div>
+                  </label>
+                  <label for="trainshare">Share of Training Data</label>
+                  <input class="form-control" id="trainshare" name="trainshare" value="0.6"></input>
+                  <br />
+                  <label for="testshare">Share of Test Data</label>
+                  <input class="form-control" id="testshare" name="testshare" placeholder="20%" value="0.2"></input>
+                  <br />
+                  <label for="cvshare">Share of Cross-Validation Data</label>
+                  <input class="form-control" id="cvshare" name="cvshare" value="0.2"></input>
+                  <br />
+                  <br />
+                  <br />
+                  <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+              </div>
+            </div>
+          
+          
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Manual Loading Procedure; close with return a pandas dataframe</h2>
+              </div>
+              <div class="card-body">
+                <div id="container_1" class="monacoeditor notready" style="height:100%; min-height:200px"></div>
+                <script type="text/javascript">
+                  $(document).ready(function(){
+                    alleditors = $(".monacoeditor.notready")
+                    alleditors.each(
+                        function(){
+                            this.editor = monaco.editor.create(this, {
+                            value: `import pandas as pd\ninputx = [0,0,1,1]\ninputy = [0,1,0,1]\noutputand = [0,0,0,1]\noutputxor = [0,1,1,0]\noutputor = [0,1,1,1]\ntypea = [1,1,1,1]\npandasdf = pd.DataFrame(list(zip(inputx, inputy,outputand,outputxor,outputor,typea)),\n\tcolumns =['inputx', 'inputy','outputand','outputxor','outputor','type'])`,
+                            language: "python",
+                            automaticLayout: true
+                        });
+                        }
+                    )
+                    alleditors.removeClass("notready")
+                  })
+                  function submitloadingprocedure(){
+                    value = $("#container_1")[0].editor.getValue()
+                    NProgress.start()
+                    $.post("{% url 'customLoadProcedure' project.pk %}", 
+                    {
+                        "csrfmiddlewaretoken":"{{ csrf_token }}",
+                        "value": value,
+                    },
+                    function (data) {
+                      NProgress.done() 
+                      console.log(data);
+                    });
+
+                  }
+                </script>
+              </div>
+              <div class="card-footer">
+                <input type="button" class="btn btn-primary" onclick="submitloadingprocedure()" name="executecustom" value="Execute"></input>
+              </div>
+
+            </div>
+          
+          
+            <div class="card card-default">
+              <div class="card-header card-header-border-bottom">
+                <h2>Select existing Dataset</h2>
+              </div>
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Projectname</th>
+                    <th scope="col">Author</th>
+                    <th scrope="col">Select</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for o in projects %}
+                  <tr>
+                    <th scope="row">{{o.pk}}</th>
+                    <td>{{o.projectname}}</td>
+                    <td>{{o.author}}</td>
+                    <td>
+                      <form action="{% url 'openproject' o.pk %}" method='POST'>{% csrf_token %}<button type="submit"
+                          class="btn btn-primary">Select</button></form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+
+                </tbody>
+              </table>
+            </div>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </div>
+
+
+
+
+      </div>
+
+      {% include "includes/footer.html" %}
+
+    </div>
+  </div>
+  {% include "includes/scripts.html" %}
+</body>
+
+</html>

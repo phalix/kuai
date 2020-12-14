@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  {% include "includes/head.html" %}
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+  
+  <script>
+    NProgress.configure({ showSpinner: false });
+    NProgress.start();
+  </script>
+
+  <div class="mobile-sticky-body-overlay"></div>
+
+  
+  <div id="toaster"></div>
+  
+
+  <div class="wrapper">
+    {% include "includes/leftsidebar.html"%}
+
+    
+
+    <div class="page-wrapper">
+        {% include "includes/header.html"%}
+
+
+      <div class="content-wrapper">
+        <div class="content">		
+            <div class="card-body">
+                <form action="{% url 'setparameter' project.pk %}" method="POST">
+                    {% csrf_token %}
+                <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Layer</th>
+                          <th scope="col">Parameter</th>
+                          <th scope="col">Option</th>
+                        </tr>
+                      </thead>
+                      <tbody id="networkconfbody">
+                      {% for p in parameters %}
+                      <tr>
+                        <td>
+                          {{ forloop.counter0 }}
+                        </td>
+                        <td>
+                           {{p.0}}
+                        </td>
+                        <td>
+                            {{p.1}}
+                          </td>
+                          <td>
+                              <input type="text"></input>
+                            </td>
+                      </tr>  
+                      {% endfor %}
+                      </tbody>
+                    </table>
+                    
+                    <button type="submit" class="mb-1 btn btn-block btn-primary">Submit</button>
+
+
+                    <script type="text/javascript">
+                      parameters = [];
+                      {% for p in parameters %}
+                      parameters.push(["{{p.0}}","{{p.1}}"]);
+                      {% endfor %}
+
+
+
+                    </script>
+                </form>    
+              </div>
+          
+                  
+                  
+
+
+						
+
+						
+
+						
+
+						
+</div>
+
+        
+
+
+      </div>
+
+                {% include "includes/footer.html" %}
+
+    </div>
+  </div>
+
+  {% include "includes/scripts.html"%}
+
+</body>
+
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+    <script>
+        NProgress.configure({
+            showSpinner: false
+        });
+        NProgress.start();
+    </script>
+
+    <div class="mobile-sticky-body-overlay"></div>
+
+
+    <div id="toaster"></div>
+
+
+    <div class="wrapper">
+
+        {% include "includes/leftsidebar.html" %}
+
+
+
+        <div class="page-wrapper">
+            <!-- Header -->
+            {% include "includes/header.html" %}
+
+
+            <div class="content-wrapper">
+                <div class="content">
+
+                    <div class="card card-default" id="dataframepreview">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Source DataFrame</h2>
+                        </div>
+                        <div class="card-body">
+
+                            {% autoescape off %} {{dataframe}} {% endautoescape %}
+                        </div>
+                        <div class="card-footer d-flex flex-wrap bg-white">
+                            <button id="addudf" type="button" class="btn btn-block btn-primary">Add UDF</button>
+                        </div>
+                        
+                    </div>
+                    
+                    <script type="text/javascript">
+                    
+                    {% autoescape off %}
+                    udfs = {{udfs}}
+                    {% endautoescape %}
+                    
+                    for(key in udfs){
+                        udf = udfs[key]
+                        primarykey  = udf.pk
+                        inputtype = udf.fields.input
+                        udfvalue = udf.fields.udfexecutiontext
+                        outputtype = udf.fields.outputtype
+                        addudf(primarykey,udfvalue,outputtype,inputtype)
+                    }
+                    
+
+                    function generateUDFString(primarykey,outputtype,inputtype){
+                        inputtype = inputtype.split(",")
+                        output = outputtype.split(",").map(x => '<li class="breadcrumb-item"><a onclick="removeBredCrump(this)">'+x+'</a></li>')
+                        input = `{% for c in columns %}<option value="{{ c }}">{{c}}</option>{% endfor %}`
+                        allelts = $($.parseHTML(input))
+                        allelts = allelts.map((x,y) => inputtype.includes(y.value)?$(y).attr("selected",true)[0]:y)
+                        input = allelts.toArray().map(x => x.outerHTML).reduce((x,y) => x+y)
+                        
+                        udfinput = `<div id="originaludfinput" class="card card-default">
+                            <form id="originaludfinputForm" enctype="multipart/form-data"
+                                action="{% url 'transformdata' project.pk %}" method='POST'>
+                                {% csrf_token %}
+                                <input type="text" name="primarykey" style="visibility:hidden" value="`+primarykey+`"></input>
+                                <div class="card-header card-header-border-bottom">
+                                    <h2>Define UDF</h2>
+                                </div>
+                                <div class="card-body">
+                                    <p> Select Input Column from Dataframe <select
+                                            class="js-example-basic-multiple form-control" name="columns"
+                                            multiple="multiple" tabindex="-1" aria-hidden="true">
+                                            `+input+`
+                                        </select></p>
+                                    <p>TextArea Python Code
+                                        <div id="container_1" class="monacoeditor notready" style="height:200px"></div>
+                                    </p>
+                                    <p>Multiple Selection of DataType
+                                    
+                                    <ol class="breadcrumb breadcrumb-inverse">`+output+`</ol>
+                                    
+                                    <div class="dropdown d-inline-block mb-1">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-display="static">
+                                            Add Type
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <!--{% for c in types %}-->
+                                            <a class="dropdown-item" onclick="addBredCrump(this,'{{c}}')">{{c}}</a>
+                                            <!--{% endfor %}-->
+                                        </div>
+                                    </div>
+                                    </p>
+                                    
+                                </div>
+                                <div class="card-footer d-flex flex-wrap bg-white">
+                                    <button name="ADD" type="button" onclick="saveandtestudffunction(event)" class="btn btn-block btn-primary">Save and Test UDF</button>
+                                    <button name="REMOVE" type="button" onclick="saveandtestudffunction(event)" class="btn btn-block btn-warning">Remove UDF</button>
+                                    <br/>
+                                    <div style="visibility:hidden;background: #ffc; padding: 10px 20px;" class="errorlog">
+
+                                    </div>
+                                </div>
+                            </form>
+                        </div>`
+                        return udfinput
+                    }
+
+                    function setupMonacoEditor(value) {
+                        alleditors = $(".monacoeditor.notready")
+                        alleditors.each(
+                            function(){
+                                this.editor = monaco.editor.create(this, {
+                                value: value,
+                                language: "python",
+                                automaticLayout: true
+                            });
+                            }
+                        )
+                        alleditors.removeClass("notready")
+                        
+
+                        
+                    }
+
+                    function addudf(primarykey,udfvalue,outputtype,inputtype) {
+                                    //var newinput = $("#originaludfinput").clone()
+                                    var newinput = $($.parseHTML(generateUDFString(primarykey,outputtype,inputtype)))
+                                    $('#dataframepreview').after(newinput)
+                                    setupMonacoEditor(udfvalue)
+                                    $('.js-example-basic-multiple').select2()
+                                }
+                    $('#addudf').click(
+                        function(){addudf(0,"return output","StringType","")}
+                    )
+                    $('document').ready(function(){
+                        setupMonacoEditor("")
+                        value = $("[name=udfclasses]").val()
+                        $("#udfclassesmonacoeditor")[0].editor.getModel().setValue(value)
+                    });
+                    </script>
+                    <!--<div class="card card-default">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Apply Transformation</h2>
+                        </div>
+                        <div class="card-body">
+                            <form enctype="multipart/form-data" action="{% url 'transformdata' project.pk %}"
+                                method='POST'>
+                                {% csrf_token %}
+                                <label for="exampleFormControlTextarea1">Define UDFs</label>
+                                <textarea name="udfclasses" class="form-control" id="exampleFormControlTextarea1"
+                                    rows="3" style="margin-top: 0px; margin-bottom: 0px; height: 122px;visibility:hidden;display:None"
+                                    value="{{udfclasses}}">{{udfclasses}}</textarea>
+                                <div id="udfclassesmonacoeditor" class="monacoeditor notready" style="height:200px"></div>
+                                <label for="exampleFormControlInput1">Provide Select Statement</label>
+                                <input type="text" name="selectstatement" class="form-control"
+                                    id="exampleFormControlInput1" placeholder='select("*")' value="{{selectstatement}}">
+                                <br />
+                                <button type="submit" class="btn btn-primary">Transform</button>
+                            </form>
+                        </div>
+                    </div>-->
+                    
+
+                    <div class="card card-default">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Target DataFrame</h2>
+                        </div>
+                        <div class="card-body">
+
+                            {% autoescape off %} {{dataframe2}} {% endautoescape %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% include "includes/footer.html" %}
+
+        </div>
+    </div>
+
+    <script>
+        function removeBredCrump(e){
+            $(e).parent().remove()
+        }
+
+        function getTypeValueOfBredCrump(){
+            return $.map($('#originaludfinputForm').find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
+        }
+        
+        sparktypes = {}
+        //{% for key,value in types.items %}
+        sparktypes['{{key}}'] = '{{value}}';
+        //{% endfor %}
+        
+
+        function addBredCrump(e,type){
+            txt = '<li class="breadcrumb-item"><a onclick="removeBredCrump(this)" >'+type+'</a></li>'
+            
+            var tocheck = $(e).parent().parent().parent().parent().find('ol.breadcrumb').find('a').last().text()
+            if(sparktypes[tocheck] != "False"){
+                $(e).parent().parent().parent().parent().find('ol.breadcrumb').append(txt)
+            }
+        }
+
+        $("form").submit(function(e){
+            value = $("#udfclassesmonacoeditor")[0].editor.getModel().getValue()
+            $("[name=udfclasses]").val(value)
+        })
+        
+        
+
+        function saveandtestudffunction(e) {
+            var udfvalue = $(e.target).parent().parent().find('.monacoeditor')[0].editor.getValue()
+            var outputtype = $.map($(e.target).parent().parent().find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
+            
+            $.post("{% url 'createOrUpdateUDF' project.pk %}", 
+                {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    "udfcode1": udfvalue,
+                    "columns": $(e.target).parent().parent().find('[name=columns]').select2('data').map(x => x.text).join(","),
+                    "outputtype": outputtype,
+                    "id": $(e.target).parent().parent().find('[name=primarykey]').val(),
+                    "action" : $(e.target).attr("name"),
+                },
+                function (data) {
+                    
+                    $(e.target).parent().parent().find(".errorlog").css('visibility',"visible")
+                    
+                    dataJson = JSON.parse(data)
+                    $(e.target).parent().parent().find(".errorlog").text(dataJson.result+dataJson.errorlog)
+                    $(e.target).parent().parent().find("[name=primarykey]").val(dataJson.id)
+                    
+                    console.log(data);
+
+                    
+                });
+            if($(e.target).attr("name")=="REMOVE"){
+                $(e.target).parent().parent().parent().remove()
+            }
+            
+            e.preventDefault();
+        }
+    </script>
+
+
+    {% include "includes/scripts.html" %}
+</body>
+
+</html>

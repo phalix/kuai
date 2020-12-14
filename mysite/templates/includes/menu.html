@@ -1,0 +1,249 @@
+<div class="simplebar-content-wrapper" style="overflow:hidden scroll;scrollbar-width:none">
+  <div class="simplebar-content" style="padding: 0px">
+  <ul class="nav sidebar-inner" id="sidebar-menu">
+    <li  class="has-sub {% if menuactive == 1 %} active {% endif %} expand" >
+      <a class="sidenav-item-link" href="javascript:void(0)" data-toggle="collapse" data-target="#project"
+        aria-expanded="false" aria-controls="dashboard">
+        <i class="mdi mdi-view-dashboard-outline"></i>
+        <span class="nav-text">Project</span> <b class="caret"></b>
+      </a>
+      <ul  class="collapse {% if menuactive == 1 %} show {% endif %}"  id="project"
+        data-parent="#sidebar-menu">
+        <div class="sub-menu">
+              <li  class="active" >
+                <a class="sidenav-item-link" href="/new">
+                  <span class="nav-text">Create New</span>
+                  
+                </a>
+              </li>
+              <li >
+                <a class="sidenav-item-link" href="/open/{{ project_id }}">
+                  <span class="nav-text">Open</span>
+                  
+                  
+                  
+                </a>
+              </li>
+              <!--<li >
+                <a class="sidenav-item-link">
+                  <span class="nav-text">Setup Data Flow</span>
+                  <span class="badge badge-danger">tbd</span>
+                  
+                  
+                  
+                </a>
+              </li>-->
+        </div>
+      </ul>
+    </li>
+    
+    <li  class="has-sub {% if menuactive == 3 %} active expand{% endif %}" >
+        <a class="sidenav-item-link" href="javascript:void(0)" data-toggle="collapse" data-target="#datao"
+          aria-expanded="false" aria-controls="dashboard">
+          <i class="mdi mdi-folder-multiple-outline"></i>
+          <span class="nav-text">Data Operation</span> <b class="caret"></b>
+        </a>
+        <ul  class="collapse {% if menuactive == 3 %} show {% endif %}"  id="datao"
+          data-parent="#sidebar-menu">
+          <div class="sub-menu">
+                <li  class="active" >
+                  <a class="sidenav-item-link" href="/datasetup/{{ project.pk }}">
+                    <span class="nav-text">Setup</span>
+                    
+                  </a>
+                </li>
+                <li  class="active" >
+                  <a class="sidenav-item-link" href="/transform/{{ project.pk }}">
+                    <span class="nav-text">Transformation</span>
+                    
+                  </a>
+                </li>
+                
+                <li  class="active" >
+                  <a class="sidenav-item-link" title="Run Analytical Functions over your Dataset." href="/dataanalysis/{{ project.pk }}">
+                    <span class="nav-text">Analysis</span>
+                  </a>
+                </li>
+                
+                <li  class="active" >
+                  <a class="sidenav-item-link" href="/dataclassification/{{ project.pk }}">
+                    <span class="nav-text">Classification</span>
+                  </a>
+                </li>
+
+                
+                
+                <li  class="active" >
+                  <a class="sidenav-item-link">
+                    <span class="nav-text">Augmentation</span>
+                    <span class="badge badge-danger">tbd</span>
+                  </a>
+                </li>
+          </div>
+        </ul>
+      </li>
+      <li  class="has-sub {% if menuactive == 2 %} active expand{% endif %}" >
+            <a class="sidenav-item-link" href="javascript:void(0)" data-toggle="collapse" data-target="#datac"
+              aria-expanded="false" aria-controls="dashboard">
+              <i class="mdi mdi-image-filter-none"></i>
+              <span class="nav-text">Automatic Collection</span> <b class="caret"></b>
+            </a>
+            <ul  class="collapse {% if menuactive == 2 %} show {% endif %}"  id="datac"
+              data-parent="#sidebar-menu">
+              <div class="sub-menu">
+                    <li  class="active" >
+                      <a class="sidenav-item-link" title="Setup Webservice to Constantly Collect Data for Training.">
+                        <span class="nav-text">Data Receiving</span>
+                        <span class="badge badge-danger">tbd</span>
+                      </a>
+                    </li>
+                    <li  class="active" >
+                      <a class="sidenav-item-link" title="Mark Correct Samples for Training.">
+                        <span class="nav-text">Data Validation</span>
+                        <span class="badge badge-danger">tbd</span>
+                      </a>
+                    </li>
+                    <li  class="active" >
+                      <a class="sidenav-item-link" title="Label received Data from Subsystems.">
+                        <span class="nav-text">Data Classification</span>
+                        <span class="badge badge-danger">tbd</span>
+                      </a>
+                    </li>
+                    <li  class="active" >
+                      <a class="sidenav-item-link" title="Release Collected Data for Training.">
+                        <span class="nav-text">Data Confirmation</span>
+                        <span class="badge badge-danger">tbd</span>
+                      </a>
+                    </li>
+                    <li  class="active" >
+                      <a class="sidenav-item-link" title="Review Collected Samples and see Status of Tasks.">
+                        <span class="nav-text">Status</span>
+                        <span class="badge badge-danger">tbd</span>
+                      </a>
+                    </li>
+              </div>
+            </ul>
+          </li>
+      <li  class="has-sub {% if menuactive == 4 %} active expand{% endif %}" >
+        <a class="sidenav-item-link" href="javascript:void(0)" data-toggle="collapse" data-target="#parameterfixing"
+          aria-expanded="false" aria-controls="dashboard">
+          <i class="mdi mdi-view-dashboard-outline"></i>
+          <span class="nav-text">ÀI Setup</span> <b class="caret"></b>
+        </a>
+        <ul  class="collapse {% if menuactive == 4 %} show {% endif %}"  id="parameterfixing"
+          data-parent="#sidebar-menu">
+          <div class="sub-menu">
+            <li>
+              <a class="sidenav-item-link" title="Load well-known Neural Network Structures.">
+                <span disabled="True" class="nav-text">Template Loading</span>
+                <span class="badge badge-success">opt</span>
+                <span class="badge badge-danger">tbd</span>
+              </a>
+            </li> 
+            <li>
+              <a class="sidenav-item-link" href="/ai/{{ project.pk }}" title="Setup Neural Network.">
+                <span class="nav-text">Structure</span>
+              </a>
+            </li> 
+            
+                <li>
+                    <a class="sidenav-item-link" href = "/optimizer/{{ project.pk }}" title="Setup Cost Function, Output Activation, etc.">
+                      <span class="nav-text">Output & Optimizer</span>
+                      
+                    </a>
+                  </li>
+                  <li>
+                    <a class="sidenav-item-link" href = "/modelsummary/{{ project.pk }}" title="Setup Cost Function, Output Activation, etc.">
+                      <span class="nav-text">Model Summary</span>
+                      
+                    </a>
+                  </li>  
+                <!--<li >
+                  <a class="sidenav-item-link" >
+                    <span class="nav-text">Experiments</span>
+                    
+                    
+                    
+                  </a>
+                </li>-->
+              
+            
+
+            
+          </div>
+        </ul>
+      </li>
+
+      <li  class="has-sub {% if menuactive == 5 %} active expand{% endif %}" >
+        <a class="sidenav-item-link" href="javascript:void(0)" data-toggle="collapse" data-target="#experiments"
+          aria-expanded="false" aria-controls="dashboard">
+          <i class="mdi mdi-chart-pie"></i>
+          <span class="nav-text">Experiments</span> <b class="caret"></b>
+        </a>
+        <ul  class="collapse {% if menuactive == 5 %} show {% endif %}"  id="experiments"
+          data-parent="#sidebar-menu">
+          <div class="sub-menu">
+            <li>
+                    <a class="sidenav-item-link" href = "/parameter/{{ project.pk }}" title="Setup Hyperparameters for which you can run experiements.">
+                        <span class="nav-text">Parameter Fixing</span>
+                        
+                    </a>
+                    </li>
+            <li>
+              <a href = "/experimentsetup/{{ project.pk }}" class="sidenav-item-link" title="Setup Run Parameters of Experiments">
+                <span class="nav-text">Setup</span>
+                <!-- Parameters + early stopping etc.-->
+              </a>
+            </li>  
+            <li>
+                  <a class="sidenav-item-link" href = "/runexperiment/{{ project.pk }}" title="Run Hyperparameter Tuning Analysis.">
+                    <span class="nav-text">Run</span>
+                    
+                  </a>
+                </li>
+                <li>
+                  <a class="sidenav-item-link" href="/experimentresults/{{ project.pk }}">
+                    <span class="nav-text" >Test Results</span>
+                    
+                    
+                  </a>
+                </li>
+          </div>
+        </ul>
+      </li>
+
+      <li  class="has-sub {% if menuactive == 6 %} active expand{% endif %}" >
+        <a class="sidenav-item-link" href="javascript:void(0)" data-toggle="collapse" data-target="#production"
+          aria-expanded="false" aria-controls="dashboard">
+          <i class="mdi mdi-folder-multiple-outline"></i>
+          <span class="nav-text">Production</span> <b class="caret"></b>
+        </a>
+        <ul  class="collapse {% if menuactive == 6 %} show {% endif %}"  id="production"
+          data-parent="#sidebar-menu">
+          <div class="sub-menu">
+              <li>
+                  <a class="sidenav-item-link">
+                    <span class="nav-text">Results</span>
+                    <span class="badge badge-danger">tbd</span>
+                    
+                  </a>
+                </li>
+              
+                <li>
+                  <a class="sidenav-item-link">
+                    <span class="nav-text">Deploy</span>
+                    <span class="badge badge-danger">tbd</span>
+                    
+                  </a>
+                </li>
+
+          </div>
+        </ul>
+      </li>
+
+      
+      
+    
+  </ul>
+  </div>
+</div>
