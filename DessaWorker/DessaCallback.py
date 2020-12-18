@@ -1,10 +1,10 @@
-from tensorflow import keras
+from tensorflow.keras import callbacks
 
 
-class CustomDessaCallback(keras.callbacks.Callback):
+class CustomDessaCallback(callbacks.Callback):
     
     def __init__(self,prefix):
-        keras.callbacks.Callback.__init__(self)
+        callbacks.Callback.__init__(self)
         self.prefix = prefix
 
 

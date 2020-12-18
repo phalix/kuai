@@ -18,7 +18,7 @@ print("____________________________________________")
 print("_________________Model______________________")
 print("____________________________________________")
 print("____________________________________________")
-print("_________________TRAIN______________________")
+print("_________________DATA_______________________")
 print("____________________________________________")
 
 import DessaCallback as dc
@@ -39,10 +39,34 @@ pds = pq.ParquetDataset(parquet_files)
 pds.split_row_groups = True
 table = pds.read()
 xy = de.getXandYFromPyArrow(table)
+
+
+pds2 = pq.ParquetDataset(parquet_files2)
+pds2.split_row_groups = True
+table2 = pds2.read()
+if not table2.num_rows>0:
+    table2 = table
+xy2 = de.getXandYFromPyArrow(table2)
+
+
+print("____________________________________________")
+print("_________________DATA_______________________")
+print("____________________________________________")
+print("____________________________________________")
+print("_________________TRAIN______________________")
+print("____________________________________________")
+
 callbacks = []
 callbacks.append(tensorboard_callback)#tensorboard
 callbacks.append(dc.CustomDessaCallback("train"))#foundations
-model.fit(x=xy['x'],y=xy['y'],epochs=epochs,batch_size = batch_size,callbacks=callbacks)
+model.fit(x=xy['x'],
+    y=xy['y'],
+    epochs=epochs,
+    batch_size = batch_size,
+    callbacks=callbacks,
+    validation_data=(xy2['x'], xy2['y']),
+    validation_freq=10,
+    )
 
 print("____________________________________________")
 print("_________________TRAIN______________________")
@@ -50,10 +74,7 @@ print("____________________________________________")
 print("____________________________________________")
 print("_________________TEST_______________________")
 print("____________________________________________")
-pds = pq.ParquetDataset(parquet_files2)
-pds.split_row_groups = True
-table = pds.read()
-xy = de.getXandYFromPyArrow(table)
+
 callbacksEvaluate = []
 callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations
 a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=callbacksEvaluate)

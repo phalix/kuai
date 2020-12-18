@@ -40,15 +40,18 @@
                       {{ output }}
 
                   </textarea>
-                  Model Inputs:</br>
-                  {% for mi in modelinputs %}
-                    {{ mi }} </br>
-                  {% endfor %}
-                  Model Outputs:</br>
-                  {% for mo in modeloutputs %}
-                    {{ mo }} </br>
-                  {% endfor %}
-                  Data Inputs:</br>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card card-default">
+                <div class="card-header card-header-border-bottom">
+                  <h2>Data Input/Outputs</h2>
+                </div>
+                <div class="card-body" style="height:100%">
+                Data Inputs:</br>
                   {% for di in datainputs %}
                     {{ di }} </br>
                   {% endfor %}
@@ -56,9 +59,23 @@
                   {% for do in dataoutputs %}
                     {{ do }} </br>
                   {% endfor %}
-
-                  </div>
-
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card card-default">
+                <div class="card-header card-header-border-bottom">
+                  <h2>Model Input/Outputs</h2>
+                </div>
+                <div class="card-body" style="height:100%">
+                Model Inputs:</br>
+                {% for mi in modelinputs %}
+                    {{ mi }} </br>
+                  {% endfor %}
+                  Model Outputs:</br>
+                  {% for mo in modeloutputs %}
+                    {{ mo }} </br>
+                  {% endfor %}
                 </div>
               </div>
             </div>

@@ -13,3 +13,7 @@ temp*
 __pycache__
 logs
 mysite/private*
+*.parquet
+metastore_db
+spark-warehouse
+mlruns

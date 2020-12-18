@@ -2,13 +2,20 @@ FROM python:3.8.6
 RUN apt-get update \
     && apt-get install default-jre -y\
     && apt-get install default-jdk -y
-#RUN apk --no-cache add\
-#    openjdk11-jre
-ENV PYTHONUNBUFFERED=1
+#    && apt-get install g++ -y\
+#    && apt-get install python3-pandas -y\
+#    && apt-get install python3-numpy -y
+#RUN apk add openjdk11 # for alpine
+#RUN apk add g++ # for alpine
+RUN /usr/local/bin/python -m pip install --upgrade pip
 WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 COPY . /code/
 RUN python manage.py makemigrations
 RUN python manage.py migrate
-EXPOSE 8000
+#RUN wget https://github.com/dessa-oss/atlas/releases/download/0.1.1/atlas_installer.py
+#RUN python atlas_installer.py -y -i -s -a -C
+#RUN python atlas_installer.py -y -N -s
+EXPOSE 8000 5000
+#EXPOSE 5000

@@ -55,13 +55,14 @@
                       fetch(deleteUrl).then()
                     }
                     function writeToDessa(){
+                      NProgress.start()
                       $.post(writeToDessaUrl, 
                       {
                           "csrfmiddlewaretoken":"{{ csrf_token }}",
                           "writeDessa": $("[name=writedessaselector]").prop("checked"),
                       },
                       function (data) {
-                          
+                          NProgress.done()
                           console.log(data);
 
                       });

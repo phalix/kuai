@@ -9,7 +9,7 @@ import mysite.neuralnetwork
 import mysite.dataoperation
 import asyncio
 import threading
-import tensorflow as tf
+#import tensorflow as tf
 
 def createnewexperimentinproject(project):
     exp = Experiment()
@@ -528,7 +528,9 @@ def getProjectDataDir(project_id):
 def createProjectDessa(project,experiment,writeToDessa):
     import os
     import subprocess
-    import foundations
+    if writeToDessa:
+        import foundations
+
     project_id = project.pk
     
     maindir = getMainDir(project_id)

@@ -14,7 +14,7 @@ import mysite.dataoperation
 #import tensorflow as tf
 import numpy as np
 import inspect
-import keras
+
 #librarystring = 'from tensorflow.python import keras'
 #exec(librarystring)
 librarystring_a = 'from tensorflow import python as pyt'
@@ -397,6 +397,7 @@ def optimizer(request,project_id):
 ### helper functions to get json from python structure
 
 def getkeraslayeroptions(libstr):
+    import keras
     result = []
     layers = inspect.getmembers(eval(libstr))
     for l in layers:
@@ -435,6 +436,7 @@ def getcurrentmodel(project,loss,metrics,neuralnetwork,optimizer,features,target
 
 
 def getinputshape(project):
+    import keras
     inputs = {}
     project_id = project.id
     #cur_features = project.features.all()
@@ -465,12 +467,17 @@ def getNeuralNetworkStructureAsPlainPython(project):
 
 def getOptimizerAsPlainPython(project):
     a = {}
-    a['conf'] = dict(map(lambda x: [x.fieldname,x.option],list(project.neuralnetwork.optimizer.configuration.all())))
-    a['name'] = project.neuralnetwork.optimizer.name
+    if project.neuralnetwork.optimizer and project.neuralnetwork.optimizer.configuration:
+        a['conf'] = dict(map(lambda x: [x.fieldname,x.option],list(project.neuralnetwork.optimizer.configuration.all())))
+        a['name'] = project.neuralnetwork.optimizer.name
+    else:
+        a['name'] = 'SGD'
+        a['conf'] = {}
     return a
 
 ## generate keras model from database definition
 def buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inputschema):
+    import keras
     nn = neuralnetwork
     
     #Build Tensorflow Model

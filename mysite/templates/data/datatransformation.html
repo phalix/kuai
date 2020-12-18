@@ -145,9 +145,9 @@
                         function(){addudf(0,"return output","StringType","")}
                     )
                     $('document').ready(function(){
-                        setupMonacoEditor("")
-                        value = $("[name=udfclasses]").val()
-                        $("#udfclassesmonacoeditor")[0].editor.getModel().setValue(value)
+                        //setupMonacoEditor("")
+                        //value = $("[name=udfclasses]").val()
+                        //$("#udfclassesmonacoeditor")[0].editor.getModel().setValue(value)
                     });
                     </script>
                     <!--<div class="card card-default">
@@ -222,6 +222,7 @@
         
 
         function saveandtestudffunction(e) {
+            NProgress.start()
             var udfvalue = $(e.target).parent().parent().find('.monacoeditor')[0].editor.getValue()
             var outputtype = $.map($(e.target).parent().parent().find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
             
@@ -243,6 +244,7 @@
                     $(e.target).parent().parent().find("[name=primarykey]").val(dataJson.id)
                     
                     console.log(data);
+                    NProgress.done()
 
                     
                 });

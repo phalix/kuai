@@ -30,6 +30,20 @@
 
                 <div class="card card-default">
                   <div class="card-header card-header-border-bottom">
+                    <h2>DataFrame Top 5</h2>
+                  </div>
+
+                  <div class="card-body">
+                    {% autoescape off %} 
+                      {{df2head}} 
+                      
+                    {% endautoescape %}
+                  </div>
+                </div>
+
+
+                <div class="card card-default">
+                  <div class="card-header card-header-border-bottom">
                     <h2>DataFrame Description</h2>
                   </div>
 

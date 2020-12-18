@@ -27,11 +27,14 @@ Everything is supported by easy to use user interfaces.
 
 ## setup
 install java  
-install python and pip > 3  
-pip install pandas Django pyspark tensorflow keras notebook ipywidgets seaborn matplotlib
+install python and pip == 3.8.6  
+pip install -r  requirements.txt
+python manage.py makemigrations  
+python manage.py migrate  
 
 ## runapp
-run "python manage.py runserver"
+python manage.py runserver  
+
 ## Warning
 Before deploying you should change the SECRET_KEY in mysite/settings.py, e.g. with https://djecrety.ir/  
 

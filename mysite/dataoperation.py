@@ -6,7 +6,6 @@ from django.shortcuts import render,get_object_or_404
 from mysite.models import Project,Feature,NeuralNetwork,UDF
 import pandas as pd
 
-pd.set_option("display.max_colwidth",20)
 
 import numpy as np
 from datetime import datetime
@@ -113,7 +112,7 @@ def createOrUpdateUDF(request,project_id):
     try:
         a_udf = generateUDFonUDF(newudf)
         df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
-        result = df.select(a_udf[1].alias(str(newudf.pk))).limit(1).collect()
+        result = df.limit(1).select(a_udf[1].alias(str(newudf.pk))).limit(1).collect()
         result = result[0][0]
     except Exception as e:
         import traceback
@@ -283,11 +282,16 @@ def analysis(request,project_id):
     #df2_cv = applyfeaturetransition(project,df2_cv,project.features.all(),project.target)
     df2_cv = df2_cv.drop('type')
 
+    dfhead5 = df2.limit(5).toPandas().to_html()
+    dfcorr = df2.toPandas()
     dfdescription = df2.describe().toPandas().to_html()
     dfdescription_test = df2_test.describe().toPandas().to_html()
     dfdescription_cv = df2_cv.describe().toPandas().to_html()
 
-    
+    #filter by simple datetypes
+    #df.info(); df.describe(); df.describe(include='all'); df.corr(); df.['target'].value_counts()
+
+
     ### restrict columns to simple types
     columns = list(dict(filter(lambda x:isTypeSimpleType(x[1]),df2.dtypes)).keys())
     
@@ -311,6 +315,7 @@ def analysis(request,project_id):
         "dfdescription_cv":dfdescription_cv,
         "columns":columns,
         "plotfunctions":seabornfunctions,
+        "df2head":dfhead5
     }
 
 
@@ -437,16 +442,19 @@ def uploaddata(request,project_id):
     cvshare = float(request.POST['cvshare'])
     subm_file = request.POST['folderfile']
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
-    
+    import uuid 
+    tempfile = "temp"+str(uuid.uuid1())
+
     if request.POST['datatype'] == "csv":
-        if not sub_file.startswith("http"):
+        if 'filewithdata' in request.FILES:
+            content = request.FILES['filewithdata'].file.read()
+            open(tempfile, 'wb').write(content)
+        elif not sub_file.startswith("http"):
             tempfile = subm_file
         else:
             import requests
             url = subm_file
             r = requests.get(url, allow_redirects=True)
-            import uuid 
-            tempfile = "temp"+str(uuid.uuid1())
             open(tempfile, 'wb').write(r.content)
         
         import mysite.project as mp
@@ -455,9 +463,17 @@ def uploaddata(request,project_id):
         df = spark.read.format("csv").option("delimiter",delimeter).option("header","true").load(tempfile)
         
     elif request.POST['datatype'] == "img":
+        if 'filewithdata' in request.FILES:
+            content = request.FILES['filewithdata'].file.read()
+            open(tempfile, 'wb').write(content)
+            from zipfile import ZipFile
+            with ZipFile(tempfile, 'r') as zipObj:
+                # Extract all the contents of zip file in current directory
+                subm_file = "temp"+str(uuid.uuid1())
+                zipObj.extractall(subm_file)
+
         from pyspark.ml.image import ImageSchema 
-        
-        df = spark.read.format("image").option("dropInvalid", True).load(subm_file) 
+        df = spark.read.format("image").option("dropInvalid", True).option("recursiveFileLookup","true").load(subm_file) 
     elif request.POST['datatype'] == "json":
         df  = spark.read.json(subm_file, multiLine = "true")
     
@@ -472,7 +488,7 @@ def uploaddata(request,project_id):
     cvdata = cvdata.withColumn('type',lit(CV_DATA_QUALIFIER))
 
     data = traindata.union(testdata).union(cvdata)
-
+    data.persist(pyspark.StorageLevel.DISK_ONLY)
     savetocassandra(project_id,data,TRAIN_DATA_QUALIFIER)
     
     from pyspark.sql import SQLContext
@@ -500,6 +516,7 @@ def dataclassification(request,project_id):
     # TODO: Enable Text Preprocessing from Keras
     
     cur_features = project.features.all()
+    cur_targets = project.targets.all()
     r_features = list(map(lambda x:x.fieldname,cur_features))
     
     if project.target != None:
@@ -540,7 +557,7 @@ def dataclassification(request,project_id):
         firstrow_transformed = df.first().asDict()
         firstrow_indexed = indexed.first().asDict()
         print("First row done")
-        featurevector_df = buildFeatureVector(indexed,cur_features,project.target).limit(displaylimit)
+        featurevector_df = buildFeatureVector(indexed,cur_features,project.target,cur_targets).limit(displaylimit)
         
         df = df.drop('type')
         indexed = indexed.drop('type')
@@ -678,7 +695,8 @@ def savetocassandra(project_id,df,type):
     
 
 def savetocassandra_writesparkdataframe(project_id,sparkdf):
-    sparkdf.write.format("mongo").mode("overwrite").save()  
+    #sparkdf.write.format("mongo").mode("append").save()  
+    sparkdf.write.format("parquet").mode("overwrite").save(str(project_id)+".parquet")
     from pyspark.sql import SQLContext
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     sqlContext = SQLContext(spark)
@@ -696,7 +714,8 @@ def readfromcassandra(project_id,type):
     if 'temp_table' in sqlContext.tableNames():
         df = sqlContext.sql("select * from temp_table")
     else:
-        df = spark.read.format("mongo").load()
+        #df = spark.read.format("mongo").load()
+        df = spark.read.parquet(str(project_id)+".parquet")
         df.registerTempTable("temp_table")
         sqlContext.sql("CACHE TABLE temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
     return df
@@ -709,66 +728,36 @@ def getsparksession(project_id,type):
     # 1 = train
     # 2 = test
     # 3 = cross validation
-    #if type in [1,2,3]:
-
     import os
-    #relevant for selecting right version
-    #TODO: must be configurable
-    #os.environ['PYSPARK_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
-    #os.environ['PYSPARK_DRIVER_PYTHON'] = '/usr/local/Frameworks/Python.framework/Versions/3.7/bin/python3.7'
-
-    #os.environ['PYSPARK_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
-    #os.environ['PYSPARK_DRIVER_PYTHON'] = 'C:\\Users\\sebas\\AppData\\Local\\Programs\\Python\\Python38'
-
     conf = createSparkConfig(project_id,type)
-    
     from django.conf import settings
     db_path = settings.DATABASES['default']['NAME']
-
-
-    
     from pyspark.sql import SparkSession
     
     spark = SparkSession.builder.appName('kuai') \
-        .master("local[16]")\
+        .master("local[*]")\
         .config(conf=conf)\
         .getOrCreate()
     return spark
-    #raise TypeError("type")
 
 def createSparkConfig(project_id,type):
     
     conf = pyspark.SparkConf()
     conf.set("spark.app.name", 'kuai')
-    #conf.set("spark.executor.cores", 1)
-    #conf.set("spark.executor.instances", 1)
-    #TODO: must be configurable
-    conf.set('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0')
+    
+    #### MONGO
+    #conf.set('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0')
+    #url = mp.getSetting(project_id,'mongoconnection')[0]
     import mysite.project as mp
-    
-    url = mp.getSetting(project_id,'mongoconnection')[0]
-    detailedurl = url+"/test.test"+str(project_id)+"_"+"1"#str(type)
-    conf.set("spark.mongodb.input.uri", detailedurl)
-    conf.set("spark.mongodb.output.uri", detailedurl)
-
-    #conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    #conf.set("spark.memory.offHeap.size","16g")
-    #conf.set("spark.memory.offHeap.enabled",True)
-    
-    #conf.set("spark.driver.core", "4")
-    conf.set("spark.driver.memory", "16g")
-    #conf.set("spark.driver.memoryOverhead","512mb")
-    
-    #conf.set("spark.executor.core", "4")
-    #conf.set("spark.executor.instances", "1")
-    conf.set("spark.executor.memory", "16g")
-    #conf.set("spark.executor.memoryOverhead","512mb")
-    
-    #conf.set("spark.default.parallelism","3")
-    #conf.set("spark.driver.maxResultSize","4096mb")
-    #conf.set("spark.driver.extraJavaOptions","-XX:+UseG1GC -XX:+UseCompressedOops")
+    #detailedurl = url+"/test.test"+str(project_id)+"_"+"1"#str(type)
+    #conf.set("spark.mongodb.input.uri", detailedurl)
+    #conf.set("spark.mongodb.output.uri", detailedurl)
     
     
+    conf.set("spark.driver.memory", "6g")
+    conf.set("spark.executor.memory", "4g")
+    conf.set("spark.sql.inMemoryColumnarStorage.batchSize", 5)
+    conf.set("spark.sql.inMemoryColumnarStorage.compressed",False)
     return conf
 
 def transformdataframe(project,dataframe,type):
@@ -981,7 +970,7 @@ def sparkSimpleTypes():
     return ('float','string','double','int','short','long','byte','decimal','timestamp','date','boolean','null','data','bigint')
 
 
-def buildFeatureVector(dataframe,features,target):
+def buildFeatureVector(dataframe,features,target,targets):
     ###
     assert target != None
     assert features != None
@@ -1019,7 +1008,7 @@ def buildFeatureVector(dataframe,features,target):
             for (key2,value2) in value.items():
                 selector.append(psf.col(key2).alias('feature_'+str(key2)))
     
-    target_dict = getfeaturedimensionbyproject([target])
+    target_dict = getfeaturedimensionbyproject(targets)
     if 1 in target_dict:
         target_array = list(target_dict[1].keys())
         vector_assembler = VectorAssembler(inputCols=target_array, outputCol="target")
@@ -1070,14 +1059,15 @@ def getXandYFromDataframe(df,project):
 
 def getDimensionsByProject(project):
     
-    project_id = project.pk
-    train_df = mysite.dataoperation.readfromcassandra(project_id,0)
-    train_df = mysite.dataoperation.transformdataframe(project,train_df,0)
-    train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
+    #project_id = project.pk
+    #train_df = mysite.dataoperation.readfromcassandra(project_id,0)
+    #train_df = mysite.dataoperation.transformdataframe(project,train_df,0)
+    #train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
+    train_df = getTransformedData(project.pk,0)
     mytypes = gettypesanddimensionsofdataframe(train_df)
-    featurenames = list(map(lambda x:x.fieldname,project.features.all()))
-    inputdimensions = list(filter(lambda x:x[0] in featurenames,mytypes))
-    outputdimensions = list(filter(lambda x:x[0] in [project.target.fieldname],mytypes))
+    #featurenames = list(map(lambda x:x.fieldname,project.features.all()))
+    inputdimensions = list(filter(lambda x:x[0].startswith('feature'),mytypes))#list(filter(lambda x:x[0] in featurenames,mytypes))
+    outputdimensions = list(filter(lambda x:x[0].startswith('target'),mytypes))#list(filter(lambda x:x[0] in [project.target.fieldname],mytypes))
 
     return [inputdimensions,outputdimensions]
 
@@ -1088,7 +1078,7 @@ def getTransformedData(project_id,qualifier):
     train_df = mysite.dataoperation.readfromcassandra(project_id,qualifier)
     train_df = mysite.dataoperation.transformdataframe(project,train_df,qualifier)
     train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
-    train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target)
+    train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target,project.targets.all())
     if qualifier > 0:
         train_df1 = train_df1.filter(train_df.type == qualifier)
     train_df1 = train_df1.drop('type')
