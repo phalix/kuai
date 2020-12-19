@@ -283,7 +283,7 @@ def analysis(request,project_id):
     df2_cv = df2_cv.drop('type')
 
     dfhead5 = df2.limit(5).toPandas().to_html()
-    dfcorr = df2.toPandas()
+    #dfcorr = df2.toPandas()
     dfdescription = df2.describe().toPandas().to_html()
     dfdescription_test = df2_test.describe().toPandas().to_html()
     dfdescription_cv = df2_cv.describe().toPandas().to_html()
@@ -489,7 +489,6 @@ def uploaddata(request,project_id):
 
     data = traindata.union(testdata).union(cvdata)
     data.persist(pyspark.StorageLevel.DISK_ONLY)
-    savetocassandra(project_id,data,TRAIN_DATA_QUALIFIER)
     
     from pyspark.sql import SQLContext
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
@@ -497,6 +496,10 @@ def uploaddata(request,project_id):
     if 'temp_table' in sqlContext.tableNames():
         sqlContext.uncacheTable("temp_table")
         sqlContext.sql("drop table temp_table")
+    
+    savetocassandra(project_id,data,TRAIN_DATA_QUALIFIER)
+    
+    
     
     return HttpResponseRedirect('/transform/'+str(project_id)+"/")
 
@@ -761,10 +764,10 @@ def createSparkConfig(project_id,type):
     #conf.set("spark.mongodb.output.uri", detailedurl)
     
     
-    conf.set("spark.driver.memory", "6g")
+    conf.set("spark.driver.memory", "8g")
     conf.set("spark.executor.memory", "4g")
-    conf.set("spark.sql.inMemoryColumnarStorage.batchSize", 5)
-    conf.set("spark.sql.inMemoryColumnarStorage.compressed",False)
+    #conf.set("spark.sql.inMemoryColumnarStorage.batchSize", 5)
+    #conf.set("spark.sql.inMemoryColumnarStorage.compressed",False)
     return conf
 
 def transformdataframe(project,dataframe,type):
