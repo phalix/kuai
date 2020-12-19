@@ -620,9 +620,16 @@ def setupdataclassifcation(request,project_id):
     
     try:
         project.target.delete()
+    except Exception as e:
+        print(e)
+    
+    try:
         project.targets.all().delete()
     except Exception as e:
         print(e)
+        for target in project.targets.all():
+            project.targets.remove(target.pk)
+    
     project.input = ""
     project.save()
     #project.target.delete()
@@ -828,7 +835,7 @@ def applyfeaturetransition(project,dataframe,features,target):
                         indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
                     else:
                         #indexed = fp.applytransition(0,feat.fieldname,isndexed)
-                        print("no transformation needed")
+                        print("no transformation needed for "+str(feat.fieldname))
                     
                 except Exception as e:
                     print("error on transformation")
@@ -1083,4 +1090,23 @@ def getTransformedData(project_id,qualifier):
         train_df1 = train_df1.filter(train_df.type == qualifier)
     train_df1 = train_df1.drop('type')
     train_df3 = train_df1
+    #duplicaterows(train_df3)
     return train_df3
+
+def duplicaterows(dataframe):
+    test = dataframe.groupby('target').count().collect()
+    from functools import reduce
+    maxvalue = reduce(lambda x,y: x if x['count'] > y['count'] else y,test)['count']
+    from pyspark.sql.functions import explode
+    for target in test:
+        s = maxvalue/target['count']
+        from math import floor
+        from pyspark.sql.functions import array, lit
+        if s >= 2:
+            s = floor(s)
+            toattach = dataframe.filter(dataframe.target==array(*[lit(x) for x in target['target']]))
+            for i in range(0,s):
+                
+                dataframe = dataframe.union(toattach)
+    test = dataframe.groupby('target').count().collect()
+    return dataframe

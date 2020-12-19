@@ -35,15 +35,18 @@ depth = 3
 batch_size = 1 #batchsize
 lrate = 1e-3
 
+
 pds = pq.ParquetDataset(parquet_files)
 pds.split_row_groups = True
 table = pds.read()
+print(str(table.num_rows))
 xy = de.getXandYFromPyArrow(table)
 
 
 pds2 = pq.ParquetDataset(parquet_files2)
 pds2.split_row_groups = True
 table2 = pds2.read()
+print(str(table2.num_rows))
 if not table2.num_rows>0:
     table2 = table
 xy2 = de.getXandYFromPyArrow(table2)
@@ -62,7 +65,7 @@ callbacks.append(dc.CustomDessaCallback("train"))#foundations
 model.fit(x=xy['x'],
     y=xy['y'],
     epochs=epochs,
-    batch_size = batch_size,
+    batch_size=batch_size,
     callbacks=callbacks,
     validation_data=(xy2['x'], xy2['y']),
     validation_freq=10,

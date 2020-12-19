@@ -68,7 +68,7 @@ def modelsummary(request,project_id):
         "project" : project,
         "project_id" : project_id,
         #"layer_types" : getkeraslayeroptions(librarystring2),
-        #"menuactive":4,
+        "menuactive":4,
         #"neuralnetwork": nn,
         #"layers": layers,
         "output":output,

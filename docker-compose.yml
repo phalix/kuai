@@ -6,9 +6,9 @@ services:
       - "27017:27017"
   kuai:
     build: .
-    command: bash -c "python manage.py runserver 0.0.0.0:8000 & mlflow ui -h 0.0.0.0 -p 5000 " #python manage.py runserver
-    volumes:
-      - .:/code
+    command: bash -c "python manage.py runserver 0.0.0.0:8000 " #& mlflow ui -h 0.0.0.0 -p 5000 " #python manage.py runserver
+    #volumes:
+    #  - .:/code
     ports:
       - "8000:8000"
       - "5000:5000"
