@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.shortcuts import render,get_object_or_404
 from datetime import datetime
 from django import forms
-from mysite.models import Project,Experiment,Result,Sample,Metrics,Loss,LayerWeights
+from mysite.models import Project,Experiment,Result,Sample,Metrics,Loss,LayerWeights,Optimizer,Configuration
 import mysite.neuralnetwork
 import mysite.dataoperation
 import asyncio
@@ -95,11 +95,40 @@ def experimentsetup(request,project_id,experiment_id):
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
-    
-    metrics = Metrics.objects.filter(experiment=experiment_id).all()
+    experiments = Experiment.objects.filter(project=project_id).all()
+    import json
+    from django.core import serializers
+    experimentsPython = json.loads(serializers.serialize('json', experiments))
     
 
+    for exp in experimentsPython:
+        metrics = Metrics.objects.filter(experiment=exp['pk']).all()
+        metricsPython = json.loads(serializers.serialize('json', metrics))
+        exp['metrics'] = metricsPython
+        optimizer = Optimizer.objects.filter(pk=exp['fields']['optimizer'])
+        optimizersPython = json.loads(serializers.serialize('json', optimizer))
+        if len(optimizersPython) > 0:
+            optimizerPython = optimizersPython[0]
+            configs = optimizer[0].configuration.all()
+            configsPython = json.loads(serializers.serialize('json', configs))
+            optimizerPython['configuration'] = configsPython
+            exp['optimizer'] = optimizerPython
+
+
+
+    metrics = Metrics.objects.filter(experiment=experiment_id).all()
+    
+    if experiment.optimizer:
+        optimizername = experiment.optimizer.name
+        optconfs = experiment.optimizer.configuration.all()
+    else:
+        optimizername = ""
+        optconfs = []
+    
     context = {
+        "optimizers" : mysite.neuralnetwork.getOptimizers(),
+        "optimizername":optimizername,
+        "optimizerconfiguration":optconfs,
         "project" : project,
         "experiment" : experiment,
         "project_id" : project_id,
@@ -108,7 +137,8 @@ def experimentsetup(request,project_id,experiment_id):
         "loss":mysite.neuralnetwork.getkeraslayeroptions('keras.losses'),
         "selloss":experiment.loss,
         "selmetrics":metrics,
-        "callbacks":['earlystopping','...']
+        "callbacks":['earlystopping','...'],
+        "experiments": json.dumps(experimentsPython),
 
     }
     
@@ -117,7 +147,10 @@ def experimentsetup(request,project_id,experiment_id):
 
 def uploadexpsetup(request,project_id,experiment_id):
     project = get_object_or_404(Project, pk=project_id)
-    experiment = get_object_or_404(Experiment, pk=experiment_id)
+    if 'newExperiment' in request.POST and request.POST['newExperiment']=='on':
+        experiment = Experiment(status=0,project=project)
+    else:
+        experiment = get_object_or_404(Experiment, pk=experiment_id)
     
     Metrics.objects.filter(experiment=experiment_id).all().delete()
 
@@ -129,7 +162,29 @@ def uploadexpsetup(request,project_id,experiment_id):
     experiment.batchsize = request.POST["batchsize"]
     experiment.noofepochs = request.POST["noofepochs"]
     
+    opticonfigs = []
+    for para in request.POST:
+        if para.startswith("optpara"):
+            optifieldname = para.split("$")[1]
+            optivalue = request.POST[para]
+            if optivalue and len(optivalue)>0:
+                curopticonf = Configuration(fieldname=optifieldname,option=optivalue)
+                curopticonf.save()
+                opticonfigs.append(curopticonf)
+        if para == "optimizerselect":
+            optiname = request.POST[para]
+
+    selopti = Optimizer(name=optiname)
+    selopti.save()
+    for oc in opticonfigs:
+        selopti.configuration.add(oc)
+        oc.save()
+    selopti.save()
+
+    experiment.optimizer = selopti
+
     experiment.save()
+
     if "metrics[]" in request.POST:
         metrics = request.POST.getlist("metrics[]")
         for m in metrics:
@@ -199,14 +254,15 @@ def prepareModel(project,experiment,loss,metrics,neuralnetwork,optimizer,feature
 
 
 
-def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema):
+def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema,expType):
     ##TODO: remove any database transactions
     import sys, traceback
     
     exp = experiment
     experiment_id = exp.id
     project_id = project.id
-    createProjectDessa(project,exp,True)    
+
+    createProjectDessa(project,exp,expType=='dessa')    
 
     lossfunction = loss
 
@@ -220,8 +276,10 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
     saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
 
-
-    submitDessaJob(project_id)
+    if expType == 'dessa':
+        submitDessaJob(project_id,experiment_id)
+    elif expType == 'plain':
+        submitPlainPythonJob(project_id,experiment_id)
     '''
     #random split to required batch size
     # 1. get count of train_df3
@@ -356,7 +414,7 @@ def run(request,project_id,experiment_id):
     
     return HttpResponse(template.render(context, request))   
 
-def startexperiment(project,experiment):
+def startexperiment(project,experiment,expType):
     loss = experiment.loss.name
     
     cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
@@ -383,7 +441,7 @@ def startexperiment(project,experiment):
     #thread = threading.Thread(target=runexperiment, args=(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema))
     #thread.daemon = True 
     #thread.start()
-    runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema)
+    runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,optimizer,features,target,inputschema,expType)
 
 
 def getexperimentsstasperproject(request,project_id,experiment_id):
@@ -409,11 +467,15 @@ active = False
 
 def startExperimentsPerProject(request,project_id,experiment_id):
     import json
+    if 'type' in request.GET:
+        expType = request.GET['type']
+    else:
+        expType = 'plain'
     #active = True
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     if True or experiment.status in (0,3):
-        startexperiment(project,experiment)
+        startexperiment(project,experiment,expType)
     experiment.status = 1
     experiment.save()
     
@@ -520,7 +582,13 @@ def getMainDir(project_id):
     return mp.getSetting(project_id,'maindir')[0]
     
 def getProjectDir(project_id):
-    return getMainDir(project_id)+"/projects/"+str(project_id)
+    import os
+    olddir = os.getcwd()
+    maindir = getMainDir(project_id)
+    os.chdir(maindir)
+    maindir = os.getcwd()
+    os.chdir(olddir)
+    return maindir+"/projects/"+str(project_id) 
 
 def getProjectDataDir(project_id):
     return getProjectDir(project_id)+"/"+"data"
@@ -532,9 +600,11 @@ def createProjectDessa(project,experiment,writeToDessa):
         import foundations
 
     project_id = project.pk
-    
+    olddir = os.getcwd()
     maindir = getMainDir(project_id)
-    projectdir = getMainDir(project_id)+"/projects"
+    os.chdir(maindir)
+    maindir = os.getcwd()
+    projectdir = maindir+"/projects"
     os.chdir(projectdir)
     import shutil
     #usage shutil.copyfile('file1.txt', 'file2.txt')
@@ -549,12 +619,16 @@ def createProjectDessa(project,experiment,writeToDessa):
     if "model" not in os.listdir():
         os.mkdir("model")
     
-    overwriteDefaultWorkerWithFollowingOptions(maindir+"/DessaWorker/DefaultWorker.py",
-        projectdir+"/"+str(project_id)+"/DefaultWorker.py",
-        projectdir+"/"+str(project_id),
-        writeToDessa,
-        experiment.noofepochs,
-        experiment.batchsize)
+
+    for exp in Experiment.objects.filter(project=project).all():
+        overwriteDefaultWorkerWithFollowingOptions(maindir+"/DessaWorker/DefaultWorker.py",
+            projectdir+"/"+str(project_id)+"/DefaultWorker_"+str(exp.id)+".py",
+            projectdir+"/"+str(project_id),
+            writeToDessa,
+            exp.noofepochs,
+            exp.batchsize,
+            exp)
+    
     #shutil.copyfile(maindir+"/DessaWorker/DefaultWorker.py",projectdir+"/"+str(project_id)+"/DefaultWorker.py")
     shutil.copyfile(maindir+"/DessaWorker/PyArrowDataExtraction.py",projectdir+"/"+str(project_id)+"/PyArrowDataExtraction.py")
     shutil.copyfile(maindir+"/DessaWorker/DessaCallback.py",projectdir+"/"+str(project_id)+"/DessaCallback.py")
@@ -562,6 +636,7 @@ def createProjectDessa(project,experiment,writeToDessa):
 
     
     os.chdir(maindir)
+    os.chdir(olddir)
 
 
 def saveModelInProjectFolder(model,project_id):
@@ -571,10 +646,10 @@ def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     import os
     dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"\\"+str(qualifier)+".parquet")
     
-def submitDessaJob(project_id):
+def submitDessaJob(project_id,experiment_id):
     try:
         import foundations
-        foundations.submit(scheduler_config='scheduler',job_directory=getProjectDir(project_id),command=["DefaultWorker.py"])
+        foundations.submit(scheduler_config='scheduler',job_directory=getProjectDir(project_id),command=["DefaultWorker_"+experiment_id+".py"])
         #import subprocess
         #proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
         #proc.wait()
@@ -582,7 +657,17 @@ def submitDessaJob(project_id):
     except Exception as e:
         print(e)
 
-def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa,epochs,batchsize):
+def submitPlainPythonJob(project_id,experiment_id):
+    directory = getProjectDir(project_id)
+    fileToRun = "DefaultWorker_"+experiment_id+".py"
+    import subprocess
+    proc = subprocess.Popen(['python', directory+"/"+fileToRun], stdout=subprocess.PIPE, shell=True)
+    output = proc.stdout.read()
+    print(output)
+
+
+
+def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa,epochs,batchsize,experiment):
     f = open(fromfile, "r")
     defaultworker = f.read()
     import re
@@ -590,6 +675,25 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa
     #defaultworker = re.sub("prjdir = '.'#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
     defaultworker = re.sub("epochs = 5 #epochs","epochs = "+str(epochs)+" #epochs",defaultworker)
     defaultworker = re.sub("batch_size = 1 #batchsize","batch_size = "+str(batchsize)+" #batchsize",defaultworker)
+    
+    if experiment.optimizer:
+        confString = ""
+        from functools import reduce
+        optionsString = ""
+        if experiment.optimizer.configuration and len(list(experiment.optimizer.configuration.all()))>0:
+            myMapWithOptions = list(map(lambda x:x.fieldname+"="+x.option,list(experiment.optimizer.configuration.all())))
+            if len(myMapWithOptions) > 0:
+                optionsString = reduce(lambda x,y:x+";"+y,myMapWithOptions)
+            
+        if len(list(Metrics.objects.filter(experiment=experiment.id)))>0:
+            metricsString = reduce(lambda x,y:x+","+y,map(lambda x:"'"+x.name+"'",list(Metrics.objects.filter(experiment=experiment.id))))
+        else:
+            metricsString = ""
+
+        defaultworker = re.sub("#overwrite model if needed optimizer = keras.optimizer.Adam\(\);model.compile\(optimizer=optimizer,loss=loss,metrics=metrics\)#change optimizer",
+            "optimizer = keras.optimizers."+experiment.optimizer.name+"("+optionsString+");model.compile(optimizer=optimizer,loss=keras.losses."+experiment.loss.name+",metrics=["+metricsString+"])",
+            defaultworker)
+
 
     withoutDessa = ["foundations.set_tensorboard_logdir(logdir)#foundations",
                     "import foundations#foundations",
@@ -603,6 +707,10 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa
         for wd in withoutDessa:
             #defaultworker = re.sub(wd,"",defaultworker)
             defaultworker = defaultworker.replace(wd,"")
+
+
+
+
 
     f2 = open(tofile, "w")
     f2.write(defaultworker)

@@ -381,12 +381,14 @@ def optimizer(request,project_id):
         "project" : project,
         "project_id" : project_id,
         "layer_types" : getkeraslayeroptions(librarystring2),
-        "optimizers" : getkeraslayeroptions(librarystring3),
+        "optimizers" : getOptimizers(),
+        "optimizername":optimizername,
+        "optimizerconfiguration":optconfs,
+
         "metrics" : getkeraslayeroptions(librarystring4),
         "availablelayers" : availablelayers,
         "menuactive":4,
-        "optimizername":optimizername,
-        "optimizerconfiguration":optconfs,
+        
         "inputs":inputs,
         "layers":layers,
 
@@ -395,6 +397,9 @@ def optimizer(request,project_id):
     return HttpResponse(template.render(context, request))
 
 ### helper functions to get json from python structure
+
+def getOptimizers():
+    return getkeraslayeroptions(librarystring3)
 
 def getkeraslayeroptions(libstr):
     import keras

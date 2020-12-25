@@ -33,76 +33,133 @@
         <div class="content">
           <form action="{% url 'uploadexpsetup' project.pk experiment.pk %}" method="POST">
             {% csrf_token %}
-            <div class="card card-default">
+
+            
+
+            <div class="card card-default" id="firstexperimentcard">
               <div class="card-header card-header-border-bottom">
-                <h2>Select Loss and Metrics</h2>
+                <h2>Select Parameters for Experiment {{experiment.pk}}</h2>
               </div>
-
               <div class="card-body">
-                <p class="mb-5"> Select Loss Function
+                <label for="optimizerselect">Choose Optimizer</label>
+                <select onchange="onselectionchanged(event)" class="js-example-basic-single form-control"
+                  id="optimizerselect" name="optimizerselect">
+                  <option>Please select...</option>
+                  {% for opti in optimizers %}
+                  <option {% if opti.0 == optimizername %}selected{% endif %}>{{opti.0}}</option>
+                  {% endfor %}
+                </select>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Option</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="itemdefinition">
+                    <tr>
+                      <td colspan="2">Choose Optimizer first.</td>
+                    </tr>
+                  </tbody>
+                </table>
 
-                  <select class="js-example-basic-single form-control" name="loss" data-select2-id="1" tabindex="-1"
-                    aria-hidden="true">
 
-                    //{% for l in loss %}
-                    <option value="{{ l.0 }}" {% if l.0 == selloss.name %}selected{% endif %}>{{l.0}}</option>
-                    //{% endfor %}
-                  </select>
+                </br>
+                <label for=""> Select Loss Function</label>
 
-                </p>
-                <p class="mb-5"> Select Metrics
+                <select class="js-example-basic-single form-control" name="loss" data-select2-id="1" tabindex="-1"
+                  aria-hidden="true">
 
-                  <select class="js-example-basic-multiple form-control" name="metrics[]" multiple="multiple"
-                    data-select2-id="2" tabindex="-1" aria-hidden="true">
-                    //{% for m in metrics %}
-                    <option value="{{ m.0 }}" //{% for sm in selmetrics %}
-                      {% if sm.name == m.0 %}selected{% endif %} //{% endfor %}>{{m.0}}</option>
-                    //{% endfor %}
-                  </select>
+                  //{% for l in loss %}
+                  <option value="{{ l.0 }}" {% if l.0 == selloss.name %}selected{% endif %}>{{l.0}}</option>
+                  //{% endfor %}
+                </select>
+                </br>
+                <label for=""> Select Metrics</label>
 
-                </p>
-                <script>
-                  $(document).ready(function () {
-                    $('.js-example-basic-multiple').select2();
-                  });
-                  $(document).ready(function () {
-                    $('.js-example-basic-single').select2();
-                  });
-                </script>
+
+                <select class="js-example-basic-multiple form-control" name="metrics[]" multiple="multiple"
+                  data-select2-id="2" tabindex="-1" aria-hidden="true">
+                  //{% for m in metrics %}
+                  <option value="{{ m.0 }}" //{% for sm in selmetrics %}
+                    {% if sm.name == m.0 %}selected{% endif %} //{% endfor %}>{{m.0}} </option> //{% endfor %} </select>
+                    </br>
+                    <label for="">Select Number of Epochs</label>
+
+
+                    <input type="text" class="form-control" name="noofepochs" data-mask="99999999" placeholder=""
+                      aria-label="" autocomplete="off" maxlength="10" value="{{experiment.noofepochs}}">
+
+
+                    </br>
+                    <label for="">Select Batch Size</label>
+                    <input type="text" class="form-control" name="batchsize" data-mask="99999999" placeholder=""
+                      aria-label="" autocomplete="off" maxlength="10" value="{{experiment.batchsize}}">
               </div>
 
             </div>
+            <script type="text/javascript">
+              $(document).ready(function () {
+                $('.js-example-basic-multiple').select2();
+              });
+              $(document).ready(function () {
+                $('.js-example-basic-single').select2();
+              });
 
-            <div class="card card-default">
-              <div class="card-header card-header-border-bottom">
-                <h2>Select Number of Epochs and Batch Size</h2>
-              </div>
+              optimizeroptions = {};
+              //{% for opti in optimizers %}
+              optimizeroptions["{{opti.0}}"] = [];
+              //{% for option in opti.1 %}
+              optimizeroptions["{{opti.0}}"].push({
+                "{{option.0}}": "{{option.1}}"
+              })
+              //{% endfor %}  
 
-              <div class="card-body">
-                <p class="mb-5"> Select Number of Epochs
+              //{% endfor %}  
 
-                  <input type="text" class="form-control" name="noofepochs" data-mask="99999999" placeholder=""
-                    aria-label="" autocomplete="off" maxlength="10" value="{{experiment.noofepochs}}">
+              optimizerconfiguration = {};
+              //{% for optconf in optimizerconfiguration %}
+              optimizerconfiguration["{{optconf.fieldname}}"] = "{{optconf.option}}";
+              //{% endfor %}  
+              function onselectionchanged(event) {
+                var seltype = event.target.value
+                changeOptimizerOptions(seltype,$(event.target).parent().parent().find("tbody")[0])
 
-                </p>
-                <p class="mb-5"> Select Batch Size
 
-                  <input type="text" class="form-control" name="batchsize" data-mask="99999999" placeholder="" aria-label=""
-                    autocomplete="off" maxlength="10" value="{{experiment.batchsize}}">
+              }
 
-                </p>
-                <script>
-                  $(document).ready(function () {
-                    $('.js-example-basic-multiple').select2();
-                  });
-                  $(document).ready(function () {
-                    $('.js-example-basic-single').select2();
-                  });
-                </script>
-              </div>
+              function changeOptimizerOptions(optimizertype,toadd) {
+                //var toadd = document.getElementById("itemdefinition");
+                toadd.innerHTML = ""
 
-            </div>
+                var cur_options = optimizeroptions[optimizertype];
+                if (cur_options) {
+                  cur_options.forEach(function (e) {
+                    allkeys = Object.keys(e);
+                    optionname = allkeys[0];
+                    optiondefaultvalue = e[allkeys[0]];
 
+                    var trnode = document.createElement('tr');
+                    var tdnode1 = document.createElement('td');
+                    var textnode = document.createTextNode(optionname);
+                    var tdnode2 = document.createElement('td');
+                    var inputnode = document.createElement('input');
+                    inputnode.setAttribute("class", "form-control")
+                    inputnode.setAttribute('placeholder', optiondefaultvalue)
+                    inputnode.setAttribute('name', "optpara" + optimizertype + '$' + optionname)
+                    if (optimizerconfiguration[optionname]) {
+                      inputnode.setAttribute('value', optimizerconfiguration[optionname])
+                    }
+                    trnode.appendChild(tdnode1);
+                    tdnode1.appendChild(textnode);
+                    trnode.appendChild(tdnode2);
+                    tdnode2.appendChild(inputnode);
+                    toadd.appendChild(trnode);
+                  })
+                }
+              }
+              changeOptimizerOptions("{{optimizername}}",$("#itemdefinition")[0])
+            </script>
             <div class="card card-default">
               <div class="card-header card-header-border-bottom">
                 <h2>General Callbacks</h2>
@@ -345,6 +402,32 @@
             </div>
             <div class="card card-default">
               <div class="card-header card-header-border-bottom">
+                <h2>Save Settings or Change Experiment</h2>
+              </div>
+              <div class="card-body">
+                <ul id="experimentList">
+                  
+                </ul>
+                <script type="text/javascript">
+                {% autoescape off %}
+                     experiments = {{experiments}}
+                    {% endautoescape %}
+                    
+                    for(i in experiments){
+                      newElem = $("<li><a href='{% url 'experimentsetuplastexperiment' project_id %}'>test</a></li>")
+                      newElem.children().attr("href",newElem.children().attr("href")+experiments[i].pk+"/")
+                      newElem.children().text("Experiment "+experiments[i].pk)
+                      $("#experimentList").append(newElem)
+                      //console.log(experiments[i].pk)
+                    }
+                </script>
+              </div>
+              <div class="card-footer">
+              <label class="control control-checkbox">Create as new Experiment
+													<input type="checkbox" name="newExperiment"></input>
+													<div class="control-indicator"></div>
+												</label>
+                
                 <button type="submit" class="mb-1 btn btn-block btn-primary">Submit</button>
               </div>
             </div>

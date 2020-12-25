@@ -100,7 +100,7 @@
                     alleditors.each(
                         function(){
                             this.editor = monaco.editor.create(this, {
-                            value: `import pandas as pd\ninputx = [0,0,1,1]\ninputy = [0,1,0,1]\noutputand = [0,0,0,1]\noutputxor = [0,1,1,0]\noutputor = [0,1,1,1]\ntypea = [1,1,1,1]\npandasdf = pd.DataFrame(list(zip(inputx, inputy,outputand,outputxor,outputor,typea)),\n\tcolumns =['inputx', 'inputy','outputand','outputxor','outputor','type'])`,
+                            value: `import pandas as pd\ninputx = [0,0,1,1]\ninputy = [0,1,0,1]\noutputand = [0,0,0,1]\noutputxor = [0,1,1,0]\noutputor = [0,1,1,1]\npandasdf = pd.DataFrame(list(zip(inputx, inputy,outputand,outputxor,outputor)),\n\tcolumns =['inputx', 'inputy','outputand','outputxor','outputor'])`,
                             language: "python",
                             automaticLayout: true
                         });
@@ -115,6 +115,9 @@
                     {
                         "csrfmiddlewaretoken":"{{ csrf_token }}",
                         "value": value,
+                        "trainshare":$("#trainshare").val(),
+                        "testshare":$("#testshare").val(),
+                        "cvshare":$("#cvshare").val(),
                     },
                     function (data) {
                       NProgress.done() 

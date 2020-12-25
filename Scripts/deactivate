@@ -1,0 +1,2 @@
+#!/usr/bin/env bash 
+source c:\users\sebas\appdata\local\programs\python\python38\Scripts\deactivate "$@"

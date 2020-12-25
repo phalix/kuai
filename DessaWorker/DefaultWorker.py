@@ -30,12 +30,6 @@ import PyArrowDataExtraction as de
 tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)#tensorboard
 foundations.set_tensorboard_logdir(logdir)#foundations
 
-epochs = 5 #epochs
-depth = 3
-batch_size = 1 #batchsize
-lrate = 1e-3
-
-
 pds = pq.ParquetDataset(parquet_files)
 pds.split_row_groups = True
 table = pds.read()
@@ -55,13 +49,25 @@ xy2 = de.getXandYFromPyArrow(table2)
 print("____________________________________________")
 print("_________________DATA_______________________")
 print("____________________________________________")
+callbacks = []
+callbacks.append(tensorboard_callback)#tensorboard
+callbacks.append(dc.CustomDessaCallback("train"))#foundations
+
+callbacksEvaluate = []
+callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations
+
+
 print("____________________________________________")
 print("_________________TRAIN______________________")
 print("____________________________________________")
 
-callbacks = []
-callbacks.append(tensorboard_callback)#tensorboard
-callbacks.append(dc.CustomDessaCallback("train"))#foundations
+#overwrite model if needed optimizer = keras.optimizer.Adam();model.compile(optimizer=optimizer,loss=loss,metrics=metrics)#change optimizer
+
+epochs = 5 #epochs
+depth = 3
+batch_size = 1 #batchsize
+lrate = 1e-3
+
 model.fit(x=xy['x'],
     y=xy['y'],
     epochs=epochs,
@@ -78,18 +84,11 @@ print("____________________________________________")
 print("_________________TEST_______________________")
 print("____________________________________________")
 
-callbacksEvaluate = []
-callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations
+
 a = model.evaluate(x=xy['x'],y=xy['y'],callbacks=callbacksEvaluate)
 print(a)
 b = model.predict(x=xy['x'])
 print(b)
-'''# Log some hyper-parameters
-foundations.log_param('depth', depth)
-foundations.log_params({'epochs': epochs,
-                        'batch_size': batch_size,
-                        'learning_rate': lrate})'''
-
 model.save(modeldir)
 #foundations.save_artifact('README.txt', 'Project_README')
 

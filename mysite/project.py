@@ -52,8 +52,8 @@ defaultValues = {
     "DessaServer":"http://localhost:5555",
     'spark.jars.packages': 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0',
     'Author':'Sebastian',
-    'maindir':"d:/Entwicklung/kuai",
-    'mongoconnection':'mongodb://localhost:27017',
+    'maindir':".",
+    'mongoconnection':'mongodb://db:27017',
     'delimeter':','
 }
 
@@ -91,6 +91,8 @@ def setupSettings(request,project_id):
             for c_2 in c:
                 c_2.option = request.POST[value]
                 c_2.save()
+    import mysite.dataoperation as md
+    md.getsparksession(project_id,1).stop()
     return HttpResponseRedirect('/settings/'+str(project_id))
 
 

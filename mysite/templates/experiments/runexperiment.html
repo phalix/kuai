@@ -48,8 +48,8 @@
                     function stopExperiment(){
                       fetch(stopUrl).then()
                     }
-                    function startExperiment(){
-                      fetch(startUrl).then()
+                    function startExperiment(type){
+                      fetch(startUrl+"?"+"type"+"="+type).then()
                     }
                     function deleteExperiment(){
                       fetch(deleteUrl).then()
@@ -69,7 +69,8 @@
                       
                     }
                   </script>
-                  <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment()">Start</button>
+                  <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('dessa')">Start in Dessa</button>
+                  <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('plain')">Start in this Environment</button>
                   <button type="button" class="mb-1 btn btn-block btn-danger" onclick="stopExperiment()">Stop</button>
 
                     <script>
