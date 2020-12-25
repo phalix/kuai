@@ -17,3 +17,4 @@ mysite/private*
 metastore_db
 spark-warehouse
 mlruns
+Scripts
