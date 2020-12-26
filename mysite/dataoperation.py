@@ -736,7 +736,7 @@ def savetocassandra(project_id,df,type):
     
 
 def savetocassandra_writesparkdataframe(project_id,sparkdf):
-    sparkdf.write.format("mongo").mode("append").save()  
+    sparkdf.write.format("mongo").mode("overwrite").save()  
     #sparkdf.write.format("parquet").mode("overwrite").save(str(project_id)+".parquet")
     from pyspark.sql import SQLContext
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
@@ -763,6 +763,23 @@ def readfromcassandra(project_id,type):
 
 
 
+def getsparkcontext(project_id,type):
+    import os
+    conf = createSparkConfig(project_id,type)
+    from django.conf import settings
+    from pyspark.sql import SparkSession
+    
+    appName = 'kuai_'+str(project_id)
+
+    from pyspark import SparkContext
+    sc = SparkContext.getOrCreate(conf)
+    if sc.appName != appName:
+        try:
+            sc.stop()
+        except:
+            print("Could not delete Context")
+        sc = SparkContext.getOrCreate(conf)
+    return sc
 
 def getsparksession(project_id,type):
     #type should be
@@ -773,26 +790,29 @@ def getsparksession(project_id,type):
     conf = createSparkConfig(project_id,type)
     from django.conf import settings
     from pyspark.sql import SparkSession
-    appName = 'kuai_'+str(project_id)
     
-    spark = SparkSession.builder.appName(appName) \
+    appName = 'kuai_'+str(project_id)
+
+    sc = getsparkcontext(project_id,type)
+    
+    
+    spark = SparkSession(sc).builder.appName(appName) \
         .master("local[*]")\
         .config(conf=conf)\
         .getOrCreate()
     if spark.builder._options['spark.app.name'] != appName:
-        spark.stop()
-        #TODO: Change Config!
-        spark = SparkSession.builder.appName(appName) \
-            .master("local[*]")\
+        spark = SparkSession(sc).builder\
             .config(conf=conf)\
             .getOrCreate()
     return spark
 
 def createSparkConfig(project_id,type):
     
-    conf = pyspark.SparkConf()
-    #conf.set("spark.app.name", 'kuai')
+    appName = 'kuai_'+str(project_id)
+    conf = pyspark.SparkConf().setMaster("local[*]").setAppName(appName)
     
+    conf.set("spark.app.name", appName)
+    conf.set("spark.driver.allowMultipleContexts", "true")
     #### MONGO
     conf.set('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0')
     import mysite.project as mp

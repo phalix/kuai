@@ -91,8 +91,11 @@ def setupSettings(request,project_id):
             for c_2 in c:
                 c_2.option = request.POST[value]
                 c_2.save()
-    import mysite.dataoperation as md
-    md.getsparksession(project_id,1).stop()
+    try:
+        import mysite.dataoperation as md
+        md.getsparkcontext(project_id,1).stop()
+    except:
+        print("Could not stop Spark")
     return HttpResponseRedirect('/settings/'+str(project_id))
 
 
