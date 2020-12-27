@@ -28,7 +28,7 @@ Everything is supported by easy to use user interfaces.
 ## setup
 install java  
 install python and pip == 3.8.6  
-pip install -r  requirements.txt
+pip install -r  requirements.txt  
 python manage.py makemigrations  
 python manage.py migrate  
 
