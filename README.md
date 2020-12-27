@@ -25,14 +25,14 @@ It enables the classical workflow of
 
 Everything is supported by easy to use user interfaces.
 
-## setup
+## Setup
 install java  
 install python and pip == 3.8.6  
 pip install -r  requirements.txt  
 python manage.py makemigrations  
 python manage.py migrate  
 
-## runapp
+## Run application
 python manage.py runserver  
 
 ## Warning
