@@ -644,7 +644,7 @@ def saveModelInProjectFolder(model,project_id):
 
 def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     import os
-    dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"\\"+str(qualifier)+".parquet")
+    dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"/"+str(qualifier)+".parquet")
     
 def submitDessaJob(project_id,experiment_id):
     try:
