@@ -11,9 +11,7 @@ Atlas Dessa (https://www.atlas.dessa.com/)
 Apache Arrow (https://arrow.apache.org/)  
 and everything is programmed in Python.  
 
-Integration with https://www.atlas.dessa.com/ or https://www.openml.org/
-
-As well as an AutoML Framework and a diagram framework.
+Integration with https://www.atlas.dessa.com/ or https://www.openml.org/  
 
 ## What is Kuai
 Kuai enables a quick protoyping approach for neural networks.  
