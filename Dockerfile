@@ -18,5 +18,3 @@ RUN python manage.py migrate
 #RUN python atlas_installer.py -y -i -s -a -C
 #RUN python atlas_installer.py -y -N -s
 EXPOSE 8000 5000
-RUN mkdir projects
-#EXPOSE 5000

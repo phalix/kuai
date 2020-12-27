@@ -4,7 +4,7 @@ TestDB.db
 mysite/migrations/*.py
 mysite/migrations/*.pyc
 !mysite/migrations/__init__.py
-projects
+projects/*
 .vscode
 .pytest*
 *.log
