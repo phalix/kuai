@@ -609,7 +609,7 @@ def createProjectDessa(project,experiment,writeToDessa):
     import shutil
     #usage shutil.copyfile('file1.txt', 'file2.txt')
     if str(project_id) not in os.listdir():
-        #os.mkdir(str(project_id))
+        os.mkdir(str(project_id))
         #os.chdir(str(project_id))
         proc = subprocess.Popen(['foundations', 'init',str(project_id)], stdout=subprocess.PIPE, shell=True)
         proc.wait()
@@ -640,7 +640,7 @@ def createProjectDessa(project,experiment,writeToDessa):
 
 
 def saveModelInProjectFolder(model,project_id):
-    model.save(getProjectDir(project_id)+"\\model\\")
+    model.save(getProjectDir(project_id)+"/model/")
 
 def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     import os
@@ -659,7 +659,7 @@ def submitDessaJob(project_id,experiment_id):
 
 def submitPlainPythonJob(project_id,experiment_id):
     directory = getProjectDir(project_id)
-    fileToRun = "DefaultWorker_"+experiment_id+".py"
+    fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
     import subprocess
     proc = subprocess.Popen(['python', directory+"/"+fileToRun], stdout=subprocess.PIPE, shell=True)
     output = proc.stdout.read()
@@ -701,7 +701,9 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa
                     "callbacksEvaluate.append(dc.CustomDessaCallback())#foundations",
                     "tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)#tensorboard",
                     "foundations.set_tensorboard_logdir(logdir)#foundations",
-                    "callbacks.append(tensorboard_callback)#tensorboard"]
+                    "callbacks.append(tensorboard_callback)#tensorboard",
+                    'callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations',
+                    'callbacks.append(dc.CustomDessaCallback("train"))#foundations']
 
     if not writeDessa:
         for wd in withoutDessa:
