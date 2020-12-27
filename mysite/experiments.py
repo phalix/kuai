@@ -609,10 +609,12 @@ def createProjectDessa(project,experiment,writeToDessa):
     import shutil
     #usage shutil.copyfile('file1.txt', 'file2.txt')
     if str(project_id) not in os.listdir():
-        os.mkdir(str(project_id))
+        
         #os.chdir(str(project_id))
         proc = subprocess.Popen(['foundations', 'init',str(project_id)], stdout=subprocess.PIPE, shell=True)
         proc.wait()
+        if str(project_id) not in os.listdir():
+            os.mkdir(str(project_id))
     os.chdir(str(project_id))
     if "data" not in os.listdir():
         os.mkdir("data")
