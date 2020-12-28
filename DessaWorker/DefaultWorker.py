@@ -1,5 +1,6 @@
 import foundations#foundations
 #from pyspark.sql import SparkSession
+import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import pyarrow.parquet as pq

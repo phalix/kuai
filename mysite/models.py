@@ -29,6 +29,7 @@ class Layer(models.Model):
     layertype = models.CharField(max_length=50)
     inputlayers = models.ManyToManyField('self')
     configuration = models.ManyToManyField(Configuration)
+    name = models.CharField(max_length=250,null=True)
 
 
 

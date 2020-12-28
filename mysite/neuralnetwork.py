@@ -11,7 +11,7 @@ from .models import Project,NeuralNetwork,Layer,Configuration,Optimizer,Experime
 
 import mysite.dataoperation
 
-#import tensorflow as tf
+import tensorflow as tf
 import numpy as np
 import inspect
 
@@ -19,9 +19,9 @@ import inspect
 #exec(librarystring)
 librarystring_a = 'from tensorflow import python as pyt'
 exec(librarystring_a)
-librarystring2 = 'keras.layers'
-librarystring3 = 'keras.optimizers'
-librarystring4 = 'keras.metrics'
+librarystring2 = 'tf.keras.layers'
+librarystring3 = 'tf.keras.optimizers'
+librarystring4 = 'tf.keras.metrics' 
 
 
 
@@ -228,8 +228,15 @@ def aioptandoutupload(request,project_id):
 def aiupload(request,project_id):
     #do not delete inputlayer, change on data classification
     project = get_object_or_404(Project, pk=project_id)
+    
+    
+    
     if project.neuralnetwork:
         nn = project.neuralnetwork
+        allMiddleLayers = list(map(lambda x:x.index,nn.layers.filter(inputlayer=False,outputlayer=False).all()))
+
+        alloutput = nn.layers.filter(outputlayer=True).all()
+        allOutputStore= dict(map(lambda x:[x,list(map(lambda z:  z.index if z.index in allMiddleLayers else -1,x.inputlayers.all()))],alloutput))
         nn.layers.filter(outputlayer=False).delete()
     else:
         nn = NeuralNetwork()
@@ -319,6 +326,13 @@ def aiupload(request,project_id):
         curLayer.save()
 
     nn.save()
+    ##restore deleted layers
+    for key,value in allOutputStore.items():
+        for v in value:
+            newinputs = nn.layers.filter(index=v,inputlayer=False,outputlayer=False).all()
+            for ni in newinputs:
+                key.inputlayers.add(ni)
+ 
     return HttpResponseRedirect('/ai/'+str(project_id))
 
 def parameter(request,project_id):
@@ -340,6 +354,7 @@ def optimizer(request,project_id):
     optimizername = ""
     availablelayers = []
     inputs = getinputshape(project)
+    outputs = dict(map(lambda x: (x[0],x[1].name) ,getoutputshape(project).items()))
     optconfs = []
     if project.neuralnetwork:
         for l in project.neuralnetwork.layers.filter(inputlayer=False,outputlayer=False):
@@ -390,6 +405,7 @@ def optimizer(request,project_id):
         "menuactive":4,
         
         "inputs":inputs,
+        "outputs":outputs,
         "layers":layers,
 
     }
@@ -449,6 +465,24 @@ def getinputshape(project):
     idx = 1
     for (key,value) in inputshapes.items():
         name=("Input"+str(idx)+"_"+str(key)).replace(" ","")
+        shape = None
+        if type(value) == list and type(value[0]) == list:
+            shape = value[0]
+        else:
+            shape = value
+        inputs[idx] = keras.Input(shape=shape,name=name)
+        idx = idx + 1
+    return inputs
+
+def getoutputshape(project):
+    import keras
+    inputs = {}
+    project_id = project.id
+    #cur_features = project.features.all()
+    inputshapes = mysite.dataoperation.getoutputschema(project_id)
+    idx = 1
+    for (key,value) in inputshapes.items():
+        name=("Output"+str(key)+"_"+str(idx)+"_"+str(value)).replace(" ","")
         shape = None
         if type(value) == list and type(value[0]) == list:
             shape = value[0]
@@ -518,10 +552,11 @@ def buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inpu
             intermedinputs.append(inpim.index)
         
         previouslayers[layer.index] = (y,inputsinput,intermedinputs,layer.id)'''
-        previouslayers[layer['idx']] = (y,layer['inputs'],layer['intermediates'],layer['idx'])
+        previouslayers[layer['idx']] = (y,layer['inputs'],layer['intermediates'],layer['idx'],layer['isoutput'])
     
     previouslayer_inst = {}
     removed = True
+    y = []
     while len(previouslayers)>0 and removed ==True:
         removed = False
         for layidx in previouslayers:
@@ -539,8 +574,8 @@ def buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inpu
                 previouslayer_inst[layidx] = value[0](cursel[0])
             else:
                 previouslayer_inst[layidx] = value[0](cursel)
-            
-            y = previouslayer_inst[layidx]
+            if value[4]:
+                y.append(previouslayer_inst[layidx])
 
 
     model = keras.Model(inputs=list(inputs.values()),outputs=y)

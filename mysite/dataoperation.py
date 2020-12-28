@@ -286,8 +286,14 @@ def analysis(request,project_id):
     #df2_cv = df2_cv.drop('type')
 
     dfhead5 = df2.limit(5).toPandas().to_html()
+    #TODO:Provide Correlation!
     #dfcorr = df2.toPandas()
+    #from pyspark.mllib.stat import Statistics
+
+    #corr_mat=Statistics.corr(features, method="pearson")
+    
     dfdescription = df2.describe().toPandas().to_html()
+    
     #dfdescription_test = df2_test.describe().toPandas().to_html()
     #dfdescription_cv = df2_cv.describe().toPandas().to_html()
 
@@ -553,7 +559,7 @@ def dataclassification(request,project_id):
     cur_features = project.features.all()
     cur_targets = project.targets.all()
     r_features = list(map(lambda x:x.fieldname,cur_features))
-    
+    r_targets = list(map(lambda x:x.fieldname,cur_targets))
     if project.target != None:
         target = project.target.fieldname
     else:
@@ -564,7 +570,7 @@ def dataclassification(request,project_id):
     firstrow_transformed = df.first().asDict()
     try:
         
-        indexed = applyfeaturetransition(project,df,cur_features,project.target)
+        indexed = applyfeaturetransition(project,df,cur_features,project.target,cur_targets)
         distributionbytarget = df.groupby(project.target.fieldname).count()
         distributionbytarget_html = distributionbytarget.limit(100).toPandas().to_html()
     except Exception as e:
@@ -629,6 +635,8 @@ def dataclassification(request,project_id):
         "project_id" : project_id,
         "featurenames": r_features,
         "features": cur_features,
+        "targets" : cur_targets,
+        "targetnames" : r_targets,
         "target" : target,
         "targetfeature" : project.target,
         "columns" : df.columns,
@@ -641,6 +649,7 @@ def dataclassification(request,project_id):
         "dataframe":dataframe_html,#
         "dataframe_fv_tar": featurevector_df_html,
         "distribution":distributionbytarget_html,
+        "transformators":mysite.featurepipelines.getAllSparkFeatureModifiers()
     }
     
     
@@ -870,7 +879,7 @@ def createDataFrameHTMLPreview(dataframe):
     return html
 
 
-def applyfeaturetransition(project,dataframe,features,target):
+def applyfeaturetransition(project,dataframe,features,target,targets):
 
     from pyspark.sql import SQLContext
     from pyspark import StorageLevel
@@ -903,6 +912,22 @@ def applyfeaturetransition(project,dataframe,features,target):
                     traceback.print_exc()
             #target
             
+            for feat in targets:
+                try:
+                    if(len(feat.reformat.strip())>0):
+                        indexed = fp.applySetOfFeatureModifiers(feat.reformat.strip(),feat.fieldname,indexed)
+                    if(feat.transition>0):
+                        indexed = fp.applytransition(feat.transition,feat.fieldname,indexed)
+                    else:
+                        #indexed = fp.applytransition(0,feat.fieldname,isndexed)
+                        print("no transformation needed for "+str(feat.fieldname))
+                    
+                except Exception as e:
+                    print("error on transformation")
+                    print(e)
+                    traceback.print_exc()
+            #target
+            '''
             try:
                 if(len(target.reformat.strip())>0):
                     indexed = fp.applySetOfFeatureModifiers(target.reformat.strip(),target.fieldname,indexed)
@@ -912,7 +937,7 @@ def applyfeaturetransition(project,dataframe,features,target):
                 print("error on transformation")
                 print(e)
                 traceback.print_exc()
-        
+            '''
             
 
             
@@ -989,6 +1014,30 @@ def getinputschema(project_id):
     #result = json.loads(project.input)
     return result
 
+
+def getoutputschema(project_id):
+    
+    import json
+    from functools import reduce
+    project = get_object_or_404(Project, pk=project_id)
+    
+    cur_features = project.targets.all()
+    feature_dict = getfeaturedimensionbyproject(cur_features)
+    
+    
+    result = {}
+    result2 = {}
+    for key in feature_dict.keys():
+        result[key] = []
+    
+    for (key,value) in feature_dict.items():
+        for (key2,value2) in value.items():
+            result[key].append(value2)
+            result2[key2] =  value2 
+    
+    return result2
+
+
 ### return dataframe by features and target
 
 def gettypesanddimensionsofdataframe(df):
@@ -1053,18 +1102,22 @@ def buildFeatureVector(dataframe,features,target,targets):
     
     feature_dict = getfeaturedimensionbyproject(features)
     selector = []
+    
+    def convertSparseVectortoDenseVector(v):
+        v = DenseVector(v)
+        new_array = list([float(x) for x in v])
+        return new_array
+    from pyspark.sql import types as T
+    from pyspark.sql import functions as F
+    from pyspark.ml.linalg import DenseVector
+    
+    toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
+
     if 1 in feature_dict:
         feature_array = list(feature_dict[1].keys())
         vector_assembler = VectorAssembler(inputCols=feature_array, outputCol="features")
         train_df3 = vector_assembler.transform(train_df)
-        from pyspark.sql import types as T
-        from pyspark.sql import functions as F
-        from pyspark.ml.linalg import DenseVector
-        def convertSparseVectortoDenseVector(v):
-            v = DenseVector(v)
-            new_array = list([float(x) for x in v])
-            return new_array
-        toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
+        
         train_df3 = train_df3.withColumn('features_array', toDenseVectorUdf('features'))
         train_df = train_df3
         selector.append(psf.col('features_array'))
@@ -1073,28 +1126,20 @@ def buildFeatureVector(dataframe,features,target,targets):
     for (key,value) in feature_dict.items():
         if key > 1:
             for (key2,value2) in value.items():
-                selector.append(psf.col(key2).alias('feature_'+str(key2)))
-    
+                colType = dict(train_df3.dtypes)[key2]
+                if colType == 'vector':
+                    selector.append(toDenseVectorUdf(key2).alias('target_'+str(key2)))
+                else: 
+                    selector.append(psf.col(key2).alias('feature_'+str(key2)))
+                    
     target_dict = getfeaturedimensionbyproject(targets)
-    if 1 in target_dict:
-        target_array = list(target_dict[1].keys())
-        vector_assembler = VectorAssembler(inputCols=target_array, outputCol="target")
-        train_df3 = vector_assembler.transform(train_df)
-        from pyspark.sql import types as T
-        from pyspark.sql import functions as F
-        from pyspark.ml.linalg import DenseVector
-        def convertSparseVectortoDenseVector(v):
-            v = DenseVector(v)
-            new_array = list([float(x) for x in v])
-            return new_array
-        toDenseVectorUdf = F.udf(convertSparseVectortoDenseVector, T.ArrayType(T.FloatType()))
-        train_df3 = train_df3.withColumn('target_array', toDenseVectorUdf('target'))
-        train_df = train_df3
-        selector.append(psf.col('target_array').alias("target"))#TODO: remove alias on compability for multiple outputs
     
     for (key,value) in target_dict.items():
-            if key > 1:
-                for (key2,value2) in value.items():
+            for (key2,value2) in value.items():
+                colType = dict(train_df3.dtypes)[key2]
+                if colType == 'vector':
+                    selector.append(toDenseVectorUdf(key2).alias('target_'+str(key2)))
+                else: 
                     selector.append(psf.col(key2).alias('target_'+str(key2)))
 
 
@@ -1144,7 +1189,7 @@ def getTransformedData(project_id,qualifier):
     #1 = mysite.dataoperation.TRAIN_DATA_QUALIFIER
     train_df = mysite.dataoperation.readfromcassandra(project_id,qualifier)
     train_df = mysite.dataoperation.transformdataframe(project,train_df,qualifier)
-    train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
+    train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target,project.targets.all())
     train_df1 = mysite.dataoperation.buildFeatureVector(train_df,project.features.all(),project.target,project.targets.all())
     if qualifier > 0:
         train_df1 = train_df1.filter(train_df.type == qualifier)

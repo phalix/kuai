@@ -9,7 +9,7 @@ import mysite.neuralnetwork
 import mysite.dataoperation
 import asyncio
 import threading
-#import tensorflow as tf
+import tensorflow as tf
 
 def createnewexperimentinproject(project):
     exp = Experiment()
@@ -133,8 +133,8 @@ def experimentsetup(request,project_id,experiment_id):
         "experiment" : experiment,
         "project_id" : project_id,
         "menuactive":5,
-        "metrics":mysite.neuralnetwork.getkeraslayeroptions('keras.metrics'),
-        "loss":mysite.neuralnetwork.getkeraslayeroptions('keras.losses'),
+        "metrics":mysite.neuralnetwork.getkeraslayeroptions('tf.keras.metrics'),
+        "loss":mysite.neuralnetwork.getkeraslayeroptions('tf.keras.losses'),
         "selloss":experiment.loss,
         "selmetrics":metrics,
         "callbacks":['earlystopping','...'],
@@ -693,7 +693,7 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa
             metricsString = ""
 
         defaultworker = re.sub("#overwrite model if needed optimizer = keras.optimizer.Adam\(\);model.compile\(optimizer=optimizer,loss=loss,metrics=metrics\)#change optimizer",
-            "optimizer = keras.optimizers."+experiment.optimizer.name+"("+optionsString+");model.compile(optimizer=optimizer,loss=keras.losses."+experiment.loss.name+",metrics=["+metricsString+"])",
+            "optimizer = keras.optimizers."+experiment.optimizer.name+"("+optionsString+");model.compile(optimizer=optimizer,loss='"+experiment.loss.name+"',metrics=["+metricsString+"])",
             defaultworker)
 
 
