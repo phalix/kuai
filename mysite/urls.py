@@ -49,6 +49,8 @@ urlpatterns = [
     path('dataanalysis/<int:project_id>/', dataoperation.analysis,name="dataanalysis"),
     path('analysisbychart/<int:project_id>/', dataoperation.analysisbychart,name="dataanalysisbychart"), 
     path('setupdataclassifcation/<int:project_id>/',dataoperation.setupdataclassifcation,name="setupdataclassifcation"),
+    path('datacorrelation/<int:project_id>/',dataoperation.correlation,name="corrrelation"),
+    
     path('dataclassification/<int:project_id>/', dataoperation.dataclassification,name="dataclassification"), 
     path('ai/<int:project_id>/', neuralnetwork.index), 
     path('modelsummary/<int:project_id>/', neuralnetwork.modelsummary), 

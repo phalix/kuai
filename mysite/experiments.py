@@ -279,7 +279,17 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     if expType == 'dessa':
         submitDessaJob(project_id,experiment_id)
     elif expType == 'plain':
-        submitPlainPythonJob(project_id,experiment_id)
+        directory = getProjectDir(project_id)
+        import threading
+        logpath = experiment.logfile
+        if not logpath:
+            logpath = directory+"/"+str(experiment_id)+"_logging.log"
+            experiment.logfile = logpath
+            experiment.save()
+        thread = threading.Thread(target=submitPlainPythonJob, args=(directory,project_id,experiment_id,logpath))
+        thread.daemon = True 
+        thread.start()
+        #submitPlainPythonJob(project_id,experiment_id)
     '''
     #random split to required batch size
     # 1. get count of train_df3
@@ -388,8 +398,6 @@ def runlatestexperiment(request,project_id):
 import threading
 def run(request,project_id,experiment_id):
 
-    #TODO: just add a button to run the experiments
-    #TODO: make it possible to cancel experiment
     template = loader.get_template('experiments/runexperiment.html')
     project = get_object_or_404(Project, pk=project_id)
     experiment_id = getlatestexperiment(project_id)
@@ -399,9 +407,22 @@ def run(request,project_id,experiment_id):
     if not (experiment.noofepochs > 0 and experiment.batchsize > 0 and experiment.loss):
         return HttpResponseRedirect("/experimentsetup/"+str(project_id)+"/"+str(experiment_id))
 
-    #startexperiment(project_id,experiment_id)
     metrics = Metrics.objects.filter(experiment=experiment_id).all()
     
+    maindir = getMainDir(project_id)
+    projectdir = getProjectDir(project_id)
+
+    experimentsetup = getExperimentConfigurationString(maindir+"/DessaWorker/DefaultWorker.py",
+                        projectdir+"/"+str(project_id),
+                        'True',
+                        experiment.noofepochs,
+                        experiment.batchsize,
+                        experiment)
+    if experiment.logfile:
+        f = open(experiment.logfile, "r")
+        curExperimentLog = f.read()
+    else:
+        curExperimentLog = ""
     context = {
         "project" : project,
         "project_id" : project_id,
@@ -409,6 +430,8 @@ def run(request,project_id,experiment_id):
         "metrics": metrics,
         "menuactive":5,
         "experiments": expDict,
+        "experimentsetup":experimentsetup,
+        "logging":curExperimentLog
 
     }
     
@@ -432,7 +455,7 @@ def startexperiment(project,experiment,expType):
     features = list(project.features.all())
     target = project.target.fieldname
 
-    #inputschema = mysite.dataoperation.getinputschema(project.id)
+
     inputschema = mysite.neuralnetwork.getinputshape(project)
 
     neuralnetwork = mysite.neuralnetwork.getNeuralNetworkStructureAsPlainPython(project)
@@ -454,11 +477,18 @@ def getexperimentsstasperproject(request,project_id,experiment_id):
         currentEpoch = 0
     
     expDict.pop("currentEpoch",None)
+    experiment = get_object_or_404(Experiment, pk=experiment_id)
+    if experiment.logfile:
+        f = open(experiment.logfile, "r")
+        curExperimentLog = f.read()
+    else:
+        curExperimentLog = ""
     
     response_data = {
         'state': expDict,
         'currentEpoch': currentEpoch,
-        'active': active
+        'active': active,
+        'logging': curExperimentLog
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
 
@@ -659,19 +689,23 @@ def submitDessaJob(project_id,experiment_id):
     except Exception as e:
         print(e)
 
-def submitPlainPythonJob(project_id,experiment_id):
-    directory = getProjectDir(project_id)
+def submitPlainPythonJob(directory,project_id,experiment_id,logpath):
     fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
     import subprocess
-    proc = subprocess.Popen(['python', directory+"/"+fileToRun], stdout=subprocess.PIPE, shell=True)
-    output = proc.stdout.read()
-    print(output)
+    f = open(logpath,"a")
+    proc = subprocess.Popen(['python', directory+"/"+fileToRun], stdout=f,stderr=f, shell=True)
+    #while proc.poll() is None:
+        #output = proc.stdout.read()
+        #print(output)
+    #    print("running")
+    #print(output)
 
 
 
-def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa,epochs,batchsize,experiment):
+def getExperimentConfigurationString(fromfile,prjdir,writeDessa,epochs,batchsize,experiment):
     f = open(fromfile, "r")
     defaultworker = f.read()
+    
     import re
     re.compile("prjdir = ''#prjdir")
     #defaultworker = re.sub("prjdir = '.'#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
@@ -711,13 +745,13 @@ def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa
         for wd in withoutDessa:
             #defaultworker = re.sub(wd,"",defaultworker)
             defaultworker = defaultworker.replace(wd,"")
+    f.close()
+    return defaultworker
 
-
-
-
-
+def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa,epochs,batchsize,experiment):
+    defaultworker = getExperimentConfigurationString(fromfile,prjdir,writeDessa,epochs,batchsize,experiment)
     f2 = open(tofile, "w")
     f2.write(defaultworker)
     f2.close()
-    f.close()
+    
     

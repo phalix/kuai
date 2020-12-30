@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+{% include "includes/head.html" %}
+
+
+<body class="header-fixed sidebar-fixed sidebar-dark header-light" id="body">
+
+    <script>
+        NProgress.configure({
+            showSpinner: false
+        });
+        NProgress.start();
+    </script>
+
+    <div class="mobile-sticky-body-overlay"></div>
+
+
+    <div id="toaster"></div>
+
+
+    <div class="wrapper">
+
+        {% include "includes/leftsidebar.html" %}
+
+
+
+        <div class="page-wrapper">
+            <!-- Header -->
+            {% include "includes/header.html" %}
+
+
+            <div class="content-wrapper">
+                <div class="content">
+
+                    <div class="card card-default" id="dataframepreview">
+                        <div class="card-header card-header-border-bottom">
+                            <h2>Correlation</h2>
+                        </div>
+                        <div class="card-body">
+
+                            {% autoescape off %} {{correlation}} {% endautoescape %}
+                        </div>
+                        
+                        
+                    </div>
+                    
+                    
+                    
+
+                </div>
+            </div>
+
+            {% include "includes/footer.html" %}
+
+        </div>
+    </div>
+
+    <script>
+        function removeBredCrump(e){
+            $(e).parent().remove()
+        }
+
+        function getTypeValueOfBredCrump(){
+            return $.map($('#originaludfinputForm').find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
+        }
+        
+        sparktypes = {}
+        //{% for key,value in types.items %}
+        sparktypes['{{key}}'] = '{{value}}';
+        //{% endfor %}
+        
+
+        function addBredCrump(e,type){
+            txt = '<li class="breadcrumb-item"><a onclick="removeBredCrump(this)" >'+type+'</a></li>'
+            
+            var tocheck = $(e).parent().parent().parent().parent().find('ol.breadcrumb').find('a').last().text()
+            if(sparktypes[tocheck] != "False"){
+                $(e).parent().parent().parent().parent().find('ol.breadcrumb').append(txt)
+            }
+        }
+
+        $("form").submit(function(e){
+            value = $("#udfclassesmonacoeditor")[0].editor.getModel().getValue()
+            $("[name=udfclasses]").val(value)
+        })
+        
+        
+
+        function saveandtestudffunction(e) {
+            NProgress.start()
+            var udfvalue = $(e.target).parent().parent().find('.monacoeditor')[0].editor.getValue()
+            var outputtype = $.map($(e.target).parent().parent().find('ol.breadcrumb').find('a'), (val,i) => val.text).join()
+            
+            $.post("{% url 'createOrUpdateUDF' project.pk %}", 
+                {
+                    "csrfmiddlewaretoken":"{{ csrf_token }}",
+                    "udfcode1": udfvalue,
+                    "columns": $(e.target).parent().parent().find('[name=columns]').select2('data').map(x => x.text).join(","),
+                    "outputtype": outputtype,
+                    "id": $(e.target).parent().parent().find('[name=primarykey]').val(),
+                    "action" : $(e.target).attr("name"),
+                },
+                function (data) {
+                    
+                    $(e.target).parent().parent().find(".errorlog").css('visibility',"visible")
+                    
+                    dataJson = JSON.parse(data)
+                    $(e.target).parent().parent().find(".errorlog").text(dataJson.result+dataJson.errorlog)
+                    $(e.target).parent().parent().find("[name=primarykey]").val(dataJson.id)
+                    
+                    console.log(data);
+                    NProgress.done()
+
+                    
+                });
+            if($(e.target).attr("name")=="REMOVE"){
+                $(e.target).parent().parent().parent().remove()
+            }
+            
+            e.preventDefault();
+        }
+    </script>
+
+
+    {% include "includes/scripts.html" %}
+</body>
+
+</html>

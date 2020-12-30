@@ -33,12 +33,26 @@
                 <div class="card-header card-header-border-bottom">
                   <h2>Start your Experiment</h2>
                 </div>
-                <div class="card-body">
+                  <div class="card-header card-header-border-bottom">
+                   <h2>Log Files</h2>
+                  </div>
+                  <div class="card-body">
+                  <textarea class="form-control" id="loggingFile" rows="3" style="height:100%;min-height:600px" readonly>
+                    {{logging}}
+                  </textarea>
+                  </div>
+            </div>
+            <div class="card card-default">
+            <div class="card-header card-header-border-bottom">
+                   <h2>Experiment Actions</h2>
+                  </div>
+                  <div class="card-body">
+
                   <script src="/assets/plugins/charts/Chart.min.js"></script>
                   
-                  <canvas id="{{experiment.loss.name}}chart" width="400" height="400"></canvas>
+                  <canvas style="display:none" id="{{experiment.loss.name}}chart" width="400" height="400"></canvas>
                   <!-- {% for m in metrics %} -->
-                  <canvas id="{{m.name}}metricchart" width="400" height="400"></canvas>
+                  <canvas style="display:none" id="{{m.name}}metricchart" width="400" height="400"></canvas>
                   <!-- {% endfor %} -->
                   <script type="text/javascript">
                     var startUrl = "{% url 'start_experiment' project.pk experiment.pk %}"
@@ -72,7 +86,13 @@
                   <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('dessa')">Start in Dessa</button>
                   <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('plain')">Start in this Environment</button>
                   <button type="button" class="mb-1 btn btn-block btn-danger" onclick="stopExperiment()">Stop</button>
-
+                  <button type="button" class="mb-1 btn btn-block btn-danger" onclick="deleteExperiment()">Delete</button>
+            
+                  <label class="control control-checkbox">Write Dessa Files
+                    <input type="checkbox" checked="checked" name="writedessaselector">
+                    <div class="control-indicator"></div>
+                  </label>
+                  <button type="button" class="mb-1 btn btn-block btn-primary" onclick="writeToDessa()">Write to Dessa</button>
                     <script>
                       function createChart(first,fkt,labels,diagramdata){
                         var ctx = document.getElementById(fkt+'chart').getContext('2d');
@@ -159,7 +179,7 @@
                             try{
                               // update the appropriate UI components
                               
-                              
+                              $("#loggingFile").val(data.logging)
                               var lastExperiment = Object.keys(data.state).reduce(function(a,b){return parseInt(a)>parseInt(b)?a:b})
                               if(lastExperiment != currentExperiment){
                                 currentExperiment = lastExperiment
@@ -230,159 +250,38 @@
                     }
                     updateProgress(progressUrl);
                   </script>
-                    Results:
-                    
-                    
-                    
-                    <br/>
-                    <textarea rows="7" class="form-control">
-                      Current Run:
-                      Epoch:
-                      Current Best Acc:
-                      Current Best Val_Acc:
-                      Current Best Loss:
-                      Current Best Val_Loss:
-                    </textarea>
-
-                    <table class="table table-striped">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Input/Output</th>
-                          <th>Parameter</th>
-                          <th>Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr><td rowspan=7>
-                          1
-                        </td>
-                        <td rowspan=3>Input</td>
-                        <td>
-                            a
-                          </td>
-                          <td>
-                              b
-                            </td>
-                      </tr>
-                      <tr>
-                        <td>
-                            a
-                          </td>
-                          <td>
-                              b
-                            </td>
-                      </tr>
-                      <tr>
-                        <td>
-                            a
-                          </td>
-                          <td>
-                              b
-                            </td>
-                      </tr>
-                      <tr>
-                          <td rowspan=4>Output</td>
-                          <td>
-                              Acc
-                            </td>
-                            <td>
-                                b
-                              </td>
-                      </tr>
-                      <tr><td>
-                          Val_Acc
-                        </td>
-                        <td>
-                            b
-                          </td>
-                    </tr>
-                    <tr><td>
-                        Loss
-                      </td>
-                      <td>
-                          b
-                        </td>
-                  </tr>
-                  <tr><td>
-                      Val_Loss
-                    </td>
-                    <td>
-                        b
-                      </td>
-                </tr>
-                      <tr><td rowspan=7>
-                          3
-                        </td>
-                        <td rowspan=3>Input</td>
-                        <td>
-                            a
-                          </td>
-                          <td>
-                              b
-                            </td>
-                      </tr>
-                      <tr>
-                        <td>
-                            a
-                          </td>
-                          <td>
-                              b
-                            </td>
-                      </tr>
-                      <tr>
-                        <td>
-                            a
-                          </td>
-                          <td>
-                              c
-                            </td>
-                      </tr>
-                      <tr>
-                          <td rowspan=4>Output</td>
-                          <td>
-                              Acc
-                            </td>
-                            <td>
-                                b
-                              </td>
-                      </tr>
-                      <tr><td>
-                          Val_Acc
-                        </td>
-                        <td>
-                            b
-                          </td>
-                    </tr>
-                    <tr><td>
-                        Loss
-                      </td>
-                      <td>
-                          b
-                        </td>
-                  </tr>
-                  <tr><td>
-                      Val_Loss
-                    </td>
-                    <td>
-                        b
-                      </td>
-                </tr>
-                      </tbody>
-                    </table>
-
-                    <br/>
-                </div>
+                                   </div>
                 
               </div>	
               
-            <button type="button" class="mb-1 btn btn-block btn-danger" onclick="deleteExperiment()">Delete</button>
             
-            <label class="control control-checkbox">Write Dessa Files
-              <input type="checkbox" checked="checked" name="writedessaselector">
-              <div class="control-indicator"></div>
-            </label>
-            <button type="button" class="mb-1 btn btn-block btn-primary" onclick="writeToDessa()">Write to Dessa</button>
+
+             <div class="card card-default">
+                <div class="card-header card-header-border-bottom">
+                  <h2>Change Code directly - Chanes have no effect right now!</h2>
+                </div>
+                <div class="card-body">
+
+                  <div id="container_1" class="monacoeditor notready" style="height:100%; min-height:600px"></div>
+                        <script type="text/javascript">
+                        $(document).ready(function(){
+                          alleditors = $(".monacoeditor.notready")
+                          alleditors.each(
+                              function(){
+                                  this.editor = monaco.editor.create(this, {
+                                  {% autoescape off %}
+                                  value: `{{experimentsetup}}`,
+                                  {% endautoescape %}
+                                  language: "python",
+                                  automaticLayout: true
+                              });
+                              }
+                          )
+                          alleditors.removeClass("notready")
+                        })
+                        </script>
+                </div>
+              </div>
             </form> 
     </div>
 

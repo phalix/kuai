@@ -75,13 +75,8 @@ def createOrUpdateUDF(request,project_id):
     udfpk = request.POST['id']
     action = request.POST['action']
     
-    from pyspark.sql import SQLContext
-    spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
-    sqlContext = SQLContext(spark)
-    if 'transform_temp_table' in sqlContext.tableNames():
-        sqlContext.uncacheTable("transform_temp_table")
-        sqlContext.sql("drop table transform_temp_table")
-    
+    clearData(project_id,'transform_temp_table')
+
     if action == "REMOVE":
         result = ""
         try:
@@ -269,6 +264,40 @@ def analysisbychart(request,project_id):
     return response
 
 
+def correlation(request,project_id):
+    template = loader.get_template('data/datacorrelation.html')
+    project = get_object_or_404(Project, pk=project_id)
+    #df = getTransformedData(project_id,0)
+    df = mysite.dataoperation.readfromcassandra(project_id,0)
+    df = mysite.dataoperation.transformdataframe(project,df,0)
+    df = applyfeaturetransition(project,df,project.features.all(),project.target,project.targets.all())
+
+    from pyspark.ml.linalg import Vectors
+    from pyspark.ml.feature import VectorAssembler
+    from pyspark.ml.stat import Correlation
+    from pyspark.ml.stat import ChiSquareTest
+    feat = list(map(lambda x:x.fieldname,project.features.all()))
+    targ = list(map(lambda x:x.fieldname,project.targets.all()))
+
+    features = feat+targ
+    assembler = VectorAssembler(
+        inputCols=features,
+        outputCol="correlation")
+    
+    output = assembler.transform(df)
+    corr_mat=Correlation.corr(output,"correlation", method="pearson")
+    corr_html = corr_mat.toPandas().iloc[0]['pearson(correlation)']
+    #chi_sqr = ChiSquareTest.test(output, "correlation", "label").head()
+    context = {
+        "project" : project,
+        "project_id" : project_id,
+        "menuactive":3,
+        "correlation":corr_html
+        
+    }
+    return HttpResponse(template.render(context, request))
+    
+
 def analysis(request,project_id):
     template = loader.get_template('data/dataanalysis.html')
     project = get_object_or_404(Project, pk=project_id)
@@ -288,9 +317,7 @@ def analysis(request,project_id):
     dfhead5 = df2.limit(5).toPandas().to_html()
     #TODO:Provide Correlation!
     #dfcorr = df2.toPandas()
-    #from pyspark.mllib.stat import Statistics
-
-    #corr_mat=Statistics.corr(features, method="pearson")
+    
     
     dfdescription = df2.describe().toPandas().to_html()
     
@@ -421,16 +448,8 @@ def transformdata(request,project_id):
     project.udfclasses = udfclasses
     project.save()
 
+    clearData(project_id,'transform_temp_table')
     
-    
-    from pyspark.sql import SQLContext
-    spark = getsparksession(project.id,TRAIN_DATA_QUALIFIER)
-    sqlContext = SQLContext(spark)
-    if 'transform_temp_table' in sqlContext.tableNames():
-        sqlContext.uncacheTable("transform_temp_table")
-        sqlContext.sql("drop table transform_temp_table")
-    
-
     return HttpResponseRedirect('/transform/'+str(project_id))
 
 
@@ -513,7 +532,7 @@ def generateDataFromUpload(project_id,df,trainshare=0.6,testshare=0.2,cvshare=0.
 
     oldColumns = data.schema.names
 
-    newColumns = list(map(lambda x:col(x).alias(x
+    substituedColumns = list(map(lambda x:col(x).alias(x
         .replace(" ","")
         .replace(",","")
         .replace(";","")
@@ -524,7 +543,11 @@ def generateDataFromUpload(project_id,df,trainshare=0.6,testshare=0.2,cvshare=0.
         .replace("\n","")
         .replace("\t","")),
         oldColumns))
+    import uuid 
     
+    newColumns = list(map(lambda x: x if len(x)>0 or x.startswith('feature') or x.startswith('target') else "novalidname"+str(uuid.uuid1())),substituedColumns)
+    
+
     data = data.select(newColumns)
 
     savetocassandra(project_id,data,TRAIN_DATA_QUALIFIER)

@@ -88,6 +88,7 @@ class Experiment(models.Model):
     noofepochs = models.IntegerField(null=True)
     batchsize = models.IntegerField(null=True)
     optimizer = models.ForeignKey(Optimizer, on_delete=models.DO_NOTHING,null=True)
+    logfile = models.CharField(max_length=999,null=True)
 
 class LayerWeights(models.Model):
     name = models.CharField(max_length=150)
