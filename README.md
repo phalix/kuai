@@ -24,13 +24,15 @@ It enables the classical workflow of
 Everything is supported by easy to use user interfaces.
 
 ## Setup
-You need to have a MongoDB running. Configure your project first under setting.  
+You need to have a MongoDB running.  
 
 install java  
 install python and pip == 3.8.6  
 pip install -r  requirements.txt  
 python manage.py makemigrations  
 python manage.py migrate  
+
+After creating a project configure it first, under settings.  
 
 ## Run application
 python manage.py runserver  
