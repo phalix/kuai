@@ -22,6 +22,7 @@ from pyspark.sql.functions import udf,col,lit
 from pyspark.sql.types import StringType,DoubleType,DateType,ArrayType,FloatType,IntegerType
 import inspect
 
+import mysite.data.dataudftransform
 
 
 TRAIN_DATA_QUALIFIER = 1
@@ -131,47 +132,6 @@ def createOrUpdateUDF(request,project_id):
     }))
 
 
-def evaluateUDFOnDataFrame(project,dataframe):
-    udfs = collectUDFSOnProject(project)
-    udfs['type'] = col("type") # do not loose type, train test cv
-    udflist = list(udfs.values())
-    udflist = udflist + dataframe.columns
-    return dataframe.select(udflist)
-    
-def collectUDFSOnProject(project):
-    udfs = UDF.objects.filter(project=project.pk).all()
-    functionarray = {}
-    for udf in udfs:
-        a = generateUDFonUDF(udf)
-        functionarray[a[0]] = a[1]
-    
-    return functionarray
-
-def generateUDFonUDF(udfdefinition):
-    from pyspark.sql.functions import udf
-    outputtype = udfdefinition.outputtype
-    left = ""
-    right = ""
-    for col in outputtype.split(','):
-        left = left + 'pyspark.sql.types.'+col+'('
-        right = ')'+right
-    outputtypeeval = eval(left+right)
-    
-    udfcode = udfdefinition.udfexecutiontext
-    import re
-    pattern = re.compile("[^A-Za-z]")
-    aliasname = pattern.sub("",udfdefinition.input)
-
-    functionname = aliasname+'_'+str(udfdefinition.pk)
-    exec('def '+functionname+'(output): \n\t'+udfcode.replace("\n","\n\t"))
-    a_udf = eval('udf('+functionname+', outputtypeeval)')
-    udfColInput = udfdefinition.input
-    if len(udfColInput.split(","))>1:
-        udfColInput = eval("pyspark.sql.functions.array"+str(tuple(udfColInput.split(","))))
-
-    b_udf = a_udf(udfColInput).alias(functionname)
-    return [functionname,b_udf]
-
 
 
 
@@ -247,9 +207,6 @@ def analysisbychart(request,project_id):
     df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df2 = transformdataframe(project,df,TRAIN_DATA_QUALIFIER)
 
-    #assert x in df2.columns
-    #assert y in df2.columns
-    
     response = HttpResponse(content_type="image/jpeg")
     dfxandy = df2.select(columns).toPandas()
     kwargs['data'] = dfxandy
@@ -301,37 +258,13 @@ def correlation(request,project_id):
 def analysis(request,project_id):
     template = loader.get_template('data/dataanalysis.html')
     project = get_object_or_404(Project, pk=project_id)
-    
     df2 = mysite.dataoperation.readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
     df2 = mysite.dataoperation.transformdataframe(project,df2,TRAIN_DATA_QUALIFIER)
     df2 = df2.drop('type')
-
-    #df2_test = mysite.dataoperation.readfromcassandra(project_id,TEST_DATA_QUALIFIER)
-    #df2_test = mysite.dataoperation.transformdataframe(project,df2_test,TEST_DATA_QUALIFIER)
-    #df2_test = df2_test.drop('type')
-
-    #df2_cv = mysite.dataoperation.readfromcassandra(project_id,CV_DATA_QUALIFIER)
-    #df2_cv = mysite.dataoperation.transformdataframe(project,df2_cv,CV_DATA_QUALIFIER)
-    #df2_cv = df2_cv.drop('type')
-
     dfhead5 = df2.limit(5).toPandas().to_html()
-    #TODO:Provide Correlation!
-    #dfcorr = df2.toPandas()
-    
     
     dfdescription = df2.describe().toPandas().to_html()
-    
-    #dfdescription_test = df2_test.describe().toPandas().to_html()
-    #dfdescription_cv = df2_cv.describe().toPandas().to_html()
-
-    #filter by simple datetypes
-    #df.info(); df.describe(); df.describe(include='all'); df.corr(); df.['target'].value_counts()
-
-
-    ### restrict columns to simple types
     columns = list(dict(filter(lambda x:isTypeSimpleType(x[1]),df2.dtypes)).keys())
-    
-    ### TODO: provide plot types of seaborn for selection
     
     seabornfunctions = {}
     seabornfunctions['Relational Plots'] = ['relplot','scatterplot','lineplot']
@@ -531,8 +464,11 @@ def generateDataFromUpload(project_id,df,trainshare=0.6,testshare=0.2,cvshare=0.
     from functools import reduce
 
     oldColumns = data.schema.names
+    import functools
 
-    substituedColumns = list(map(lambda x:col(x).alias(x
+    substituedColumns = list(filter(lambda x: len(x)>0 or x.startswith('feature') or x.startswith('target'),oldColumns))
+    
+    newColumns = list(map(lambda x:col(x).alias(x
         .replace(" ","")
         .replace(",","")
         .replace(";","")
@@ -542,12 +478,8 @@ def generateDataFromUpload(project_id,df,trainshare=0.6,testshare=0.2,cvshare=0.
         .replace(")","")
         .replace("\n","")
         .replace("\t","")),
-        oldColumns))
-    import uuid 
+        substituedColumns))
     
-    newColumns = list(map(lambda x: x if len(x)>0 or x.startswith('feature') or x.startswith('target') else "novalidname"+str(uuid.uuid1())),substituedColumns)
-    
-
     data = data.select(newColumns)
 
     savetocassandra(project_id,data,TRAIN_DATA_QUALIFIER)
@@ -863,31 +795,7 @@ def createSparkConfig(project_id,type):
     #conf.set("spark.sql.inMemoryColumnarStorage.compressed",False)
     return conf
 
-def transformdataframe(project,dataframe,type):
-    #apply project.selectstatement
-    #apply project.udfclasses
-    from pyspark.sql import SQLContext
-    from pyspark import StorageLevel
 
-    spark = getsparksession(project.id,1)
-    sqlContext = SQLContext(spark)
-    if 'transform_temp_table' in sqlContext.tableNames():
-        df2 = sqlContext.sql("select * from transform_temp_table")
-    else:
-        
-        try:
-            df2 = evaluateUDFOnDataFrame(project,dataframe)
-            df2.registerTempTable("transform_temp_table")
-            sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
-
-        except Exception as e:
-            print(e)
-            traceback.print_exc()
-            #project.selectstatement = ""
-            #project.save()
-            df2 = dataframe
-        
-    return df2
 
 def createDataFrameHTMLPreview(dataframe):
     from pyspark.sql.functions import substring
@@ -1164,11 +1072,6 @@ def buildFeatureVector(dataframe,features,target,targets):
                     selector.append(toDenseVectorUdf(key2).alias('target_'+str(key2)))
                 else: 
                     selector.append(psf.col(key2).alias('target_'+str(key2)))
-
-
-    #selector.append(psf.col(target.fieldname).alias("target"))
-
-    #train_df3 = train_df3.withColumn("target",train_df3[target.fieldname])
     selector.append(col('type'))
     train_df3 = train_df3.select(selector)
     return train_df3
@@ -1194,16 +1097,10 @@ def getXandYFromDataframe(df,project):
 
 def getDimensionsByProject(project):
     
-    #project_id = project.pk
-    #train_df = mysite.dataoperation.readfromcassandra(project_id,0)
-    #train_df = mysite.dataoperation.transformdataframe(project,train_df,0)
-    #train_df = applyfeaturetransition(project,train_df,project.features.all(),project.target)
     train_df = getTransformedData(project.pk,0)
     mytypes = gettypesanddimensionsofdataframe(train_df)
-    #featurenames = list(map(lambda x:x.fieldname,project.features.all()))
     inputdimensions = list(filter(lambda x:x[0].startswith('feature'),mytypes))#list(filter(lambda x:x[0] in featurenames,mytypes))
     outputdimensions = list(filter(lambda x:x[0].startswith('target'),mytypes))#list(filter(lambda x:x[0] in [project.target.fieldname],mytypes))
-
     return [inputdimensions,outputdimensions]
 
 
@@ -1238,3 +1135,100 @@ def duplicaterows(dataframe):
                 dataframe = dataframe.union(toattach)
     test = dataframe.groupby('target').count().collect()
     return dataframe
+
+
+
+##########################
+##### DATATRANSFORM ######
+##########################
+
+def evaluateUDFOnDataFrame(project,dataframe):
+    udfs = collectUDFSOnProject(project)
+    udfs['type'] = col("type") # do not loose type, train test cv
+    udflist = list(udfs.values())
+    udflist = udflist + dataframe.columns
+    return dataframe.select(udflist)
+    
+def collectUDFSOnProject(project):
+    udfs = UDF.objects.filter(project=project.pk).all()
+    from django.core import serializers
+    data = serializers.serialize("json", udfs)
+    import json
+    udfdata = json.loads(data)
+
+    functionarray = {}
+    for udf in udfdata:
+        import re
+        pattern = re.compile("[^A-Za-z]")
+        aliasname = pattern.sub("",udf['fields']['input'])
+        functionname = aliasname+'_'+str(udf['pk'])
+        udfpara = udf['fields']
+        udfpara['functionname'] = functionname
+        a = generateUDFonUDF(udfpara)
+        functionarray[a[0]] = a[1]
+    
+    return functionarray
+
+def generateUDFonUDF(udfdefinition):
+    from pyspark.sql.functions import udf
+    outputtype = udfdefinition['outputtype']
+    left = ""
+    right = ""
+    for col in outputtype.split(','):
+        left = left + 'pyspark.sql.types.'+col+'('
+        right = ')'+right
+    outputtypeeval = eval(left+right)
+    
+    udfcode = udfdefinition['udfexecutiontext']
+    functionname = udfdefinition['functionname']
+    exec('def '+functionname+'(output): \n\t'+udfcode.replace("\n","\n\t"))
+    a_udf = eval('udf('+functionname+', outputtypeeval)')
+    udfColInput = udfdefinition['input']
+    if len(udfColInput.split(","))>1:
+        udfColInput = eval("pyspark.sql.functions.array"+str(tuple(udfColInput.split(","))))
+
+    b_udf = a_udf(udfColInput).alias(functionname)
+    return [functionname,b_udf]
+
+def transformdataframe(project,dataframe,type):
+    from pyspark.sql import SQLContext
+    from pyspark import StorageLevel
+
+    spark = getsparksession(project.id,1)
+    sqlContext = SQLContext(spark)
+    if 'transform_temp_table' in sqlContext.tableNames():
+        df2 = sqlContext.sql("select * from transform_temp_table")
+    else:
+        
+        try:
+            df2 = evaluateUDFOnDataFrame(project,dataframe)
+            df2.registerTempTable("transform_temp_table")
+            sqlContext.sql("CACHE TABLE transform_temp_table OPTIONS ('storageLevel' 'DISK_ONLY')")
+
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            df2 = dataframe
+        
+    return df2
+
+
+def applyUdfTransformation(project):
+        udfs = UDF.objects.filter(project=project.pk).all()
+        from django.core import serializers
+        data = serializers.serialize("json", udfs)
+        import json
+        udfdata = json.loads(data)
+
+        functionarray = {}
+        for udf in udfdata:
+            import re
+            pattern = re.compile("[^A-Za-z]")
+            aliasname = pattern.sub("",udf['fields']['input'])
+            functionname = aliasname+'_'+str(udf['pk'])
+            udfpara = udf['fields']
+            udfpara['functionname'] = functionname
+            a = generateUDFonUDF(udfpara)
+            functionarray[a[0]] = a[1]
+        
+        return functionarray

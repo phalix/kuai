@@ -155,12 +155,13 @@
                             'func': $('[name = function]')[0].value
                           }
                         
-
+                        NProgress.start()
                         fetch(
                         getcharturl +
                           "?" +
                           new URLSearchParams(data)
                         ).then((imageData) => {
+                          NProgress.done()
                           imageData.blob().then((blobData) => {
                             this.imageLoaded = true;
                             let src = URL.createObjectURL(blobData);
