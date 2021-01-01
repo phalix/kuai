@@ -3,7 +3,6 @@ from mysite.experimentrunners.plain import PlainPythonExperiment
 class AtlasDessaExperiment(PlainPythonExperiment):
     
     def __init__(self):
-        import foundations
         super().__init__(self)
 
     def show(self):

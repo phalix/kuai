@@ -32,6 +32,9 @@ class PlainPythonExperiment:
     def showExperiment(self):
         print(self.executionText)
 
+    def getExperiment(self):
+        return self.executionText
+
     def writeExperiment(self):
 
         import os

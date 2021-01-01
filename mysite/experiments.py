@@ -274,30 +274,7 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
     saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
 
-    directory = getProjectDir(project_id)
-        
-    logpath = experiment.logfile
-    if not logpath:
-        logpath = directory+"/"+str(experiment_id)+"_logging.log"
-        experiment.logfile = logpath
-        experiment.save()
-    
-    fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
-
-    expConfig = {}
-    expConfig['loss'] = exp.loss.name
-    expConfig['metrics'] = metrics
-    expConfig['Optimizer'] = {'selection':exp.optimizer.name,'options':{}}
-    for option in list(exp.optimizer.configuration.all()):
-        expConfig['Optimizer']['options'][option.fieldname] = option.option
-    
-    if expType == 'dessa':
-        ppe = AtlasDessaExperiment(directory,fileToRun,logpath)
-    elif expType == 'plain':
-        ppe = PlainPythonExperiment(directory,fileToRun,logpath)
-        
-    ppe.setupExperiment(expConfig)
-    ppe.writeExperiment()
+    ppe = generateExperiment(project_id,experiment_id,False)
     ppe.executeExperiment()
     ppe.showExperiment()
     
@@ -428,12 +405,11 @@ def run(request,project_id,experiment_id):
     maindir = getMainDir(project_id)
     projectdir = getProjectDir(project_id)
 
-    experimentsetup = getExperimentConfigurationString(maindir+"/DessaWorker/DefaultWorker.py",
-                        projectdir+"/"+str(project_id),
-                        'True',
-                        experiment.noofepochs,
-                        experiment.batchsize,
-                        experiment)
+    
+
+    ppe = generateExperiment(project_id,experiment_id,False)
+    experimentsetup = ppe.getExperiment()
+    
     if experiment.logfile:
         f = open(experiment.logfile, "r")
         curExperimentLog = f.read()
@@ -592,14 +568,43 @@ def loadmodelweights(experiment_id,model):
 
 def writetodessa(request,project_id,experiment_id):
     import json
+    writeToDessa = 'writeDessa' in request.POST and request.POST['writeDessa'] == 'true'
+    ppe = generateExperiment(project_id,experiment_id,writeToDessa)
+
+
+
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
     metrics = []
     for m in cur_metrics:
         metrics.append(m.name)
+    features = list(project.features.all())
+    inputschema = mysite.neuralnetwork.getinputshape(project)
+    neuralnetwork = mysite.neuralnetwork.getNeuralNetworkStructureAsPlainPython(project)
+    optimizer = mysite.neuralnetwork.getOptimizerAsPlainPython(project)
+    model = prepareModel(project,experiment,experiment.loss.name,metrics,neuralnetwork,optimizer,features,project.target.fieldname,inputschema)
+    saveModelInProjectFolder(model,project_id)
 
-    writeToDessa = 'writeDessa' in request.POST and request.POST['writeDessa'] == 'true'
+    train_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
+    test_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
+    saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
+    saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
+    print("done writing to dessa")
+
+    return HttpResponse(json.dumps({}), content_type='application/json')
+
+
+def generateExperiment(project_id,experiment_id,writeToDessa):
+    project = get_object_or_404(Project, pk=project_id)
+    experiment = get_object_or_404(Experiment, pk=experiment_id)
+    
+    cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
+    metrics = []
+    for m in cur_metrics:
+        metrics.append(m.name)
+
+    
     directory = getProjectDir(project_id)
     logpath = experiment.logfile
     if not logpath:
@@ -624,23 +629,8 @@ def writetodessa(request,project_id,experiment_id):
 
     ppe.setupExperiment(expConfig)
     ppe.writeExperiment()
-    
 
-    features = list(project.features.all())
-    inputschema = mysite.neuralnetwork.getinputshape(project)
-    neuralnetwork = mysite.neuralnetwork.getNeuralNetworkStructureAsPlainPython(project)
-    optimizer = mysite.neuralnetwork.getOptimizerAsPlainPython(project)
-    model = prepareModel(project,experiment,experiment.loss.name,metrics,neuralnetwork,optimizer,features,project.target.fieldname,inputschema)
-    saveModelInProjectFolder(model,project_id)
-
-    train_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TRAIN_DATA_QUALIFIER)
-    test_df3 = mysite.dataoperation.getTransformedData(project_id,mysite.dataoperation.TEST_DATA_QUALIFIER)
-    saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
-    saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
-    print("done writing to dessa")
-
-    return HttpResponse(json.dumps({}), content_type='application/json')
-
+    return ppe
 
 def getMainDir(project_id):
     import mysite.project as mp
