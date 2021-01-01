@@ -119,6 +119,7 @@ class PlainPythonExperiment:
             import subprocess
             f = open(self.logfile,"a")
             proc = subprocess.Popen(['python', self.projectfolder+"/"+self.experimentfile], stdout=f,stderr=f, shell=True,cwd=self.projectfolder)
+            proc.wait()
             return proc
         else:
             print("not complied yet")

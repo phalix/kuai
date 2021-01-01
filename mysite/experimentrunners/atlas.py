@@ -2,8 +2,18 @@ from mysite.experimentrunners.plain import PlainPythonExperiment
 
 class AtlasDessaExperiment(PlainPythonExperiment):
     
-    def __init__(self):
-        super().__init__(self)
+    projectfolder = None
+    experimentfile = None
+    executionText = None
+    logfile = None
+    configuration = None
+    
+
+    def __init__(self,projectfolder,experimentfile,logfile,executionText=None):
+        self.projectfolder = projectfolder
+        self.experimentfile = experimentfile
+        self.logfile = logfile
+        self.executionText = executionText
 
     def show(self):
         print("show")
@@ -75,7 +85,8 @@ class AtlasDessaExperiment(PlainPythonExperiment):
                         'callbacks.append(dc.CustomDessaCallback("train"))#foundations']
 
         f.close()
-        f2 = open(self.experimentfile, "w")
+        self.executionText = defaultworker
+        f2 = open(self.projectfolder+"/"+self.experimentfile, "w")
         f2.write(defaultworker)
         f2.close()
         print("write")
@@ -83,13 +94,22 @@ class AtlasDessaExperiment(PlainPythonExperiment):
     def executeExperiment(self):
         print("execute")
         try:
-            import foundations
-            foundations.submit(scheduler_config='scheduler',job_directory=getProjectDir(project_id),command=["DefaultWorker_"+experiment_id+".py"])
-            #import subprocess
-            #proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
-            #proc.wait()
-            print("started")
+            if self.executionText:
+                f2 = open(self.projectfolder+"/"+self.experimentfile, "w")
+                f2.write(self.executionText)
+                f2.close()
+                import foundations
+                foundations.submit(scheduler_config='scheduler',job_directory=self.projectfolder,command=[self.experimentfile])
+                print("started")
+            else:
+                print("not complied yet")
+                return None
         except Exception as e:
             print(e)
         return None
         
+    @classmethod
+    def deserialize(cls,json_dict):
+        import json
+        para = json.loads(json_dict)
+        return cls(para['projectfolder'],para['experimentfile'],para['logfile'],para['executionText'])

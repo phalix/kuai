@@ -229,4 +229,28 @@ class TestKuaiCase(TestCase):
         response = c.post("/startExperimentsPerProject/"+project_id_str+"/"+exp_id_str+"/", {})
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
+        
+        response = c.post('/uploadexpsetup/'+project_id_str+'/'+exp_id_str+'/', {
+            'loss':'MAE',
+            'metrics[]':'MSE',
+            'noofepochs':'6',
+            'batchsize':'5',
+        })
+
+        import requests
+        if requests.get("http://localhost:5000/").status_code == 200:
+
+            response = c.post("/writetodessa/"+project_id_str+"/"+exp_id_str+"/", {
+                'writeDessa':'true'
+            })
+            self.assertEqual(response.status_code >
+                            199 and response.status_code < 400, True)
+            
+            #write to dessa and run
+            response = c.post("/startExperimentsPerProject/"+project_id_str+"/"+exp_id_str+"/", {
+                'writeDessa':'true'
+            })
+            self.assertEqual(response.status_code >
+                            199 and response.status_code < 400, True)
+            
         print("done")

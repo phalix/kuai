@@ -31,7 +31,7 @@ RUN python manage.py migrate
 #RUN wget https://github.com/dessa-oss/atlas/releases/download/0.1.1/atlas_installer.py
 #RUN python atlas_installer.py -y -i -s -a -C
 #RUN python atlas_installer.py -y -N -s
-EXPOSE 8000 5000
+
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 # File wsgi.py was not found in subfolder: 'kuai'. Please enter the Python path to wsgi file.

@@ -411,11 +411,7 @@ def run(request,project_id,experiment_id):
     ppe = generateExperiment(project_id,experiment_id,False)
     experimentsetup = ppe.getExperiment()
     
-    if experiment.logfile:
-        f = open(experiment.logfile, "r")
-        curExperimentLog = f.read()
-    else:
-        curExperimentLog = ""
+    
     context = {
         "project" : project,
         "project_id" : project_id,
@@ -424,7 +420,7 @@ def run(request,project_id,experiment_id):
         "menuactive":5,
         "experiments": expDict,
         "experimentsetup":experimentsetup,
-        "logging":curExperimentLog
+        "logging":ppe.getLog()
 
     }
     
@@ -610,9 +606,9 @@ def generateExperiment(project_id,experiment_id,writeToDessa):
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
-    if experiment.executablecode:
+    if experiment.executablecode and experiment.experimenttype:
         try:
-            ppe = PlainPythonExperiment.deserialize(experiment.executablecode)
+            ppe = eval(experiment.experimenttype).deserialize(experiment.executablecode)
             return ppe
         except Exception as e:
             print(e)
@@ -644,11 +640,15 @@ def generateExperiment(project_id,experiment_id,writeToDessa):
     expConfig['Optimizer'] = {'selection':exp.optimizer.name,'options':{}}
     for option in list(exp.optimizer.configuration.all()):
         expConfig['Optimizer']['options'][option.fieldname] = option.option
+    expConfig['epochs']=exp.noofepochs
+    expConfig['BatchSize']=exp.batchsize
+
 
     ppe.setupExperiment(expConfig)
     ppe.writeExperiment()
 
     experiment.executablecode = ppe.serialize()
+    experiment.experimenttype = ppe.__class__.__name__
     experiment.save()
 
     return ppe
