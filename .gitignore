@@ -8,7 +8,8 @@ projects/*
 .pytest*
 *.log
 tempfile*
-temp*
+temp/upload/*
+temp/extract/*
 !mysite/templates*
 __pycache__
 logs

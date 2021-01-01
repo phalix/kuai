@@ -34,7 +34,8 @@ projects/*
 .pytest*
 *.log
 tempfile*
-temp*
+temp/upload/*
+temp/extract/*
 __pycache__
 logs
 mysite/private*

@@ -409,7 +409,7 @@ def uploaddata(request,project_id):
     subm_file = request.POST['folderfile']
     spark = getsparksession(project_id,TRAIN_DATA_QUALIFIER)
     import uuid 
-    tempfile = "temp"+str(uuid.uuid1())
+    tempfile = "temp/upload/temp"+str(uuid.uuid1())
 
     if request.POST['datatype'] == "csv":
         if 'filewithdata' in request.FILES:
@@ -435,7 +435,7 @@ def uploaddata(request,project_id):
             from zipfile import ZipFile
             with ZipFile(tempfile, 'r') as zipObj:
                 # Extract all the contents of zip file in current directory
-                subm_file = "temp"+str(uuid.uuid1())
+                subm_file = "temp/extract/temp"+str(uuid.uuid1())
                 zipObj.extractall(subm_file)
 
         from pyspark.ml.image import ImageSchema 

@@ -117,7 +117,7 @@ class PlainPythonExperiment:
             f2.write(self.executionText)
             f2.close()
             import subprocess
-            f = open(self.logfile,"a")
+            f = open(self.projectfolder+"/"+self.logfile,"a")
             proc = subprocess.Popen(['python', self.projectfolder+"/"+self.experimentfile], stdout=f,stderr=f, shell=True,cwd=self.projectfolder)
             proc.wait()
             return proc
@@ -126,7 +126,7 @@ class PlainPythonExperiment:
             return None
     
     def getLog(self):
-        f = open(self.logfile, "r")
+        f = open(self.projectfolder+"/"+self.logfile, "r")
         curExperimentLog = f.read()
         return curExperimentLog
 
