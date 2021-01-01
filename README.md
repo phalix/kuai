@@ -34,6 +34,9 @@ python manage.py migrate
 
 After creating a project configure it first, under settings.  
 
+## Run tests
+python manage.py test ./tests  
+
 ## Run application
 python manage.py runserver  
 

@@ -10,6 +10,9 @@ import mysite.dataoperation
 import asyncio
 import threading
 import tensorflow as tf
+from mysite.experimentrunners.plain import PlainPythonExperiment
+from mysite.experimentrunners.atlas import AtlasDessaExperiment
+
 
 def createnewexperimentinproject(project):
     exp = Experiment()
@@ -163,6 +166,7 @@ def uploadexpsetup(request,project_id,experiment_id):
     experiment.noofepochs = request.POST["noofepochs"]
     
     opticonfigs = []
+    optiname='Adam'
     for para in request.POST:
         if para.startswith("optpara"):
             optifieldname = para.split("$")[1]
@@ -173,7 +177,7 @@ def uploadexpsetup(request,project_id,experiment_id):
                 opticonfigs.append(curopticonf)
         if para == "optimizerselect":
             optiname = request.POST[para]
-
+    
     selopti = Optimizer(name=optiname)
     selopti.save()
     for oc in opticonfigs:
@@ -249,7 +253,6 @@ def prepareModel(project,experiment,loss,metrics,neuralnetwork,optimizer,feature
     model = mysite.neuralnetwork.getcurrentmodel(project,loss,metrics,neuralnetwork,optimizer,features,target,inputschema)
     #restore weights
     loadmodelweights(experiment.id,model)
-
     return model
 
 
@@ -262,11 +265,6 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     experiment_id = exp.id
     project_id = project.id
 
-    createProjectDessa(project,exp,expType=='dessa')    
-
-    lossfunction = loss
-
-    
     model = prepareModel(project,exp,loss,metrics,neuralnetwork,optimizer,features,target,inputschema)
     saveModelInProjectFolder(model,project_id)
     
@@ -276,20 +274,38 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
     saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
 
+    directory = getProjectDir(project_id)
+        
+    logpath = experiment.logfile
+    if not logpath:
+        logpath = directory+"/"+str(experiment_id)+"_logging.log"
+        experiment.logfile = logpath
+        experiment.save()
+    
+    fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
+
+    expConfig = {}
+    expConfig['loss'] = exp.loss.name
+    expConfig['metrics'] = metrics
+    expConfig['Optimizer'] = {'selection':exp.optimizer.name,'options':{}}
+    for option in list(exp.optimizer.configuration.all()):
+        expConfig['Optimizer']['options'][option.fieldname] = option.option
+    
     if expType == 'dessa':
-        submitDessaJob(project_id,experiment_id)
+        ppe = AtlasDessaExperiment(directory,fileToRun,logpath)
     elif expType == 'plain':
-        directory = getProjectDir(project_id)
-        import threading
-        logpath = experiment.logfile
-        if not logpath:
-            logpath = directory+"/"+str(experiment_id)+"_logging.log"
-            experiment.logfile = logpath
-            experiment.save()
-        thread = threading.Thread(target=submitPlainPythonJob, args=(directory,project_id,experiment_id,logpath))
-        thread.daemon = True 
-        thread.start()
-        #submitPlainPythonJob(project_id,experiment_id)
+        ppe = PlainPythonExperiment(directory,fileToRun,logpath)
+        
+    ppe.setupExperiment(expConfig)
+    ppe.writeExperiment()
+    ppe.executeExperiment()
+    ppe.showExperiment()
+    
+    import threading
+    
+    thread = threading.Thread(target=ppe.executeExperiment)
+    thread.daemon = True 
+    thread.start()
     '''
     #random split to required batch size
     # 1. get count of train_df3
@@ -578,21 +594,40 @@ def writetodessa(request,project_id,experiment_id):
     import json
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
-    
-    writeToDessa = request.POST['writeDessa'] == 'true'
-    
-    createProjectDessa(project,experiment,writeToDessa)
-    features = list(project.features.all())
-    
-    
     cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
     metrics = []
     for m in cur_metrics:
         metrics.append(m.name)
 
-
-    inputschema = mysite.neuralnetwork.getinputshape(project)
+    writeToDessa = 'writeDessa' in request.POST and request.POST['writeDessa'] == 'true'
+    directory = getProjectDir(project_id)
+    logpath = experiment.logfile
+    if not logpath:
+        logpath = directory+"/"+str(experiment_id)+"_logging.log"
+        experiment.logfile = logpath
+        experiment.save()
     
+    fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
+    
+    if writeToDessa:
+        ppe = AtlasDessaExperiment(directory,fileToRun,logpath)
+    else:
+        ppe = PlainPythonExperiment(directory,fileToRun,logpath)
+    
+    exp = experiment
+    expConfig = {}
+    expConfig['loss'] = exp.loss.name
+    expConfig['metrics'] = metrics
+    expConfig['Optimizer'] = {'selection':exp.optimizer.name,'options':{}}
+    for option in list(exp.optimizer.configuration.all()):
+        expConfig['Optimizer']['options'][option.fieldname] = option.option
+
+    ppe.setupExperiment(expConfig)
+    ppe.writeExperiment()
+    
+
+    features = list(project.features.all())
+    inputschema = mysite.neuralnetwork.getinputshape(project)
     neuralnetwork = mysite.neuralnetwork.getNeuralNetworkStructureAsPlainPython(project)
     optimizer = mysite.neuralnetwork.getOptimizerAsPlainPython(project)
     model = prepareModel(project,experiment,experiment.loss.name,metrics,neuralnetwork,optimizer,features,project.target.fieldname,inputschema)
@@ -623,53 +658,6 @@ def getProjectDir(project_id):
 def getProjectDataDir(project_id):
     return getProjectDir(project_id)+"/"+"data"
 
-def createProjectDessa(project,experiment,writeToDessa):
-    import os
-    import subprocess
-    if writeToDessa:
-        import foundations
-
-    project_id = project.pk
-    olddir = os.getcwd()
-    maindir = getMainDir(project_id)
-    os.chdir(maindir)
-    maindir = os.getcwd()
-    projectdir = maindir+"/projects"
-    os.chdir(projectdir)
-    import shutil
-    #usage shutil.copyfile('file1.txt', 'file2.txt')
-    if str(project_id) not in os.listdir():
-        
-        #os.chdir(str(project_id))
-        proc = subprocess.Popen(['foundations', 'init',str(project_id)], stdout=subprocess.PIPE, shell=True)
-        proc.wait()
-        if str(project_id) not in os.listdir():
-            os.mkdir(str(project_id))
-    os.chdir(str(project_id))
-    if "data" not in os.listdir():
-        os.mkdir("data")
-    if "model" not in os.listdir():
-        os.mkdir("model")
-    
-
-    for exp in Experiment.objects.filter(project=project).all():
-        overwriteDefaultWorkerWithFollowingOptions(maindir+"/DessaWorker/DefaultWorker.py",
-            projectdir+"/"+str(project_id)+"/DefaultWorker_"+str(exp.id)+".py",
-            projectdir+"/"+str(project_id),
-            writeToDessa,
-            exp.noofepochs,
-            exp.batchsize,
-            exp)
-    
-    #shutil.copyfile(maindir+"/DessaWorker/DefaultWorker.py",projectdir+"/"+str(project_id)+"/DefaultWorker.py")
-    shutil.copyfile(maindir+"/DessaWorker/PyArrowDataExtraction.py",projectdir+"/"+str(project_id)+"/PyArrowDataExtraction.py")
-    shutil.copyfile(maindir+"/DessaWorker/DessaCallback.py",projectdir+"/"+str(project_id)+"/DessaCallback.py")
-    shutil.copyfile(maindir+"/DessaWorker/requirements.txt",projectdir+"/"+str(project_id)+"/requirements.txt")
-
-    
-    os.chdir(maindir)
-    os.chdir(olddir)
-
 
 def saveModelInProjectFolder(model,project_id):
     model.save(getProjectDir(project_id)+"/model/")
@@ -677,81 +665,5 @@ def saveModelInProjectFolder(model,project_id):
 def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     import os
     dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"/"+str(qualifier)+".parquet")
-    
-def submitDessaJob(project_id,experiment_id):
-    try:
-        import foundations
-        foundations.submit(scheduler_config='scheduler',job_directory=getProjectDir(project_id),command=["DefaultWorker_"+experiment_id+".py"])
-        #import subprocess
-        #proc = subprocess.Popen(['foundations', 'submit','scheduler',getProjectDir(project_id),'DefaultWorker.py'], stdout=subprocess.PIPE, shell=True)
-        #proc.wait()
-        print("started")
-    except Exception as e:
-        print(e)
-
-def submitPlainPythonJob(directory,project_id,experiment_id,logpath):
-    fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
-    import subprocess
-    f = open(logpath,"a")
-    proc = subprocess.Popen(['python', directory+"/"+fileToRun], stdout=f,stderr=f, shell=True)
-    #while proc.poll() is None:
-        #output = proc.stdout.read()
-        #print(output)
-    #    print("running")
-    #print(output)
-
-
-
-def getExperimentConfigurationString(fromfile,prjdir,writeDessa,epochs,batchsize,experiment):
-    f = open(fromfile, "r")
-    defaultworker = f.read()
-    
-    import re
-    re.compile("prjdir = ''#prjdir")
-    #defaultworker = re.sub("prjdir = '.'#prjdir","prjdir = '"+prjdir+"'#prjdir",defaultworker)
-    defaultworker = re.sub("epochs = 5 #epochs","epochs = "+str(epochs)+" #epochs",defaultworker)
-    defaultworker = re.sub("batch_size = 1 #batchsize","batch_size = "+str(batchsize)+" #batchsize",defaultworker)
-    
-    if experiment.optimizer:
-        confString = ""
-        from functools import reduce
-        optionsString = ""
-        if experiment.optimizer.configuration and len(list(experiment.optimizer.configuration.all()))>0:
-            myMapWithOptions = list(map(lambda x:x.fieldname+"="+x.option,list(experiment.optimizer.configuration.all())))
-            if len(myMapWithOptions) > 0:
-                optionsString = reduce(lambda x,y:x+";"+y,myMapWithOptions)
-            
-        if len(list(Metrics.objects.filter(experiment=experiment.id)))>0:
-            metricsString = reduce(lambda x,y:x+","+y,map(lambda x:"'"+x.name+"'",list(Metrics.objects.filter(experiment=experiment.id))))
-        else:
-            metricsString = ""
-
-        defaultworker = re.sub("#overwrite model if needed optimizer = keras.optimizer.Adam\(\);model.compile\(optimizer=optimizer,loss=loss,metrics=metrics\)#change optimizer",
-            "optimizer = keras.optimizers."+experiment.optimizer.name+"("+optionsString+");model.compile(optimizer=optimizer,loss='"+experiment.loss.name+"',metrics=["+metricsString+"])",
-            defaultworker)
-
-
-    withoutDessa = ["foundations.set_tensorboard_logdir(logdir)#foundations",
-                    "import foundations#foundations",
-                    "callbacks.append(dc.CustomDessaCallback())#foundations",
-                    "callbacksEvaluate.append(dc.CustomDessaCallback())#foundations",
-                    "tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)#tensorboard",
-                    "foundations.set_tensorboard_logdir(logdir)#foundations",
-                    "callbacks.append(tensorboard_callback)#tensorboard",
-                    'callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations',
-                    'callbacks.append(dc.CustomDessaCallback("train"))#foundations']
-
-    if not writeDessa:
-        for wd in withoutDessa:
-            #defaultworker = re.sub(wd,"",defaultworker)
-            defaultworker = defaultworker.replace(wd,"")
-    f.close()
-    return defaultworker
-
-def overwriteDefaultWorkerWithFollowingOptions(fromfile,tofile,prjdir,writeDessa,epochs,batchsize,experiment):
-    defaultworker = getExperimentConfigurationString(fromfile,prjdir,writeDessa,epochs,batchsize,experiment)
-    f2 = open(tofile, "w")
-    f2.write(defaultworker)
-    f2.close()
     
     

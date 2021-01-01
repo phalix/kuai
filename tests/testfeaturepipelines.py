@@ -27,7 +27,10 @@ class TestFeaturePipelines(TestCase):
         pdf = pd.DataFrame(list(zip(inputx, inputy,outputand,outputxor,outputor,typea)), 
                columns =['inputx', 'inputy','outputand','outputxor','outputor','type']) 
 
-        spark = md.getsparksession(1,1)
+        from datetime import datetime
+        p = Project(author="test",projectname="test",datacreated=datetime.now(),pk=999)
+        p.save()
+        spark = md.getsparksession(999,1)
         df = spark.createDataFrame(pdf)
 
 

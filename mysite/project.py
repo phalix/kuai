@@ -53,7 +53,7 @@ defaultValues = {
     'spark.jars.packages': 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.0',
     'Author':'Sebastian',
     'maindir':".",
-    'mongoconnection':'mongodb://db:27017',
+    'mongoconnection':'mongodb://localhost:27017',
     'delimeter':','
 }
 

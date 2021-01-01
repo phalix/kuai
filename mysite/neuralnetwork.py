@@ -240,6 +240,7 @@ def aiupload(request,project_id):
         nn.layers.filter(outputlayer=False).delete()
     else:
         nn = NeuralNetwork()
+        allOutputStore = {}
     nn.save()
     project.neuralnetwork = nn
     project.save()

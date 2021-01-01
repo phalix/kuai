@@ -30,7 +30,7 @@ class TestKuaiCase(TestCase):
                          199 and response.status_code < 400, True)
 
         response = c.post('/dataupload/'+project_id_str+'/', {
-            'folderfile': "C:\\Users\\sebas\\Downloads\\wkn__historic.csv",
+            'folderfile': "examples/stock/wkn_846900_historic.csv",
             'shuffledata': True,
             'trainshare': 0.6,
             'testshare': 0.2,

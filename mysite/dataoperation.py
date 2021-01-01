@@ -112,7 +112,13 @@ def createOrUpdateUDF(request,project_id):
     errorlog = ""
     result = ""
     try:
-        a_udf = generateUDFonUDF(newudf)
+        udfpara = {}
+        udfpara['outputtype'] = newudf.outputtype
+        udfpara['input'] = newudf.input
+        udfpara['udfexecutiontext'] = newudf.udfexecutiontext
+        udfpara['functionname'] = 'testexecution'
+        
+        a_udf = generateUDFonUDF(udfpara)
         df = readfromcassandra(project_id,TRAIN_DATA_QUALIFIER)
         result = df.limit(1).select(a_udf[1].alias(str(newudf.pk))).limit(1).collect()
         result = result[0][0]
@@ -396,7 +402,6 @@ def existingdatasetselection(request):
 
 def uploaddata(request,project_id):
     #subm_file = request.FILES['filewithdata']
-    
     shuffle = request.POST['shuffledata']
     trainshare = float(request.POST['trainshare'])
     testshare = float(request.POST['testshare'])
@@ -1169,7 +1174,14 @@ def collectUDFSOnProject(project):
     
     return functionarray
 
+
+
 def generateUDFonUDF(udfdefinition):
+    assert 'outputtype' in udfdefinition
+    assert 'udfexecutiontext' in udfdefinition
+    assert 'functionname' in udfdefinition
+    assert 'input' in udfdefinition
+
     from pyspark.sql.functions import udf
     outputtype = udfdefinition['outputtype']
     left = ""
