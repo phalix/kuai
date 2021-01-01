@@ -1,7 +1,11 @@
 from mysite.experimentrunners.plain import PlainPythonExperiment
 
 class AtlasDessaExperiment(PlainPythonExperiment):
-    import foundations
+    
+    def __init__(self):
+        import foundations
+        super().__init__(self)
+
     def show(self):
         print("show")
 
