@@ -17,9 +17,9 @@ class TestKuaiCase(TestCase):
         projectname = 'testproject'
 
         c = Client()
-        project_id = 882233
+        project_id = 111111
         response = c.post(
-            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname,'pk':882233})
+            '/createnewproject/', {'authorNameInput': author, 'projectNameInput': projectname,'pk':project_id})
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
         project = get_object_or_404(Project, pk=project_id)

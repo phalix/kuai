@@ -101,7 +101,7 @@ class PlainPythonExperiment:
             defaultworker = defaultworker.replace(wd,"")
         
         f.close()
-        f2 = open(self.experimentfile, "w")
+        f2 = open(self.projectfolder+"/"+self.experimentfile, "w")
         f2.write(defaultworker)
         f2.close()
         self.executionText = defaultworker
@@ -111,7 +111,7 @@ class PlainPythonExperiment:
         print("execute")
         import subprocess
         f = open(self.logfile,"a")
-        proc = subprocess.Popen(['python', self.projectfolder+"/"+self.experimentfile], stdout=f,stderr=f, shell=True)
+        proc = subprocess.Popen(['python', self.projectfolder+"/"+self.experimentfile], stdout=f,stderr=f, shell=True,cwd=self.projectfolder)
         return proc
         
     def getLog(self):
