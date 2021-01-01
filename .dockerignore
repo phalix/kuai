@@ -36,6 +36,8 @@ projects/*
 tempfile*
 temp/upload/*
 temp/extract/*
+!temp/upload/README.md
+!temp/extract/README.md
 __pycache__
 logs
 mysite/private*
