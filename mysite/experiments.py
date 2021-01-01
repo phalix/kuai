@@ -128,6 +128,11 @@ def experimentsetup(request,project_id,experiment_id):
         optimizername = ""
         optconfs = []
     
+    experimentTypeNames = [PlainPythonExperiment.__name__]
+
+    for subclass in PlainPythonExperiment.__subclasses__():
+        experimentTypeNames.append(subclass.__name__)
+
     context = {
         "optimizers" : mysite.neuralnetwork.getOptimizers(),
         "optimizername":optimizername,
@@ -142,6 +147,8 @@ def experimentsetup(request,project_id,experiment_id):
         "selmetrics":metrics,
         "callbacks":['earlystopping','...'],
         "experiments": json.dumps(experimentsPython),
+        "experimenttypes":experimentTypeNames,
+        "currenttype":experiment.experimenttype,
 
     }
     
@@ -165,6 +172,7 @@ def uploadexpsetup(request,project_id,experiment_id):
     
     experiment.batchsize = request.POST["batchsize"]
     experiment.noofepochs = request.POST["noofepochs"]
+    experiment.experimenttype = request.POST["experimenttypeselect"]
     
     opticonfigs = []
     optiname='Adam'
@@ -628,10 +636,11 @@ def generateExperiment(project_id,experiment_id,writeToDessa):
     
     fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
     
-    if writeToDessa:
-        ppe = AtlasDessaExperiment(directory,fileToRun,logpath)
-    else:
-        ppe = PlainPythonExperiment(directory,fileToRun,logpath)
+    #if writeToDessa:
+    #    ppe = AtlasDessaExperiment(directory,fileToRun,logpath)
+    #else:
+    #    ppe = PlainPythonExperiment(directory,fileToRun,logpath)
+    ppe = eval(experiment.experimenttype)(directory,fileToRun,logpath)
     
     exp = experiment
     expConfig = {}

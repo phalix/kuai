@@ -41,10 +41,18 @@
                 <h2>Select Parameters for Experiment {{experiment.pk}}</h2>
               </div>
               <div class="card-body">
+                <label for="optimizerselect">Choose Type of Experiment</label>
+                <select onchange="onselectionchanged(event)" class="js-example-basic-single form-control"
+                  id="experimenttypeselect" name="experimenttypeselect">
+                  {% for type in experimenttypes %}
+                  <option {% if currenttype == type %}selected{% endif %}>{{type}}</option>
+                  {% endfor %}
+                </select>
+                <br/>
+
                 <label for="optimizerselect">Choose Optimizer</label>
                 <select onchange="onselectionchanged(event)" class="js-example-basic-single form-control"
                   id="optimizerselect" name="optimizerselect">
-                  <option>Please select...</option>
                   {% for opti in optimizers %}
                   <option {% if opti.0 == optimizername %}selected{% endif %}>{{opti.0}}</option>
                   {% endfor %}
