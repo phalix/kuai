@@ -41,7 +41,6 @@ class NeuralNetwork(models.Model):
     layers = models.ManyToManyField(Layer)
     optimizer = models.ForeignKey(Optimizer, on_delete=models.DO_NOTHING,null=True)
     
-
 class ParameterFixation(models.Model):
     parameter = models.ForeignKey(Configuration, null=True,on_delete=models.CASCADE)
     configuration = models.ManyToManyField(Configuration,related_name="configuration")
@@ -89,6 +88,8 @@ class Experiment(models.Model):
     batchsize = models.IntegerField(null=True)
     optimizer = models.ForeignKey(Optimizer, on_delete=models.DO_NOTHING,null=True)
     logfile = models.CharField(max_length=999,null=True)
+    executablecode = models.TextField(null=True)
+
 
 class LayerWeights(models.Model):
     name = models.CharField(max_length=150)

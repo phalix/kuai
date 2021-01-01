@@ -7,10 +7,11 @@ class PlainPythonExperiment:
     configuration = None
     
 
-    def __init__(self,projectfolder,experimentfile,logfile):
+    def __init__(self,projectfolder,experimentfile,logfile,executionText=None):
         self.projectfolder = projectfolder
         self.experimentfile = experimentfile
         self.logfile = logfile
+        self.executionText = executionText
 
     def setupExperiment(self,configuration):
         required = {'epochs':10,
@@ -101,19 +102,28 @@ class PlainPythonExperiment:
             defaultworker = defaultworker.replace(wd,"")
         
         f.close()
-        f2 = open(self.projectfolder+"/"+self.experimentfile, "w")
-        f2.write(defaultworker)
-        f2.close()
         self.executionText = defaultworker
         print("write")
     
     def executeExperiment(self):
         print("execute")
-        import subprocess
-        f = open(self.logfile,"a")
-        proc = subprocess.Popen(['python', self.projectfolder+"/"+self.experimentfile], stdout=f,stderr=f, shell=True,cwd=self.projectfolder)
-        return proc
+        assert self.executionText != None
+        assert self.projectfolder != None
+        assert self.experimentfile != None
+        assert self.logfile != None
         
+        if self.executionText:
+            f2 = open(self.projectfolder+"/"+self.experimentfile, "w")
+            f2.write(self.executionText)
+            f2.close()
+            import subprocess
+            f = open(self.logfile,"a")
+            proc = subprocess.Popen(['python', self.projectfolder+"/"+self.experimentfile], stdout=f,stderr=f, shell=True,cwd=self.projectfolder)
+            return proc
+        else:
+            print("not complied yet")
+            return None
+    
     def getLog(self):
         f = open(self.logfile, "r")
         curExperimentLog = f.read()
@@ -121,3 +131,21 @@ class PlainPythonExperiment:
 
     def getResults(self):
         return None
+
+    def serialize(self):
+        result = {}
+        result['executionText'] = self.executionText
+        result['projectfolder'] = self.projectfolder
+        result['experimentfile'] = self.experimentfile
+        result['logfile'] = self.logfile
+        import json
+        return json.dumps(result)
+    
+    @classmethod
+    def deserialize(cls,json_dict):
+        import json
+        para = json.loads(json_dict)
+        return cls(para['projectfolder'],para['experimentfile'],para['logfile'],para['executionText'])
+
+    def update(self,newexecutiontext):
+        self.executionText = newexecutiontext

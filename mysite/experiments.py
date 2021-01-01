@@ -154,6 +154,7 @@ def uploadexpsetup(request,project_id,experiment_id):
         experiment = Experiment(status=0,project=project)
     else:
         experiment = get_object_or_404(Experiment, pk=experiment_id)
+        experiment.executablecode = None
     
     Metrics.objects.filter(experiment=experiment_id).all().delete()
 
@@ -567,14 +568,23 @@ def loadmodelweights(experiment_id,model):
 
 
 def writetodessa(request,project_id,experiment_id):
-    import json
+    project = get_object_or_404(Project, pk=project_id)
+    experiment = get_object_or_404(Experiment, pk=experiment_id)
+
     writeToDessa = 'writeDessa' in request.POST and request.POST['writeDessa'] == 'true'
+
+    if 'executionText' in request.POST:
+        import json
+        para = json.loads(experiment.executablecode)
+        para['executionText'] = request.POST['executionText']
+        experiment.executablecode = json.dumps(para)
+        experiment.save()
+
     ppe = generateExperiment(project_id,experiment_id,writeToDessa)
 
 
 
-    project = get_object_or_404(Project, pk=project_id)
-    experiment = get_object_or_404(Experiment, pk=experiment_id)
+    
     cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
     metrics = []
     for m in cur_metrics:
@@ -591,7 +601,8 @@ def writetodessa(request,project_id,experiment_id):
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
     saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
     print("done writing to dessa")
-
+    
+    import json
     return HttpResponse(json.dumps({}), content_type='application/json')
 
 
@@ -599,6 +610,13 @@ def generateExperiment(project_id,experiment_id,writeToDessa):
     project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
+    if experiment.executablecode:
+        try:
+            ppe = PlainPythonExperiment.deserialize(experiment.executablecode)
+            return ppe
+        except Exception as e:
+            print(e)
+        
     cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
     metrics = []
     for m in cur_metrics:
@@ -629,6 +647,9 @@ def generateExperiment(project_id,experiment_id,writeToDessa):
 
     ppe.setupExperiment(expConfig)
     ppe.writeExperiment()
+
+    experiment.executablecode = ppe.serialize()
+    experiment.save()
 
     return ppe
 
