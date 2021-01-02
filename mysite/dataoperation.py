@@ -426,7 +426,7 @@ def uploaddata(request,project_id):
         import mysite.project as mp
         delimeter = mp.getSetting(project_id,'delimeter')[0]
         
-        df = spark.read.format("csv").option("delimiter",delimeter).option("header","true").load(tempfile)
+        df = spark.read.format("csv").option("delimiter",delimeter).option("header","true").option("inferSchema", "true").load(tempfile)
         
     elif request.POST['datatype'] == "img":
         if 'filewithdata' in request.FILES:

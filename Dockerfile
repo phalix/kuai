@@ -22,9 +22,6 @@ WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 COPY . /code/
-# Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
-#RUN useradd appuser && chown -R appuser /code
-#USER appuser
 
 RUN python manage.py makemigrations
 RUN python manage.py migrate

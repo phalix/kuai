@@ -187,6 +187,7 @@ class TestKuaiCase(TestCase):
             'batchsize':'4',
             'optimizerselect':'Adam',
             'optpara$learning_rate':'0.1',
+            'experimenttypeselect':'PlainPythonExperiment',
         })
         
         self.assertEqual(response.status_code >

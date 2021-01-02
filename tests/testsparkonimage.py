@@ -185,6 +185,7 @@ udfimage = udf(imagetonp, ArrayType(ArrayType(ArrayType(IntegerType()))))"""
             'metrics[]':'MAE',
             'noofepochs':'5',
             'batchsize':'4',
+            'experimenttypeselect':'PlainPythonExperiment',
         })
         
         self.assertEqual(response.status_code >

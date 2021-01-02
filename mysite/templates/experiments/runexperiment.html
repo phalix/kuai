@@ -108,15 +108,24 @@
                   var writeToDessaUrl = "{% url 'writetodessa' project.pk experiment.pk %}"
 
                   function stopExperiment() {
-                    fetch(stopUrl).then()
+                    NProgress.start()
+                    fetch(stopUrl).then(function(){
+                      NProgress.done()
+                    })
                   }
 
                   function startExperiment(type) {
-                    fetch(startUrl + "?" + "type" + "=" + type).then()
+                    NProgress.start()
+                    fetch(startUrl + "?" + "type" + "=" + type).then(function(){
+                      NProgress.done()
+                    })
                   }
 
                   function deleteExperiment() {
-                    fetch(deleteUrl).then()
+                    NProgress.start()
+                    fetch(deleteUrl).then(function(){
+                      NProgress.done()
+                    })
                   }
 
                   function writeToDessa() {
@@ -133,19 +142,17 @@
 
                   }
                 </script>
-                <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('dessa')">Start in
-                  Dessa</button>
-                <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('plain')">Start in
-                  this Environment</button>
+                <button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('dessa')">Write and Start Experiment</button>
+                <!--<button type="button" class="mb-1 btn btn-block btn-primary" onclick="startExperiment('plain')">Start in
+                  this Environment</button>-->
                 <button type="button" class="mb-1 btn btn-block btn-danger" onclick="stopExperiment()">Stop</button>
                 <button type="button" class="mb-1 btn btn-block btn-danger" onclick="deleteExperiment()">Delete</button>
 
-                <label class="control control-checkbox">Write Dessa Files
+                <label class="control control-checkbox" style="visibility:hidden">Write Dessa Files
                   <input type="checkbox" checked="checked" name="writedessaselector">
                   <div class="control-indicator"></div>
                 </label>
-                <button type="button" class="mb-1 btn btn-block btn-primary" onclick="writeToDessa()">Write to
-                  Dessa</button>
+                <button type="button" class="mb-1 btn btn-block btn-primary" onclick="writeToDessa()">Write Experiment</button>
                 <script>
                   function createChart(first, fkt, labels, diagramdata) {
                     var ctx = document.getElementById(fkt + 'chart').getContext('2d');

@@ -77,9 +77,11 @@ class PlainPythonExperiment:
         if len(myMapWithOptions) > 0:
             optionsString = reduce(lambda x,y:x+";"+y,myMapWithOptions)
             
-        
-        metricsString = reduce(lambda x,y:x+","+y,map(lambda x:"'"+x+"'",self.configuration['metrics']))
-        
+        try:
+            metricsString = reduce(lambda x,y:x+","+y,map(lambda x:"'"+x+"'",self.configuration['metrics']))
+        except Exception as e:
+            print(e)
+            metricsString = ""
 
         defaultworker = re.sub("#overwrite model if needed optimizer = keras.optimizer.Adam\(\);model.compile\(optimizer=optimizer,loss=loss,metrics=metrics\)#change optimizer",
             "optimizer = keras.optimizers."+self.configuration['Optimizer']['selection']+"("+optionsString+");model.compile(optimizer=optimizer,loss='"+self.configuration['loss']+"',metrics=["+metricsString+"])",

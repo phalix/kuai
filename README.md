@@ -48,7 +48,6 @@ https://hub.docker.com/r/bittmans/kuai
 
 ## TODO
 * rename from mysite to kuai
-* support multiple output
 * enable asynchronous background processes for data transformation
 * support GANs and Auto Encoders through configurable Experiments
 

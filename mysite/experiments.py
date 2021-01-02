@@ -283,7 +283,7 @@ def runexperiment(project,experiment,loss,metrics,currentepoch,neuralnetwork,opt
     saveParquetDataInProjectFolder(train_df3,project_id,qualifier=1)
     saveParquetDataInProjectFolder(test_df3,project_id,qualifier=2)
 
-    ppe = generateExperiment(project_id,experiment_id,False)
+    ppe = generateExperiment(project_id,experiment_id)
     ppe.executeExperiment()
     ppe.showExperiment()
     
@@ -402,7 +402,6 @@ def run(request,project_id,experiment_id):
 
     template = loader.get_template('experiments/runexperiment.html')
     project = get_object_or_404(Project, pk=project_id)
-    experiment_id = getlatestexperiment(project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     expDict = retrieveExperimentStats(project_id)
     
@@ -416,7 +415,7 @@ def run(request,project_id,experiment_id):
 
     
 
-    ppe = generateExperiment(project_id,experiment_id,False)
+    ppe = generateExperiment(project_id,experiment_id)
     experimentsetup = ppe.getExperiment()
     
     
@@ -475,11 +474,8 @@ def getexperimentsstasperproject(request,project_id,experiment_id):
     
     expDict.pop("currentEpoch",None)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
-    if experiment.logfile:
-        f = open(experiment.logfile, "r")
-        curExperimentLog = f.read()
-    else:
-        curExperimentLog = ""
+    ppe = generateExperiment(project_id,experiment_id)    
+    curExperimentLog = ppe.getLog()
     
     response_data = {
         'state': expDict,
@@ -584,11 +580,8 @@ def writetodessa(request,project_id,experiment_id):
         experiment.executablecode = json.dumps(para)
         experiment.save()
 
-    ppe = generateExperiment(project_id,experiment_id,writeToDessa)
+    ppe = generateExperiment(project_id,experiment_id)
 
-
-
-    
     cur_metrics = Metrics.objects.filter(experiment=experiment.id).all()
     metrics = []
     for m in cur_metrics:
@@ -610,8 +603,8 @@ def writetodessa(request,project_id,experiment_id):
     return HttpResponse(json.dumps({}), content_type='application/json')
 
 
-def generateExperiment(project_id,experiment_id,writeToDessa):
-    project = get_object_or_404(Project, pk=project_id)
+def generateExperiment(project_id,experiment_id):
+    #project = get_object_or_404(Project, pk=project_id)
     experiment = get_object_or_404(Experiment, pk=experiment_id)
     
     if experiment.executablecode and experiment.experimenttype:
@@ -636,10 +629,6 @@ def generateExperiment(project_id,experiment_id,writeToDessa):
     
     fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
     
-    #if writeToDessa:
-    #    ppe = AtlasDessaExperiment(directory,fileToRun,logpath)
-    #else:
-    #    ppe = PlainPythonExperiment(directory,fileToRun,logpath)
     ppe = eval(experiment.experimenttype)(directory,fileToRun,logpath)
     
     exp = experiment

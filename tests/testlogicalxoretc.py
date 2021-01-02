@@ -216,6 +216,7 @@ class TestKuaiCase(TestCase):
             'metrics[]':'MSE',
             'noofepochs':'5',
             'batchsize':'4',
+            'experimenttypeselect':'PlainPythonExperiment',
         })
         
         self.assertEqual(response.status_code >
@@ -235,10 +236,15 @@ class TestKuaiCase(TestCase):
             'metrics[]':'MSE',
             'noofepochs':'6',
             'batchsize':'5',
+            'experimenttypeselect':'AtlasDessaExperiment',
         })
 
         import requests
-        if requests.get("http://localhost:5000/").status_code == 200:
+        try:
+            response = requests.get("http://localhost:5000/")
+        except:
+            response = None
+        if response and response.status_code == 200:
 
             response = c.post("/writetodessa/"+project_id_str+"/"+exp_id_str+"/", {
                 'writeDessa':'true'
