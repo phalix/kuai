@@ -989,6 +989,11 @@ def gettypesanddimensionsofdataframe(df):
     for item in mytypes_nodim:
         if isTypeSimpleType(item[1]):
            cur = item + ("1",)
+        elif item[1] == 'struct<origin:string,height:int,width:int,nChannels:int,mode:int,data:binary>':
+            ## This is an image
+            tovalidate = totestwith[item[0]]
+            dimension = str([tovalidate.height,tovalidate.width,tovalidate.nChannels]).replace("[","").replace("]","").replace(" ","")
+            cur = item + (dimension,)
         else:
             tovalidate = totestwith[item[0]]
             tovalidatetype = type(tovalidate)

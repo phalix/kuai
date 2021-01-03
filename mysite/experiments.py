@@ -12,6 +12,7 @@ import threading
 import tensorflow as tf
 from mysite.experimentrunners.plain import PlainPythonExperiment
 from mysite.experimentrunners.atlas import AtlasDessaExperiment
+from mysite.experimentrunners.mlflow import MLFlowExperiment
 
 
 def createnewexperimentinproject(project):
