@@ -1,6 +1,12 @@
 import foundations#foundations
 #from pyspark.sql import SparkSession
 import tensorflow as tf
+
+try:  
+    physical_devices = tf.config.list_physical_devices('GPU')
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+except:  # Invalid device or cannot modify virtual devices once initialized.  
+    pass
 from tensorflow import keras
 import numpy as np
 import pyarrow.parquet as pq

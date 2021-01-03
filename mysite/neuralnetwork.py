@@ -540,7 +540,10 @@ def buildmodel(project,neuralnetwork,optimizer,features,loss,metrics,target,inpu
                 option = value
                 if len(option)>0:
                     calldict[key] = option
-        calldict["name"]= "tobesaved_"+str(layer['idx'])  
+        if layer['isoutput']:
+            calldict["name"]= "output_"+str(layer['idx'])
+        else:
+            calldict["name"]= "tobesaved_"+str(layer['idx'])  
         #y.name = "tobesaved_"+str(layer.id)    
             
         #initiate by actual predecessor

@@ -543,7 +543,7 @@ def savemodelweights(experiment_id,model):
     LayerWeights.objects.filter(experiment=experiment_id).all().delete()
     for layer in model.layers:
         curName = layer.name
-        if curName.startswith("tobesaved_"):
+        if curName.startswith("tobesaved_") or curName.startsWith("output_"):
             weights = layer.get_weights()
             ser_weights = pickle.dumps(weights,protocol=0)
             lw = LayerWeights(name=layer.name,weights=ser_weights,experiment=experiment)
@@ -674,6 +674,42 @@ def saveModelInProjectFolder(model,project_id):
 
 def saveParquetDataInProjectFolder(dataframe,project_id,qualifier=1):
     import os
-    dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"/"+str(qualifier)+".parquet")
+    ##Check if dataframe contains image struct.
     
+    images = list(filter(lambda x:x[1] == 'struct<origin:string,height:int,width:int,nChannels:int,mode:int,data:binary>',dataframe.dtypes))
+    if len(images)>0:
+        for image in images:
+            from pyspark.sql import types as T
+            from pyspark.sql import functions as F
+            from pyspark.ml.linalg import DenseVector
+            folder = getProjectDataDir(project_id)+"/"+str(qualifier)+"."+image[0]
+            import os
+            os.makedirs(folder,exist_ok=True)
+            def setpath(copyto):
+                def copyImageAndTrimName(input):
+                    originSplitted = input['origin'].split("/")
+                    
+                    print(copyto)
+                    newOrigin = originSplitted[len(originSplitted)-1]
+                    from shutil import copyfile
+                    ##Start beginning of 8, due to file:///
+                    copyfile(input['origin'][8:], copyto+"/"+newOrigin)
+                    return {"origin":newOrigin,
+                            "height":input['height'],
+                            "width":input['width'],
+                            "nChannels":input['nChannels'],
+                            "mode":input['mode'],"data":input['data']}
+                return copyImageAndTrimName
+            myFunction = setpath(folder)
+            copyImageAndTrimNameUDF = F.udf(myFunction, 
+                T.StructType([T.StructField("origin",T.StringType(),True),
+                                T.StructField("height",T.IntegerType(),True),
+                                T.StructField("width",T.IntegerType(),True),
+                                T.StructField("nCHannels",T.IntegerType(),True),
+                                T.StructField("mode",T.IntegerType(),True),
+                                T.StructField("data",T.BinaryType(),True)]))
+            
+            dataframe = dataframe.withColumn(image[0],copyImageAndTrimNameUDF(image[0]))
+    
+    dataframe.write.mode("overwrite").parquet(getProjectDataDir(project_id)+"/"+str(qualifier)+".parquet")
     
