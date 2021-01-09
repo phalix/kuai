@@ -205,4 +205,11 @@ class TestKuaiCase(TestCase):
         })
         self.assertEqual(response.status_code >
                          199 and response.status_code < 400, True)
+        
+        response = c.post("/experimentresults/"+project_id_str+"/",{
+
+        })
+        self.assertEqual(response.status_code >
+                         199 and response.status_code < 400, True)
+        
         print("done")

@@ -7,13 +7,15 @@ class AtlasDessaExperiment(PlainPythonExperiment):
     executionText = None
     logfile = None
     configuration = None
+    projectid = None
     
 
-    def __init__(self,projectfolder,experimentfile,logfile,executionText=None):
+    def __init__(self,projectfolder,experimentfile,logfile,project_id,executionText=None):
         self.projectfolder = projectfolder
         self.experimentfile = experimentfile
         self.logfile = logfile
         self.executionText = executionText
+        self.projectid = project_id
 
     def show(self):
         print("show")
@@ -113,3 +115,25 @@ class AtlasDessaExperiment(PlainPythonExperiment):
         import json
         para = json.loads(json_dict)
         return cls(para['projectfolder'],para['experimentfile'],para['logfile'],para['executionText'])
+
+    def getResults():
+        import mysite.project as mp
+        urlatlasdessa = mp.getSetting(self.projectid,'DessaServer')[0]
+        
+        import requests
+        results_dessa = requests.get(urlatlasdessa+"/foundations_rest_api/api/v2beta/projects/"+str(self.projectid)+"/job_listing")
+        import json
+        if results_dessa.text == '"This project was not found"\n':
+            result_json = {"error":results_dessa.text}
+            name = []
+            jobs = []
+            metrics = []
+            parameters = []
+        else:
+            results_json = json.loads(results_dessa.text)
+            name = results_json['name']
+            jobs = results_json['jobs']
+            metrics = results_json['output_metric_names']
+            parameters = results_json['parameters']
+        
+        return [result_json,urlatlasdessa]

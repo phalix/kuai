@@ -35,6 +35,8 @@ import PyArrowDataExtraction as de
 
 
 tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logdir)#tensorboard
+csv_callback = keras.callbacks.CSVLogger("experiment_training.log", separator=",", append=False)#csvlogger
+csv_callback_test = keras.callbacks.CSVLogger("experiment_testing.log", separator=",", append=False)#csvloggertesting
 foundations.set_tensorboard_logdir(logdir)#foundations
 
 pds = pq.ParquetDataset(parquet_files)
@@ -57,12 +59,14 @@ print("____________________________________________")
 print("_________________DATA_______________________")
 print("____________________________________________")
 callbacks = []
+
 callbacks.append(tensorboard_callback)#tensorboard
 callbacks.append(dc.CustomDessaCallback("train"))#foundations
+callbacks.append(csv_callback)
 
 callbacksEvaluate = []
 callbacksEvaluate.append(dc.CustomDessaCallback("test"))#foundations
-
+callbacksEvaluate.append(csv_callback_test)
 
 print("____________________________________________")
 print("_________________TRAIN______________________")

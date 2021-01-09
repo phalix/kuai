@@ -5,6 +5,7 @@ class PlainPythonExperiment:
     executionText = None
     logfile = None
     configuration = None
+    csvLoggingFile = None
     
 
     def __init__(self,projectfolder,experimentfile,logfile,executionText=None):
@@ -12,6 +13,9 @@ class PlainPythonExperiment:
         self.experimentfile = experimentfile
         self.logfile = logfile
         self.executionText = executionText
+        self.csvLoggingFile = experimentfile+".csv"
+        self.csvLoggingFileTest = experimentfile+"test.csv"
+
 
     def setupExperiment(self,configuration):
         required = {'epochs':10,
@@ -87,7 +91,9 @@ class PlainPythonExperiment:
             "optimizer = keras.optimizers."+self.configuration['Optimizer']['selection']+"("+optionsString+");model.compile(optimizer=optimizer,loss='"+self.configuration['loss']+"',metrics=["+metricsString+"])",
             defaultworker)
 
-        
+        defaultworker = re.sub(r'.*csvlogger\b','csv_callback = keras.callbacks.CSVLogger("'+self.csvLoggingFile+'", separator=",", append=False)#csvlogger',defaultworker)
+        defaultworker = re.sub(r'.*csvloggertesting\b','csv_callback_test = keras.callbacks.CSVLogger("'+self.csvLoggingFileTest+'", separator=",", append=False)#csvloggertesting',defaultworker)
+
 
         withoutDessa = ["foundations.set_tensorboard_logdir(logdir)#foundations",
                         "import foundations#foundations",
@@ -136,8 +142,48 @@ class PlainPythonExperiment:
         return curExperimentLog
 
     def getResults(self):
-        return None
+        import pandas as pd
+        try:
+            dataframe = pd.read_csv(self.projectfolder+"/"+self.csvLoggingFile)
+            output_metric_names = list(map(lambda x:{"name":"train"+x, "type": "array number"},list(filter(lambda x:x!="epoch",list(dataframe.columns)))))
+            
+            output_metrics = []
+            for a in output_metric_names:
+                element = {"name":a['name']}
+                element['value'] = list(dataframe[a['name'][5:]])
+                output_metrics.append(element)
+        except Exception as e:
+            output_metrics = []
+            output_metric_names = []
+        
+        try:   
+            dataframe_test = pd.read_csv(self.projectfolder+"/"+self.csvLoggingFileTest)
+            output_metric_names_test = list(map(lambda x:{"name":"test"+x, "type": "array number"},list(filter(lambda x:x!="epoch",list(dataframe_test.columns)))))
+            output_metrics_test = []
+            for a in output_metric_names_test:
+                element = {"name":a['name']}
+                element['value'] = list(dataframe_test[a['name'][5:]])
+                output_metrics_test.append(element)
+        except Exception as e:
+            output_metrics_test = []
+            output_metric_names_test = []
+            
+        result = {
+            "name":"1",
+            "parameters":[],
+            "jobs":[{
+                "job_id":"1",
+                "user":"",
+                "project":"",
+                "job_parameters":"",
+                "output_metrics":output_metrics+output_metrics_test,
+            }],
+            "output_metric_names":output_metric_names+output_metric_names_test
 
+        }
+            
+        return [result,""]
+        
     def serialize(self):
         result = {}
         result['executionText'] = self.executionText
@@ -155,3 +201,5 @@ class PlainPythonExperiment:
 
     def update(self,newexecutiontext):
         self.executionText = newexecutiontext
+
+    

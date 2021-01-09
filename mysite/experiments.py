@@ -40,37 +40,35 @@ def experimentsetuplastexperiment(request,project_id):
     latestexp = getlatestexperiment(project_id)
     return experimentsetup(request,project_id,latestexp)
 
-def experimentresults(request,project_id):
+def experimentresultslatest(request,project_id):
+    experiment_id = getlatestexperiment(project_id)
+    return experimentresults(request,project_id,experiment_id)
+
+
+def experimentresults(request,project_id,experiment_id):
     #define earlystopping, after how many epochs
     #define in general how many epochs should run
     #define save val_loss, loss etc.
 
     #get callbacks etc.!
-
     template = loader.get_template('experiments/results.html')
     project = get_object_or_404(Project, pk=project_id)
     
-    import mysite.project as mp
-    urlatlasdessa = mp.getSetting(project_id,'DessaServer')[0]
-    
-    import requests
-    results_dessa = requests.get(urlatlasdessa+"/foundations_rest_api/api/v2beta/projects/"+str(project_id)+"/job_listing")
-    import json
-    if results_dessa.text == '"This project was not found"\n':
-        result_json = {"error":results_dessa.text}
-        name = []
-        jobs = []
-        metrics = []
-        parameters = []
-    else:
-        results_json = json.loads(results_dessa.text)
+    ppe = generateExperiment(project_id,experiment_id)
+
+    results_json,urlatlasdessa = ppe.getResults()
+    try:
         name = results_json['name']
         jobs = results_json['jobs']
         metrics = results_json['output_metric_names']
         parameters = results_json['parameters']
-    
-    
-    
+    except:
+        name = []
+        jobs = []
+        metrics = []
+        parameters = []
+
+
     
     context = {
         "project" : project,
@@ -630,7 +628,7 @@ def generateExperiment(project_id,experiment_id):
     
     fileToRun = "DefaultWorker_"+str(experiment_id)+".py"
     
-    ppe = eval(experiment.experimenttype)(directory,fileToRun,logpath)
+    ppe = eval(experiment.experimenttype)(directory,fileToRun,logpath,project_id)
     
     exp = experiment
     expConfig = {}
